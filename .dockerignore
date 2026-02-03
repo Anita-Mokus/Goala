@@ -1,0 +1,47 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local database (will be recreated in production)
+chroma_db/
+
+# Git
+.git/
+.gitignore
+
+# Documentation and development files
+*.md
+!README.md
+build.sh
+start_api.sh
+start_api.bat
+
+# Test files
+tests/
+test_*.py
+*_test.py
+
+# Environment variables (should use Railway environment variables)
+.env
+.env.local
+.env.*.local
