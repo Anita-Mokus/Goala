@@ -1,0 +1,232 @@
+{
+  "datasets": [
+    {
+      "name": "junior_academy_eval_mbh",
+      "description": "Kérdések az MBH Bank H-1339-2025, H-68-2024, H-682-2025 és H-776-2023 számú dokumentumai alapján.",
+      "file_paths": [
+        "data/H-1339-2025-20251120010000.pdf",
+        "data/H-68-2024-20251120010000.pdf",
+        "data/H-682-2025-20251120010000.pdf",
+        "data/H-776-2023-20251120010000.pdf"
+      ],
+      "questions": [
+        {
+          "input": "Mi az MBH Bank Nyrt. feltüntetett telefonszáma?",
+          "expected_output": "06 80 350 350"
+        },
+        {
+          "input": "Mi az MBH Bank Nyrt. feltüntetett e-mail címe?",
+          "expected_output": "ugyfelszolgalat@mbhbank.hu"
+        },
+        {
+          "input": "Mi az MBH Bank Nyrt. weboldala?",
+          "expected_output": "www.mbhbank.hu"
+        },
+        {
+          "input": "Mi a Lakossági Számla Akciós Termékek Hirdetménye dokumentumszáma?",
+          "expected_output": "H-1339/2025"
+        },
+        {
+          "input": "Mi a Lakossági Számla Akciós Termékek Hirdetménye közzétételének dátuma?",
+          "expected_output": "2025.09.19."
+        },
+        {
+          "input": "Mi a Lakossági Számla Akciós Termékek Hirdetménye hatálybalépésének dátuma?",
+          "expected_output": "2025.09.22."
+        },
+        {
+          "input": "Mely korábbi bankokkal olvadt össze az MBH Bank, hogy létrejöjjön a jelenlegi Lakossági Számla Akciós Termékek hirdetménye?",
+          "expected_output": "Takarékbank Zrt. and MKB Bank Nyrt."
+        },
+        {
+          "input": "Melyik weboldal nyújt tájékoztatást az Országos Betétbiztosítási Alap (OBA) által fedezett betétekről?",
+          "expected_output": "www.oba.hu"
+        },
+        {
+          "input": "Mi az 1. számú módosításban felsorolt új promóció neve?",
+          "expected_output": "Prémium kampány - Opera előadás PROMÓCIÓ"
+        },
+        {
+          "input": "Mi a Prémium kampány - Opera előadás PROMÓCIÓ befejezésének dátuma?",
+          "expected_output": "2025. november 21"
+        },
+        {
+          "input": "Mikor kerül megrendezésre a 'Diótörő' előadás az 'Opera előadás PROMÓCIÓ' keretében?",
+          "expected_output": "2025. december 11"
+        },
+        {
+          "input": "Mi a Visa 'KártyaMánia' promóció új lezárási dátuma?",
+          "expected_output": "2025.09.21"
+        },
+        {
+          "input": "Mely dátummal ér véget az MBH Lakossági számlacsomag váltási és egyéb akciók?",
+          "expected_output": "2025. szeptember 19"
+        },
+        {
+          "input": "Hol található részletes tájékoztatás az 'Opera előadás PROMÓCIÓ'-val kapcsolatban?",
+          "expected_output": "https://www.opera.hu/hu/tajekoztatok/"
+        },
+        {
+          "input": "Mi a 'KiberPajzs' számára megadott weboldal?",
+          "expected_output": "kiberpajzs.hu"
+        },
+        {
+          "input": "Az 'Opera előadás PROMÓCIÓ' esetében a jogosult ügyfelek meddig regisztrálhatnak?",
+          "expected_output": "2025. november 21"
+        },
+        {
+          "input": "Milyen típusú számlákat kell nyitni a 'Diák - és Diákhitel számla promóció'-ban való részvételhez?",
+          "expected_output": "MBH Diák or MBH Diákhitel számlát"
+        },
+        {
+          "input": "Meddig érvényes a 'Diák - és Diákhitel számla promóció'?",
+          "expected_output": "2025. szeptember 30"
+        },
+        {
+          "input": "Mekkora összegű visszatérítésre jogosultak a Pécsi Tudományegyetem azon hallgatói, akik meghatározott számlát nyitnak és megfelelnek a feltételeknek?",
+          "expected_output": "30 000 Ft"
+        },
+        {
+          "input": "Mi az utolsó dátum, ameddig a 'VISA Bankkártya igénylés és használat ösztönző akció' hatályban lesz?",
+          "expected_output": "2025. szeptember 21."
+        },
+        {
+          "input": "Mi a célja a H-68/2024 dokumentumnak?",
+          "expected_output": "It is a 'Hirdetmény lakossági ügyfelek részére' (Notice for retail customers), providing a 'Díjjegyzék fogalomtár' (Fee Schedule Glossary) defining common banking services and fees."
+        },
+        {
+          "input": "Mi a Számlavezetés definíciója?",
+          "expected_output": "A számlavezető számlát vezet az ügyfél általi használat céljából. (The account manager maintains an account for use by the customer.)"
+        },
+        {
+          "input": "A H-68/2024 dokumentum szerint mit tesz lehetővé az internetbanki szolgáltatás az ügyfél számára?",
+          "expected_output": "Az ügyfél a számláján az kapcsolódó szolgáltatásokat interneten vagy mobil eszközön (például mobiltelefonon) keresztül veszi igénybe. (The customer uses the related services on his account via the internet or mobile device.)"
+        },
+        {
+          "input": "Mi a készpénzfelvétel definíciója a H-68/2024 dokumentum szerint?",
+          "expected_output": "Az ügyfél készpénzt vesz fel a saját számlájáról, belföldön. (The customer withdraws cash from his account, domestically.)"
+        },
+        {
+          "input": "Milyen típusú számlák nem részei a IX. MBH Lakossági számla és folyószámlahitel akció visszatérítési kedvezménnyel ajánlatnak?",
+          "expected_output": " MBH Kedvezmény\n  - MBH Kedvezmény Plusz\n  - MBH Extra\n  - MBH Partner Plusz\n  - MBH Menedzser\n  - MBH Prémium\n  - MBH Private Banking Panoráma\n  - MBH Private Banking Pillér"
+        },
+        {
+          "input": "Hol tekinthetik meg a résztvevők az 'MBH nyárváró számlanyitási akció' Általános Szerződési Feltételeit?",
+          "expected_output": "A feltételek a mbhbank.hu oldalon vagy az MBH Bank bármely fiókjában megtekinthetők."
+        },
+        {
+          "input": "Milyen változások történnek a bankszámlákkal május 31-én a Kondíciós lista magánszemélyek részére - Általános és speciális rendelkezések alapján?",
+          "expected_output": "H-682/2025 Condíciós lista states that Bankszámlavezetés, szolgáltatáscsomagok és kapcsolódó szolgáltatások and Betéti termékek címú fejezete lose its validity on May 31st. These provisions will be transfered to Fizetési számlák és fizetési számlákhoz kapcsolódó betétek Általános Szerződési Feltételeibe, Lakossági és vállalati bankkártyák Általános Szerződési Feltételeibe, Telebank szolgáltatás Általános Szerződési Feltételeibe, Elektronikus szolgáltatások Általános Szerződési Feltételeibe, Fizetési számlák és kapcsolódó szolgáltatások speciális feltételeiről és a fizetési megbízások benyújtásának és teljesítésének rendjéről című Hirdetménybe és az egyes fizetési számlákra vonatkozó Hirdetményekbe, Az egyes betéti termékekre vonatkozó Hirdetményekbe"
+        },
+        {
+          "input": "Mi történt az MBH Bank (korábban MKB) alkalmazással?",
+          "expected_output": "Fokozatosan megszűnik; az alkalmazás az új MBH Bank App alkalmazásban lesz elérhető. Az alkalmazás már nem fogja tudni teljesíteni a jelenlegi jogszabályi előírásokat."
+        },
+        {
+          "input": "A H-682/2025 dokumentum szerint mi a 'Fizetési kérelem' célja?",
+          "expected_output": "Célja a fizető fél azonnali fizetési megbízásainak automatizálása."
+        },
+        {
+          "input": "Honnan olvasható be az EAM?",
+          "expected_output": "QR-kódokból, NFC-kből vagy Deeplinks-ekből (URL)."
+        },
+        {
+          "input": "Milyen intézkedések történhetnek, ha a fizetéshez nem áll rendelkezésre elegendő fedezet?",
+          "expected_output": "Ha a fedezet nem teljes, a bank sorba állítja a megbízást, és ha a megbízás összege jóváíráskor rendelkezésre áll, a megbízást a díjak egyidejű terhelésével végrehajtja. Ha nincs fedezet, a bank elutasítja a megbízást, és sorba állítás nem történik."
+        },
+        {
+          "input": "Sorolja fel azokat a jelenlegi pénznemeket, amelyekben az MBH bank bankszámlát nyit.",
+          "expected_output": "HUF, AUD, BGN, CAD, CHF, CZK, DKK, EUR, GBP, JPY, NOK, PLN, RON, SEK, USD"
+        },
+        {
+          "input": "Összegezze a H-776/2023 dokumentumot.",
+          "expected_output": "Ez a dokumentum (H-776/2023) az MBH Bank Nyrt. általános szerződési feltételei az Apple Pay mobilfizetési szolgáltatás használatára vonatkozóan. Az ügyfél letölti az MBH Bank alkalmazást, és megkezdheti a számláinak az Apple Wallet számára történő engedélyezését. A H-776/2023 dokumentumot kivonják az MBH rendszeréből, mivel ezek a feltételek beépítésre kerülnek a mobilfizetési szolgáltatásokra vonatkozó általános dokumentumba. "
+        },
+        {
+          "input": "Mik a feltételek a magasabb THM igényléséhez az MBH-nál?",
+          "expected_output": "A maximálisnál magasabb THM (Teljes Hiteldíj Mutató) igényléséhez az ügyfélnek regisztrálnia kell az MBH Info (MBH Mobilbankár) szolgáltatásra. A regisztrációval a napi maximális limitek a következőkre változnak: Készpénzfelvétel: 5 millió Ft és 25 tranzakció, és Vásárlás: 5 millió Ft és 20 tranzakció."
+        },
+        {
+          "input": "Soroljon fel néhány feltételt a „Kártya Mánia!” Visa bankkártya igénylés és használat ösztönző akcióban való részvételhez.",
+          "expected_output": "- Új ügyfelek: akik a promóció ideje alatt új lakossági bankszámlát nyitnak.\n  - Meglévő ügyfelek:\n  o akik 2025. február 25. előtt nyitottak lakossági bankszámlát\n  o akiknek 2025. május 24. és 2025. augusztus 24. között nem volt aktív vagy aktiválható Visa Classic vagy Visa Fenntartható bankkártyájuk az adott számlához."
+        },
+        {
+          "input": "Milyen típusú cselekvések szükségesek 30 000 Ft visszatérítés megszerzéséhez a VII. MBH nyárváró számlanyitási akcióban?",
+          "expected_output": "A 30 000 Ft -os díjvisszatérítésre azon ügyfelek jogosultak, akik  ▪ a promóció időtartama alatt új ügyfélként MBH Kedvezmény, MBH Kedvezmény Plusz, MBH Extra, MBH Prémium, MBH Partner Plusz vagy MBH Menedzser számlát nyitnak , továbbá  ▪ a számlanyitást követő 3. hónap végéig  o legalább 2 alkalommal egyösszegű, egyenként legalább 250.000 Ft értékű jövedelem* (munkabér) vagy nyugdíj jóváírást érkeztetnek átutalással a promóció keretében nyitott bankszámlájukra, továbbá o legalább 3 alkalommal egyenként min. 1.000 Ft értékű sikeres és ugyanezen időpontig lekönyvelt - belföldön és/vagy külföldön végrehajtott POS és/vagy internetes - vásárlási tranzakciót végeznek a számlához kapcsolódó betéti főkártyával, továbbá ▪ marketing célú megkeresésekre vonatkozóan pozitív nyilatkozatot tesznek ."
+        },
+        {
+          "input": "Vázolja az EAM folyamatát.",
+          "expected_output": "Az EAM beolvasása QR-kóddal, NFC-vel vagy deeplinkkel (URL) történik, ami arra utasítja a rendszert, hogy töltse be a fizetést az ügyfél számlájára. Az EAM-eket ellenőrzik, majd jóváhagyják. A folyamat megkezdéséhez és a fizetés teljesítéséhez mindkét félnek meg kell állapodnia."
+        },
+        {
+          "input": "Írja le a feltételeket 10 000 Ft Media Markt utalvány megszerzéséhez a 'Kártya Mánia!' VISA promócióban.",
+          "expected_output": "Feltételek:\n  • Bankkártya igénylése a promóciós időszak alatt, és a 3.1. pontban meghatározott feltételek teljesülése;\n  • Összesen legalább 50 000 Ft értékű bankkártyás vásárlás végrehajtása e-kereskedelmi és/vagy POS terminálokon egy vagy több összegben;\n  • A számlatulajdonos(ok) e-mail címet adnak meg a Banknak a MediaMarkt utalvány e-mailben történő kézbesítéséhez;\n  • A számlának aktív státuszban kell lennie az utalvány elküldésekor, és nem állhat felmondás alatt.\n  • A kampány során igényelt lakossági Visa betéti kártyát a Számlatulajdonos vagy az MBH Bank 2025. november 30-ig nem szüntette meg."
+        },
+        {
+          "input": "Hasonlítsa össze a Pécsi Tudományegyetem hallgatói Diákszámla és a Diákszámla nyitási akció feltételeit és a promóciós időszakot.",
+          "expected_output": "Pécsi Tudományegyetem hallgatói promóció feltételei:\n   Pécsi Tudományegyetem hallgatói a számlanyitás időpontjában vagy felvételt nyertek a 2025/2026 -os tanévre , melyet érvényes diákigazolvány vagy pozitív felvételi döntésről érkezett értesítés (e -mail) bemutatásával igazolnak, ▪ a promóció időtartama alatt új ügyfélként MBH Diák vagy MBH Diákhitel számlát nyitnak. \n   Diákszámla nyitási akció: új ügyfélként MBH Diák vagy MBH Diákhitel számlát nyitnak\n  • legalább 5 alkalommal egyenként min. 1.000 Ft értékű sikeres és ugyanezen időpontig lekönyvelt - belföldön és/vagy külföldön végrehajtott POS és/vagy internetes - vásárlási tranzakciót végeznek a számlához kapcsolódó betéti főkártyával, továbbá marketing célú megkeresésekre vonatkozóan pozitív nyilatkozatot tesznek.\n   \n  Pécsi Tudományegyetem hallgatói Diákszámla: Promóciós időszak: 2025. augusztus 25. napjától visszavonásig, de legkésőbb 2025. szeptember 30. napjáig. \n   Diákszámla nyitási akció Promóciós időszak: 2025. június 10. napjától visszavonásig, de legkésőbb 2025. szeptember 30. napjáig. A Promóció 2025. június 15 -én visszavonásra került."
+        },
+        {
+          "input": "Hasonlítsa össze a Pécsi Tudományegyetem hallgatói Diákszámla és a Diákszámla nyitási akció visszatérítésének időpontját.",
+          "expected_output": "Pécsi Tudományegyetem hallgatói Diákszámla: A visszatérítés 2025.12.31. napjáig történik meg, a promócióban nyitott bankszámlán kerül jóváírásra.\n  Diákszámla nyitási akció Visszatérítés dátuma: \n  - 2025. júniusban nyitott számlák esetén 2025.09.30 -ig, \n  - 2025. júliusban nyitott számlák esetén 2025.10.31 -ig,\n  - 2025. augusztusban nyitott számlák esetén 2025.11.30 -ig,\n  - 2025. szeptemberben nyitott számlák esetén 2025.12.31 -ig."
+        },
+        {
+          "input": "Hasonlítsa össze a VII. MBH nyárváró számlanyitási akció és a VIII. MBH Kiemelt Partner számlanyitási akció keretében kapott előnyöket.",
+          "expected_output": "MBH nyárváró számlanyitási akció:A 30 000 Ft -os díjvisszatérítésre azon ügyfelek jogosultak, akik  ▪ a promóció időtartama alatt új ügyfélként MBH Kedvezmény, MBH Kedvezmény Plusz, MBH Extra, MBH Prémium, MBH Partner Plusz vagy MBH Menedzser számlát nyitnak , továbbá  ▪ a számlanyitást követő 3. hónap végéig  o legalább 2 alkalommal egyösszegű, egyenként legalább 250.000 Ft értékű jövedelem* (munkabér) vagy nyugdíj jóváírást érkeztetnek átutalással a promóció keretében nyitott bankszámlájukra, továbbá  o legalább 3 alkalommal egyenként min. 1.000 Ft értékű sikeres és ugyanezen időpontig lekönyvelt - belföldön és/vagy külföldön végrehajtott POS és/vagy internetes  - vásárlási tranzakciót végeznek a számlához kapcsolódó betéti főkártyával, továbbá  ▪ marketing célú megkeresésekre vonatkozóan pozitív nyilatkozatot tesznek . * Jövedelemnek minősül minden olyan bankszámlára érkező átutalás, amelynél magyar nyelven, beazonosítható módon feltüntetésre kerül az információ, hogy munkabér/jövedelem utalásról van szó, valamint a Nyugdíjfolyósítótól érkező nyugdíj.\n  ▪ a 20 000 Ft -os visszatérítésre azok az ügyfelek jogosultak, akik az 1 -es pontban leírt feletételeknek megfelelnek, és ▪ folyószámlahitelt igényelnek a promóciós időszakban, ▪ folyószámlahitel igénylésüket a Bank hiánytalanul befogadta, és ▪ pozitív hitelbírálati döntés született (a folyószámlahitel igénylés a Bank részéről jóváhagyásra került), és a folyószámlahitel keretet a Bank legkésőbb 2026. január 31 -ig az ügyfél rendelkezésére bocsátja.\n  \n  VIII. MBH Kiemelt Partner számlanyitási akció\n  ▪ a promóció időtartama alatt új ügyfélként Kiemelt Partner számlát nyitnak vagy meglévő ügyfélként az 1.2 -es pontban szereplő típusú bankszámlájukat MBH Kiemelt Partner számlára módosítják , továbbá  ▪ a számlanyitást követő 3. hónap végéig  o legalább 2 alkalommal egyösszegű, egyenként legalább 250.000 Ft értékű jövedelem * (munkabér) vagy nyugdíj jóváírás t érkeztetnek átutalással a promóció keretében nyitott bankszámlájukra, továbbá  o legalább 3 alkalommal egyenként min. 1.000 Ft értékű sikeres és ugyanezen időpontig lekönyvelt - belföldön és/vagy külföldön végrehajtott POS és/vagy internetes - vásárlási tranzakciót végeznek a számlához kapcsolódó betéti főkártyával, továbbá  ▪ marketing célú megkeresésekre vonatkozóan pozitív nyilatkozatot tesznek vagy a jelenleg meglévő marketing célú megkeresésekre vonatkozó pozitív nyilatkozatukat nem vonják vissza .\n  ▪ A 20 000 Ft -os díjvisszatérítésre azok az ügyfelek jogosultak, akik az 1 -es pontban szerepelnek és ▪ folyószámlahitelt igényelnek a promóciós időszakban, ▪ folyószámlahitel igénylésüket a Bank hiánytalanul befogadta, és ▪ pozitív hitelbírálati döntés született (a folyószámlahitel igénylés a Bank részéről jóváhagyásra került), és a folyószámlahitel keretet a Bank legkésőbb 2026 . január 31-ig az ügyfél rendelkezésére bocsátja."
+        },
+        {
+          "input": "Hasonlítsa össze a Visa Classic és a Visa Fenntartható kártyákat.",
+          "expected_output": "A „Kártya Mánia!” Visa bankkártya igénylés és használat ösztönző akció meghatározza, hogy a promócióban részt vevők a Visa Classic vagy a Visa Fenntartható betéti bankkártyát igényelhetik a jogosultsághoz. \n  Visa Classic bankkártya esetén a bankkártya éves kártyadíjának, illetve Visa Fenntartható bankkártya esetén a bankkártya havi kártyadíjának fedezetét az igénylés pillanatában szükséges biztosítani a hozzá kapcsolódó lakossági bankszámlán."
+        },
+        {
+          "input": "Hasonlítsa össze az EGT-n belüli fizetési műveletet a SEPA fizetési megbízással.",
+          "expected_output": "EGT-n belüli fizetési művelet: Az a fizetési művelet, amelynek lebonyolításánál mind a fizető fél, mind a kedvezményezett pénzforgalmi szolgáltatója, vagy a teljesítést végző egyetlen pénzforgalmi szolgáltató az Európai Gazdasági Térség (EGT) területén belül nyújtja pénzforgalmi szolg áltatását és a pénzforgalmi szolgáltatásnyújtás euróban vagy egy euroövezeten kívüli EGT -állam pénznemében történik.\n  \n  SEPA fizetési megbízás: Az EUR átutalások technikai és üzleti követelményeinek megállapításáról és a 924/2009/EK rendelet módosításáról szóló, az Európai Parlament és a Tanács 260/2012/EU rendelete értelmében az EGT -n (Európai Gazdasági Térség) belüli, minden EUR devizanemű átutalást a Bank SEPA formátumban hajt végre. A SEPA fizetési megbízás olyan bankközi fizetési művelet, melynek teljesítési feltételei:  a teljesítés devizaneme kizárólag EUR;   csak az EGT és Svájc területén vehető igénybe; a kedvezményezett számláján a teljes összeg jóváírandó. A kötelezett és a kedvezményezett a bankok díját megosztva viselik, tehát a külföldi bankköltség a kedvezményezettet terheli (SHA); az IBAN használata kötelező."
+        },
+        {
+          "input": "Hasonlítsa össze a „Kártya Mánia!” Visa bankkártya igénylést és a „Kártyára Fel!” Visa bankkártya igénylést.",
+          "expected_output": "Mind a Kártya Mánia, mind a Kártyára Fel akciók Visa kártya igénylések. Az egyik különbség a dátumokban van. A Kártya Mánia 2025. augusztus 25. és 2025. szeptember 21. között, a Kártyára Fel! pedig 2025. augusztus 01. és 2025. augusztus 24. között érvényes."
+        },
+        {
+          "input": "Magyarázza el a különbséget a Promóció Szervezője és a Kedvezmény juttatója között.",
+          "expected_output": "A PROMÓCIÓ SZERVEZŐJE a szervező, míg a Kedvezmény juttatója a Bank, mint kifizető tesz fizetést vagy térít vissza adósságot, mint ilyen, felelős az adókért stb."
+        },
+        {
+          "input": "A H-68 Díjjegyzéket tartalmaz, de a H-682 is rendelkezik díjjegyzékkel? Miért?",
+          "expected_output": "A H-68-as dokumentum csak a használt terminológia jelentésének meghatározására összpontosít, nem egy konkrét díjlistára. A H-682 Kondíciós listát biztosít."
+        },
+        {
+          "input": "Mik a különbségek az Új ügyfelek és a Meglévő ügyfelek között a „Kártya Mánia!” Visa bankkártya igénylésnél?",
+          "expected_output": "Új ügyfelek: akik a promóció időtartama alatt új lakossági bankszámlát nyitnak.\n  Meglévő ügyfelek: \n  o akik 2025. február 25. előtt nyitottak lakossági bankszámlát,\n  o akik 2025. május 24. és 2025. augusztus 24. között nem rendelkeztek aktív vagy aktiválható Visa Classic, illetve Visa Fenntartható bankkártyával az adott számlához."
+        },
+        {
+          "input": "Hasonlítsa össze a VI. Diákszámla nyitási akciót és a II. Pécsi Tudományegyetem hallgatói részére Diák - és Diákhitel számla promóciót.",
+          "expected_output": "Az első egy egyszerű 'Diákszámla nyitási akció' minden diák számára, ahol az új ügyfelek 30 000 Ft visszatérítést kapnak, míg a másik kizárólag a Pécsi Tudományegyetem hallgatóinak szól. A Pécsi Tudományegyetem promóciója megköveteli a beiratkozás igazolását, és meghatározott vásárlások végrehajtását a visszatérítés aktiválásához."
+        },
+        {
+          "input": "Melyek azok a feltételek közötti hasonlóságok, amelyek miatt a Számlatulajdonos NEM kap visszatérítést egy tranzakció után?",
+          "expected_output": "- a promócióban nyitott lakossági forint fizetési számlaszerződése és bankkártyája a feltételek vizsgálati dátumáig megszüntetésre kerül vagy a feltételek vizsgálatakor felmondás alatt áll,\n  - a feltételvizsgálatkor a számlája már nem a jelen promócióban részt vevő számlacsomagok valamelyikében van."
+        },
+        {
+          "input": "Hasonlítsa össze a VISA Bankkártya használat ösztönző kampányt és a „Kártyára Fel!” Visa bankkártya igénylést.",
+          "expected_output": "A VISA Bankkártya használat ösztönző kampány egy aktív számla használatán alapul, míg a „Kártyára Fel!” Visa bankkártya igénylés a számlanyitáson és a használaton alapul."
+        },
+        {
+          "input": "Mely promóciókat vonja vissza a 3. módosítás, és mikor ér véget?",
+          "expected_output": "A Bank az MBH Lakossági számlacsomag váltási és számla aktiválási akciót, az MBH Lakossági számla aktiváló akciót és a Folyószámlahitel igénylési akciót visszavonja, amely 2025. szeptember 19-én ér véget."
+        },
+        {
+          "input": "Hasonlítsa össze a VISA kártyákat és a használatot, amelyeket ez a rendszer kínál, más kártya opciókkal.",
+          "expected_output": "A VISA kártyák hozzáférést biztosítanak számos, eltérő feltételekkel rendelkező promócióhoz. Bár ez a promóció VISA kártyát igényel, lehetnek más kártyák, amelyek még jobb megtakarításokat vagy hasznosabb kedvezményeket kínálnak. Mindez az ügyfél vásárlási igényeitől és költési szokásaitól függ."
+        },
+        {
+          "input": "Foglalja össze, mi történik a konverziók (átváltások) esetén.",
+          "expected_output": "A H-682/2025 dokumentum kimondja, hogy a konverziók (átváltások) az MBH Bank kereskedelmi devizaárfolyamát használják, bizonyos kivételekkel. Külön árfolyamok és feltételek vonatkoznak a pénzváltásokra."
+        },
+        {
+          "input": "Mi történt 2025. január 30-án a H-682 szerint?",
+          "expected_output": "A 2. és a 3. módosítás is hatályba lép: Fizetési kérelemre vonatkozó új funkciók bevezetése, és az MBH Bank App alkalmazással kapcsolatos módosítások."
+        }
+      ]
+    }
+  ]
+}
