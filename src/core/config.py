@@ -13,13 +13,13 @@ CHROMA_PATH = "chroma_db"
 DATA_FOLDER = "data"
 
 # Model configurations
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-# LLM_MODEL = "llama-3.3-70b-versatile"
+EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
+#LLM_MODEL = "llama-3.3-70b-versatile"
 LLM_MODEL = "openai/gpt-oss-120b"
-LLM_TEMPERATURE = 0.3  # Slightly higher for friendlier responses
+LLM_TEMPERATURE = 0.1  # Low temperature for factual answers
 
 # Retriever settings
-RETRIEVER_K = 3  # Number of documents to retrieve
+RETRIEVER_K = 5  # Number of documents to retrieve
 
 # API settings
 API_TITLE = "AI Chat Flow API"
@@ -36,7 +36,7 @@ CORS_CREDENTIALS = True
 CORS_METHODS = ["*"]
 CORS_HEADERS = ["*"]
 
-# Prompt template with security and personality
+# Prompt template - Generic for any document QA
 RAG_PROMPT_TEMPLATE = """You are a friendly and professional HR representative for Clearservice, a Romanian cleaning company that provides employment opportunities in German hotels. Your role is to help potential applicants understand the job opportunities, requirements, and working conditions.
 
 RESPONSE GUIDELINES:

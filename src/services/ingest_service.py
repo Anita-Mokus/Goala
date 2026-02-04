@@ -3,7 +3,7 @@ Document Ingestion Service.
 Handles loading PDFs and TXT files and creating vector embeddings in ChromaDB.
 """
 import os
-from langchain_community.document_loaders import PyPDFLoader, TextLoader
+from langchain_community.document_loaders import PyPDFLoader, TextLoader, UnstructuredPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
@@ -17,9 +17,12 @@ class IngestService:
     def __init__(self):
         """Initialize the ingest service."""
         self.embedding_function = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+        # Optimized for structured documents with tables/charts
         self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200
+            chunk_size=2000,  # Larger to keep table rows together
+            chunk_overlap=400,  # More overlap to preserve context
+            # Prioritize keeping table structures intact
+            separators=["\n\n\n", "\n\n", "\n", "|", ". ", " ", ""]
         )
     
     def ingest_document(self, doc_path: str = None) -> None:
@@ -51,7 +54,8 @@ class IngestService:
         
         # Load document based on file type
         if doc_path.endswith('.pdf'):
-            loader = PyPDFLoader(doc_path)
+            #loader = PyPDFLoader(doc_path)
+            loader = UnstructuredPDFLoader(doc_path)
         elif doc_path.endswith('.txt'):
             loader = TextLoader(doc_path, encoding='utf-8')
         else:
@@ -100,7 +104,8 @@ class IngestService:
             
             # Load based on file type
             if doc_file.endswith('.pdf'):
-                loader = PyPDFLoader(doc_path)
+                #loader = PyPDFLoader(doc_path)
+                loader = UnstructuredPDFLoader(doc_path)
             else:  # .txt
                 loader = TextLoader(doc_path, encoding='utf-8')
             

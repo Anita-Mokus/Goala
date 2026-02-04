@@ -79,7 +79,8 @@ def evaluate_rag():
     print("=" * 60 + "\n")
     
     # Load evaluation dataset
-    eval_file = project_root / "clearservice_eval.json"
+    #eval_file = project_root / "clearservice_eval.json"
+    eval_file = project_root / "mbh_junior_hu_evalset.json"
     if not eval_file.exists():
         print(f"ERROR: Evaluation file not found: {eval_file}")
         sys.exit(1)
