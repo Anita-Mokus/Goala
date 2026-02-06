@@ -19,7 +19,7 @@ LLM_MODEL = "openai/gpt-oss-120b"
 LLM_TEMPERATURE = 0.1  # Low temperature for factual answers
 
 # Retriever settings
-RETRIEVER_K = 5  # Number of documents to retrieve
+RETRIEVER_K = 10  # Number of documents to retrieve
 
 # API settings
 API_TITLE = "AI Chat Flow API"
