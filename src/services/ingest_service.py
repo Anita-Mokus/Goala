@@ -19,7 +19,7 @@ class IngestService:
         self.embedding_function = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
-            chunk_overlap=200
+            chunk_overlap=300
         )
     
     def ingest_document(self, doc_path: str = None) -> None:

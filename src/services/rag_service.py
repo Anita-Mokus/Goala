@@ -40,7 +40,11 @@ class RAGService:
             )
         
         # Initialize embedding function
-        self.embedding_function = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+        self.embedding_function = HuggingFaceEmbeddings(
+            model_name=EMBEDDING_MODEL,
+            model_kwargs={'device': 'cpu'},  # Force CPU to avoid GPU memory issues
+            encode_kwargs={'normalize_embeddings': True}
+        )
         
         # Load vector database
         try:
