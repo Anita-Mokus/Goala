@@ -120,7 +120,7 @@ def evaluate_rag():
             # Get RAG answer
             try:
                 llm_answer = rag_service.query(question)
-                print(f"  RAG Answer: {llm_answer[:80]}...")
+                print(f"  RAG Answer: {llm_answer[:200]}...")
             except Exception as e:
                 print(f"  ERROR getting RAG answer: {e}")
                 llm_answer = f"ERROR: {str(e)}"
@@ -155,7 +155,7 @@ def evaluate_rag():
     
     # Save results to CSV
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_file = project_root / f"eval_results_{timestamp}.csv"
+    output_file = project_root / f"evaluation_results" / f"eval_results_{timestamp}.csv"
     
     print("\n" + "=" * 60)
     print("Saving results...")
