@@ -13,7 +13,7 @@ CHROMA_PATH = "chroma_db"
 DATA_FOLDER = "data"
 
 # Model configurations
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+EMBEDDING_MODEL = "BAAI/bge-m3"
 
 LLM_MODEL = "llama-3.3-70b-versatile" # Faster with good accuracy
 # LLM_MODEL = "qwen/qwen3-32b" # This is pretty slow, but accurate.
