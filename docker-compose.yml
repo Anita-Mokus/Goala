@@ -1,0 +1,92 @@
+# Docker Compose for Goala Development Environment
+# Services: PostgreSQL (pgvector), FastAPI Backend, Frontend (placeholder)
+
+services:
+  # =============================================================================
+  # PostgreSQL Database with pgvector extension
+  # =============================================================================
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: goala-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-goala}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-goala}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - goala-network
+
+  # =============================================================================
+  # FastAPI Backend (RAG Service)
+  # =============================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: goala-api
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-goala}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN:-}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      # Mount data folder for development (hot-reload documents)
+      - ./data:/app/data:ro
+      # Mount src for development (optional: enable for hot-reload)
+      # - ./src:/app/src:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s  # Longer start period for model loading
+    networks:
+      - goala-network
+
+  # =============================================================================
+  # Frontend (Placeholder - to be implemented)
+  # =============================================================================
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: goala-frontend
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${FRONTEND_PORT:-3000}:3000"
+  #   environment:
+  #     - API_URL=http://api:8000
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - goala-network
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  goala-network:
+    driver: bridge
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  pgvector_data:
+    name: goala-pgvector-data

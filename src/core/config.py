@@ -9,8 +9,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Project paths
-CHROMA_PATH = "chroma_db"
 DATA_FOLDER = "data"
+
+# PostgreSQL / pgvector configuration (using sync driver)
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+psycopg2://postgres:postgres@localhost:5432/goala"
+)
+PGVECTOR_COLLECTION_NAME = "document_embeddings"
 
 # Model configurations
 EMBEDDING_MODEL = "BAAI/bge-m3"

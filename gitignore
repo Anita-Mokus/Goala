@@ -26,8 +26,8 @@ env/
 ENV/
 .venv/
 
-# chroma_db - Uncomment to exclude from git if regenerating on deployment
-# chroma_db
+# Old ChromaDB (migrated to pgvector)
+chroma_db/
 
 # Environment Variables
 .env
@@ -51,6 +51,8 @@ ENV/
 htmlcov/
 .tox/
 
+# Docker (development only - don't commit volumes)
+# pgvector_data/ (handled by Docker named volumes)
 
 # Logs
 *.log
