@@ -1,0 +1,32 @@
+# AI Chat Flow - Dependencies
+
+# Core dependencies
+fastapi==0.115.9
+uvicorn[standard]==0.30.0
+python-dotenv==1.0.0
+pydantic==2.9.0
+
+# LangChain and AI
+langchain>=0.3.0
+langchain-groq>=0.2.0
+langchain-huggingface>=0.1.0
+langchain-community>=0.3.0
+langchain-postgres>=0.0.12
+
+# PDF processing
+pypdf>=5.1.0
+
+# Embeddings (install PyTorch CPU-only first to save space)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.0.0
+sentence-transformers>=3.1.0
+
+# PostgreSQL / pgvector (sync only)
+psycopg2-binary>=2.9.0
+pgvector>=0.3.0
+sqlalchemy>=2.0.0
+
+# Development dependencies (optional)
+# pytest==8.3.0
+# black==24.8.0
+# flake8==7.1.0
