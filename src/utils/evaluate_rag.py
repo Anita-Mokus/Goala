@@ -17,11 +17,12 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from src.services import RAGService
-from langchain_groq import ChatGroq
+from src.services.llm_provider import get_llm_provider
 from src.core.config import (
     EMBEDDING_MODEL,
     LLM_MODEL,
     LLM_TEMPERATURE,
+    LLM_PROVIDER,
     RETRIEVER_K
 )
 
@@ -129,9 +130,10 @@ def evaluate_rag():
         print(f"ERROR: Failed to initialize RAG service: {e}")
         sys.exit(1)
     
-    # Initialize judge LLM
+    # Initialize judge LLM using configured provider
     print("Initializing judge LLM...")
-    judge_llm = ChatGroq(model=LLM_MODEL, temperature=JUDGE_LLM_TEMPERATURE)
+    judge_provider = get_llm_provider(LLM_PROVIDER, LLM_MODEL, JUDGE_LLM_TEMPERATURE)
+    judge_llm = judge_provider.get_llm()
     
     # Get chunking configuration
     chunk_config = get_chunk_config()

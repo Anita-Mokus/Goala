@@ -21,11 +21,28 @@ PGVECTOR_COLLECTION_NAME = "document_embeddings"
 # Model configurations
 EMBEDDING_MODEL = "BAAI/bge-m3"
 
-# LLM_MODEL = "llama-3.3-70b-versatile" # Faster with good accuracy
-# LLM_MODEL = "qwen/qwen3-32b" # This is pretty slow, but accurate.
-LLM_MODEL = "openai/gpt-oss-120b" # result after evaluation: 90%  
+# LLM Provider Selection
+# Options: 'groq' or 'deepseek'
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq")
 
-LLM_TEMPERATURE = 0.3  # Slightly higher for friendlier responses
+# Groq Model Options (when using Groq provider)
+# "llama-3.3-70b-versatile"  # Faster with good accuracy
+# "qwen/qwen3-32b"            # Pretty slow, but accurate
+# "openai/gpt-oss-120b"       # Result after evaluation: 90%
+GROQ_LLM_MODEL = os.getenv("GROQ_LLM_MODEL", "openai/gpt-oss-120b")
+
+# DeepSeek Model Options (when using DeepSeek provider)
+# "deepseek-chat"             # Non-thinking mode (faster, default)
+# "deepseek-reasoner"         # Thinking mode (more accurate)
+DEEPSEEK_LLM_MODEL = os.getenv("DEEPSEEK_LLM_MODEL", "deepseek-chat")
+
+# Get the appropriate model based on provider
+if LLM_PROVIDER.lower() == "deepseek":
+    LLM_MODEL = DEEPSEEK_LLM_MODEL
+else:
+    LLM_MODEL = GROQ_LLM_MODEL
+
+LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))  # Slightly higher for friendlier responses
 
 # Retriever settings
 RETRIEVER_K = 4  # Number of documents to retrieve

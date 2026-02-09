@@ -2,7 +2,6 @@
 RAG (Retrieval-Augmented Generation) Service.
 Handles document retrieval and response generation using LangChain with pgvector.
 """
-from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_postgres import PGVector
 from langchain_core.prompts import ChatPromptTemplate
@@ -13,11 +12,13 @@ from src.core.config import (
     DATABASE_URL,
     PGVECTOR_COLLECTION_NAME,
     EMBEDDING_MODEL,
+    LLM_PROVIDER,
     LLM_MODEL,
     LLM_TEMPERATURE,
     RETRIEVER_K,
     RAG_PROMPT_TEMPLATE
 )
+from src.services.llm_provider import get_llm_provider
 
 
 class RAGService:
@@ -43,11 +44,9 @@ class RAGService:
         except Exception as e:
             raise RuntimeError(f"Failed to connect to vector database: {str(e)}")
         
-        # Initialize LLM
-        self.llm = ChatGroq(
-            model=LLM_MODEL,
-            temperature=LLM_TEMPERATURE
-        )
+        # Initialize LLM using the configured provider
+        llm_provider = get_llm_provider(LLM_PROVIDER, LLM_MODEL, LLM_TEMPERATURE)
+        self.llm = llm_provider.get_llm()
         
         # Create prompt template
         self.prompt = ChatPromptTemplate.from_template(RAG_PROMPT_TEMPLATE)
