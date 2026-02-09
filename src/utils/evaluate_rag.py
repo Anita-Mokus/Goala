@@ -1,11 +1,11 @@
 """
 RAG Evaluation Script.
-Tests the RAG system using questions from clearservice_eval.json
+Tests the RAG system using questions from mbh_junior_hu_evalset.json
 and evaluates responses using an LLM judge.
+Outputs results in JSON format with configuration metadata.
 """
 import sys
 import json
-import csv
 import gc
 import torch
 from pathlib import Path
@@ -18,7 +18,23 @@ if str(project_root) not in sys.path:
 
 from src.services import RAGService
 from langchain_groq import ChatGroq
-from src.core.config import LLM_MODEL
+from src.core.config import (
+    EMBEDDING_MODEL,
+    LLM_MODEL,
+    LLM_TEMPERATURE,
+    RETRIEVER_K
+)
+
+
+# ============================================================================
+# CONFIGURATION - Modify these variables to change evaluation behavior
+# ============================================================================
+EVAL_FILE_NAME = "mbh_junior_hu_evalset.json"  # Evaluation dataset file
+OUTPUT_DIR_NAME = "evaluation_results"         # Directory for results
+OUTPUT_FILE_PREFIX = "eval_results_"           # Prefix for output JSON files
+JUDGE_LLM_TEMPERATURE = 0                      # Temperature for judge LLM (0 = deterministic)
+MEMORY_CLEAR_INTERVAL = 5                      # Clear memory every N questions
+# ============================================================================
 
 
 # Load the judge prompt template
@@ -74,6 +90,22 @@ def parse_judge_response(response: str) -> tuple[int, str]:
     return score, explanation
 
 
+def get_chunk_config():
+    """Get chunk size and overlap from IngestService."""
+    try:
+        from src.services.ingest_service import IngestService
+        ingest_service = IngestService()
+        return {
+            "chunk_size": ingest_service.text_splitter._chunk_size,
+            "chunk_overlap": ingest_service.text_splitter._chunk_overlap
+        }
+    except Exception:
+        return {
+            "chunk_size": 'default',  # default values
+            "chunk_overlap": 'default'
+        }
+
+
 def evaluate_rag():
     """Run the RAG evaluation."""
     print("\n" + "=" * 60)
@@ -81,8 +113,7 @@ def evaluate_rag():
     print("=" * 60 + "\n")
     
     # Load evaluation dataset
-    #eval_file = project_root / "clearservice_eval.json"
-    eval_file = project_root / "mbh_junior_hu_evalset.json"
+    eval_file = project_root / 'shared' / EVAL_FILE_NAME
     if not eval_file.exists():
         print(f"ERROR: Evaluation file not found: {eval_file}")
         sys.exit(1)
@@ -100,7 +131,27 @@ def evaluate_rag():
     
     # Initialize judge LLM
     print("Initializing judge LLM...")
-    judge_llm = ChatGroq(model=LLM_MODEL, temperature=0)
+    judge_llm = ChatGroq(model=LLM_MODEL, temperature=JUDGE_LLM_TEMPERATURE)
+    
+    # Get chunking configuration
+    chunk_config = get_chunk_config()
+    
+    # Prepare metadata
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    metadata = {
+        "timestamp": timestamp,
+        "embedding_model": EMBEDDING_MODEL,
+        "chunk_size": chunk_config["chunk_size"],
+        "chunk_overlap": chunk_config["chunk_overlap"],
+        "retriever_k": RETRIEVER_K,
+        "llm_model": LLM_MODEL,
+        "llm_temperature": LLM_TEMPERATURE
+    }
+    
+    print("\nConfiguration:")
+    for key, value in metadata.items():
+        print(f"  {key}: {value}")
+    print()
     
     # Prepare results
     results = []
@@ -146,47 +197,65 @@ def evaluate_rag():
             
             # Store result
             results.append({
-                "input": question,
+                "question": question,
                 "expected_output": expected_output,
                 "llm_answer": llm_answer,
                 "score": score,
                 "explanation": explanation
             })
             
-            # Clear memory every 5 questions to prevent slowdown
-            if i % 5 == 0:
-                gc.collect()
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
+            # Clear memory every N questions to prevent slowdown; !!! this caused issues
+            # if i % MEMORY_CLEAR_INTERVAL == 0:
+            #     gc.collect()
+            #     if torch.cuda.is_available():
+            #         torch.cuda.empty_cache()
             
             print()
     
-    # Save results to CSV
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_file = project_root / f"evaluation_results" / f"eval_results_{timestamp}.csv"
+    # Calculate statistics
+    scores = [r["score"] for r in results if isinstance(r["score"], int)]
+    statistics = {}
+    if scores:
+        statistics = {
+            "total_questions": len(results),
+            "average_score": round(sum(scores) / len(scores), 2),
+            "score_distribution": {
+                "score_5": {"count": scores.count(5), "percentage": round(scores.count(5)/len(scores)*100, 1)},
+                "score_4": {"count": scores.count(4), "percentage": round(scores.count(4)/len(scores)*100, 1)},
+                "score_3": {"count": scores.count(3), "percentage": round(scores.count(3)/len(scores)*100, 1)},
+                "score_2": {"count": scores.count(2), "percentage": round(scores.count(2)/len(scores)*100, 1)},
+                "score_1": {"count": scores.count(1), "percentage": round(scores.count(1)/len(scores)*100, 1)}
+            }
+        }
+    
+    # Prepare final output
+    output_data = {
+        "metadata": metadata,
+        "results": results,
+        "statistics": statistics
+    }
+    
+    # Save results to JSON
+    timestamp_file = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_dir = project_root / OUTPUT_DIR_NAME
+    output_dir.mkdir(exist_ok=True)
+    output_file = output_dir / f"{OUTPUT_FILE_PREFIX}{timestamp_file}.json"
     
     print("\n" + "=" * 60)
     print("Saving results...")
     
-    with open(output_file, 'w', newline='', encoding='utf-8') as f:
-        fieldnames = ["input", "expected_output", "llm_answer", "score", "explanation"]
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(results)
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(output_data, f, indent=2, ensure_ascii=False)
     
-    # Calculate statistics
-    scores = [r["score"] for r in results if isinstance(r["score"], int)]
-    if scores:
-        avg_score = sum(scores) / len(scores)
-        print(f"\nResults saved to: {output_file}")
+    # Print statistics
+    print(f"\nResults saved to: {output_file}")
+    if statistics:
         print(f"\nStatistics:")
-        print(f"  Total questions: {len(results)}")
-        print(f"  Average score: {avg_score:.2f}/5")
-        print(f"  Score 5: {scores.count(5)} ({scores.count(5)/len(scores)*100:.1f}%)")
-        print(f"  Score 4: {scores.count(4)} ({scores.count(4)/len(scores)*100:.1f}%)")
-        print(f"  Score 3: {scores.count(3)} ({scores.count(3)/len(scores)*100:.1f}%)")
-        print(f"  Score 2: {scores.count(2)} ({scores.count(2)/len(scores)*100:.1f}%)")
-        print(f"  Score 1: {scores.count(1)} ({scores.count(1)/len(scores)*100:.1f}%)")
+        print(f"  Total questions: {statistics['total_questions']}")
+        print(f"  Average score: {statistics['average_score']}/5")
+        print(f"\nScore Distribution:")
+        for score_level, data in statistics['score_distribution'].items():
+            print(f"  {score_level}: {data['count']} ({data['percentage']}%)")
     
     print("\n" + "=" * 60)
     print("Evaluation completed!")
