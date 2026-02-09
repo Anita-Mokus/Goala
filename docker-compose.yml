@@ -43,10 +43,9 @@ services:
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
-      # Mount data folder for development (hot-reload documents)
+      - ./src:/app/src  
       - ./data:/app/data:ro
-      # Mount src for development (optional: enable for hot-reload)
-      # - ./src:/app/src:ro
+      - ./shared:/app/shared
     depends_on:
       db:
         condition: service_healthy
