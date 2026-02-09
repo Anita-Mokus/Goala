@@ -2,7 +2,6 @@
 FastAPI application for AI Chat Flow.
 Main API endpoints for the hotel chatbot.
 """
-import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -15,7 +14,7 @@ from src.core.config import (
     CORS_CREDENTIALS,
     CORS_METHODS,
     CORS_HEADERS,
-    CHROMA_PATH
+    DATABASE_URL,
 )
 
 # Global service instance (lazy initialization to prevent startup crashes)
@@ -35,11 +34,12 @@ def get_rag_service():
             )
     return _rag_service
 
+
 # Initialize FastAPI app
 app = FastAPI(
     title=API_TITLE,
     description=API_DESCRIPTION,
-    version=API_VERSION
+    version=API_VERSION,
 )
 
 # Enable CORS
@@ -54,26 +54,27 @@ app.add_middleware(
 
 # Startup event: Initialize vector database on first run
 @app.on_event("startup")
-async def startup_event():
-    """Run ingestion on startup if vector database doesn't exist."""
+def startup_event():
+    """Run ingestion on startup if vector database doesn't have documents."""
     try:
-        # Check if ChromaDB exists and has data
-        db_exists = os.path.exists(CHROMA_PATH) and os.listdir(CHROMA_PATH)
+        from src.services.ingest_service import IngestService
+        ingest_service = IngestService()
         
-        if not db_exists:
+        # Check if collection already has documents
+        has_documents = ingest_service.check_collection_exists()
+        
+        if not has_documents:
             print("\n" + "="*50)
-            print("Vector database not found. Starting PDF ingestion...")
+            print("Vector database empty. Starting document ingestion...")
             print("="*50 + "\n")
             
-            from src.services.ingest_service import IngestService
-            ingest_service = IngestService()
-            ingest_service.ingest_all_pdfs()
+            ingest_service.ingest_all_documents()
             
             print("\n" + "="*50)
-            print("PDF ingestion completed successfully!")
+            print("Document ingestion completed successfully!")
             print("="*50 + "\n")
         else:
-            print("Vector database found. Skipping ingestion.")
+            print("Vector database found with documents. Skipping ingestion.")
     except Exception as e:
         print(f"Warning: Failed to initialize vector database: {e}")
         print("The service will start, but /chat endpoint may not work until database is initialized.")
@@ -105,30 +106,32 @@ def read_root():
 def health_check():
     """Health check endpoint with service validation."""
     try:
-        import os
-        from src.core.config import CHROMA_PATH
+        from sqlalchemy import create_engine, text
         
-        # Check if ChromaDB exists
-        db_exists = os.path.exists(CHROMA_PATH) and os.listdir(CHROMA_PATH)
+        # Test database connection
+        engine = create_engine(DATABASE_URL)
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        engine.dispose()
         
         # Try to initialize service
         service = get_rag_service()
         
         return {
             "status": "healthy",
-            "database": "ready" if db_exists else "missing",
+            "database": "connected",
             "service": "initialized"
         }
     except Exception as e:
         return {
             "status": "unhealthy",
             "error": str(e),
-            "database": "not ready"
+            "database": "not connected"
         }
 
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+def chat(request: ChatRequest):
     """
     Main chat endpoint - send a message, get an AI response.
     

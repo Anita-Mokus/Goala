@@ -1,0 +1,63 @@
+# =============================================================================
+# Docker Ignore File for Goala
+# =============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+.env
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+tests/
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# ChromaDB (old vector store - no longer needed)
+chroma_db/
+
+# Evaluation and test files
+*_eval.json
+eval_*.csv
+results.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Scripts
+build.sh
+start_api.sh
+start_api.bat
+
+# Misc
+*.log
+*.tmp

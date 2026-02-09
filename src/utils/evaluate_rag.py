@@ -6,6 +6,8 @@ and evaluates responses using an LLM judge.
 import sys
 import json
 import csv
+import gc
+import torch
 from pathlib import Path
 from datetime import datetime
 
@@ -150,6 +152,12 @@ def evaluate_rag():
                 "score": score,
                 "explanation": explanation
             })
+            
+            # Clear memory every 5 questions to prevent slowdown
+            if i % 5 == 0:
+                gc.collect()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
             
             print()
     

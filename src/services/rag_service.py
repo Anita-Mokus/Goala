@@ -1,16 +1,17 @@
 """
 RAG (Retrieval-Augmented Generation) Service.
-Handles document retrieval and response generation using LangChain.
+Handles document retrieval and response generation using LangChain with pgvector.
 """
 from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
+from langchain_postgres import PGVector
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
 from src.core.config import (
-    CHROMA_PATH,
+    DATABASE_URL,
+    PGVECTOR_COLLECTION_NAME,
     EMBEDDING_MODEL,
     LLM_MODEL,
     LLM_TEMPERATURE,
@@ -24,32 +25,23 @@ class RAGService:
     
     def __init__(self):
         """Initialize RAG components."""
-        import os
-        
-        # Check if vector database exists
-        if not os.path.exists(CHROMA_PATH):
-            raise RuntimeError(
-                f"Vector database directory '{CHROMA_PATH}' not found. "
-                "Please run document ingestion first."
-            )
-        
-        if not os.listdir(CHROMA_PATH):
-            raise RuntimeError(
-                f"Vector database directory '{CHROMA_PATH}' is empty. "
-                "Please run document ingestion first."
-            )
-        
         # Initialize embedding function
-        self.embedding_function = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+        self.embedding_function = HuggingFaceEmbeddings(
+            model_name=EMBEDDING_MODEL,
+            model_kwargs={'device': 'cpu'},
+            encode_kwargs={'normalize_embeddings': True}
+        )
         
-        # Load vector database
+        # Load vector database from PostgreSQL
         try:
-            self.db = Chroma(
-                persist_directory=CHROMA_PATH,
-                embedding_function=self.embedding_function
+            self.db = PGVector(
+                embeddings=self.embedding_function,
+                connection=DATABASE_URL,
+                collection_name=PGVECTOR_COLLECTION_NAME,
+                use_jsonb=True,
             )
         except Exception as e:
-            raise RuntimeError(f"Failed to load vector database: {str(e)}")
+            raise RuntimeError(f"Failed to connect to vector database: {str(e)}")
         
         # Initialize LLM
         self.llm = ChatGroq(
