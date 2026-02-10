@@ -1,11 +1,11 @@
-# Python API Container for Goala
-# Multi-stage build with CPU-only dependencies
-
-FROM python:3.11-slim as builder
+# ============================================
+# Stage 1: Base image with heavy dependencies
+# ============================================
+FROM python:3.11-slim AS base
 
 WORKDIR /app
 
-# Install build dependencies
+# Install system dependencies for PDF processing
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
@@ -14,49 +14,43 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for caching
+# Copy requirements and install all Python dependencies
 COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --user -r requirements.txt
-
-# Production stage
+# ============================================
+# Stage 2: Final runtime image
+# ============================================
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install runtime dependencies
+# Install only runtime system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     libmagic1 \
     poppler-utils \
     tesseract-ocr \
-    mesa-utils \
-    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed packages from builder
-COPY --from=builder /root/.local /root/.local
-
-# Ensure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
+# Copy Python packages from base stage
+COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=base /usr/local/bin /usr/local/bin
 
 # Copy application code
 COPY src/ ./src/
 COPY data/ ./data/
 
-# Set Python environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app
-ENV HF_HOME=/tmp/huggingface_cache
+# Environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    HF_HOME=/tmp/huggingface_cache
 
-# Expose the API port
 EXPOSE 8000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
-# Run the application
 CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

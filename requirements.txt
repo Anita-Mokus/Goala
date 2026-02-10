@@ -1,37 +1,37 @@
-# AI Chat Flow - Dependencies
+# AI Chat Flow - Dependencies (LangChain 0.3.x compatible)
 
-# Core dependencies
+# Core
 fastapi==0.115.9
 uvicorn[standard]==0.30.0
 python-dotenv==1.0.0
-pydantic==2.9.0
+pydantic>=2.7.4,<3.0.0
 
-# LangChain and AI
-langchain>=0.3.0
-langchain-groq>=0.2.0
-langchain-openai>=0.2.0
-langchain-huggingface>=0.1.0
-langchain-community>=0.3.0
-langchain-postgres>=0.0.12
-langchain_unstructured>=1.0.0
+# LangChain 0.3.x family (pinned to prevent 1.x upgrades)
+langchain-core>=0.3.55,<1.0.0
+langchain>=0.3.0,<0.4.0
+langchain-text-splitters>=0.3.6,<1.0.0
+langchain-community>=0.3.0,<0.4.0
 
-# PDF processing
-pypdf>=5.1.0
-unstructured[pdf]>=0.18.0
+# LangChain integrations (compatible with 0.3.x core)
+langchain-groq>=0.2.0,<1.0.0
+langchain-openai>=0.2.0,<1.0.0
+langchain-huggingface>=0.1.0,<1.0.0
+langchain-postgres==0.0.16
 
-# Embeddings (install PyTorch CPU-only first to save space)
+# Unstructured PDF loading (downgraded for 0.3.x compatibility)
+unstructured[pdf]>=0.15.7,<0.16.0
+langchain-unstructured>=0.1.6,<1.0.0
+
+# Embeddings & HF stack (CPU-only torch)
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.5.1
-transformers==4.45.2
-huggingface-hub==0.26.2
+transformers>=4.41.0,<5.0.0
+huggingface-hub>=0.26.0,<1.0.0
 sentence-transformers==3.3.1
 
-# PostgreSQL / pgvector (sync only)
-psycopg2-binary>=2.9.0
-pgvector>=0.3.0
-sqlalchemy>=2.0.0
-
-# Development dependencies (optional)
-# pytest==8.3.0
-# black==24.8.0
-# flake8==7.1.0
+# PostgreSQL / pgvector (updated for langchain-postgres 0.0.16)
+psycopg[binary]>=3.0,<4.0
+psycopg-pool>=3.2.1,<4.0
+pgvector>=0.2.5,<0.4.0
+sqlalchemy>=2.0.0,<3.0
+asyncpg>=0.30.0

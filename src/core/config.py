@@ -11,10 +11,10 @@ load_dotenv()
 # Project paths
 DATA_FOLDER = "data"
 
-# PostgreSQL / pgvector configuration (using sync driver)
+# PostgreSQL / pgvector configuration (using psycopg3 driver)
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+psycopg2://postgres:postgres@localhost:5432/goala"
+    "postgresql+psycopg://postgres:postgres@localhost:5432/goala"
 )
 PGVECTOR_COLLECTION_NAME = "document_embeddings"
 
