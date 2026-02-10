@@ -4,8 +4,7 @@ Handles loading PDFs and TXT files and creating vector embeddings in PostgreSQL 
 """
 import os
 import re
-from langchain_unstructured import UnstructuredLoader
-from langchain_community.document_loaders import TextLoader
+from langchain_community.document_loaders import UnstructuredPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_postgres import PGVector
@@ -136,7 +135,7 @@ class IngestService:
         print(f"Loading file: {doc_path}...")
         
         if doc_path.endswith('.pdf'):
-            loader = UnstructuredLoader(file_path=doc_path, strategy="hi_res", language=PDF_LANGUAGE)
+            loader = UnstructuredPDFLoader(doc_path)
         elif doc_path.endswith('.txt'):
             loader = TextLoader(doc_path, encoding='utf-8')
         else:
@@ -176,7 +175,7 @@ class IngestService:
             print(f"\nLoading: {doc_file}...")
             
             if doc_file.endswith('.pdf'):
-                loader = UnstructuredLoader(file_path=doc_path, strategy="hi_res", language=PDF_LANGUAGE)
+                loader = UnstructuredPDFLoader(doc_path)
             else:
                 loader = TextLoader(doc_path, encoding='utf-8')
             

@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagic-dev \
     poppler-utils \
     tesseract-ocr \
+    libgl1 \
+    libglib2.0-0 \
+    libmagic-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install all Python dependencies
@@ -32,6 +35,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagic1 \
     poppler-utils \
     tesseract-ocr \
+    libgl1 \
+    libglib2.0-0 \
+    libmagic-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python packages from base stage
@@ -43,7 +49,7 @@ COPY src/ ./src/
 COPY data/ ./data/
 
 # Environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
+ENV HONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
     HF_HOME=/tmp/huggingface_cache
