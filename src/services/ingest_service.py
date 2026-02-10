@@ -29,9 +29,10 @@ class IngestService:
         )
         self.connection_string = DATABASE_URL
         self.collection_name = PGVECTOR_COLLECTION_NAME
-        # Regex pattern to remove MBH Bank header
+        # Improved regex pattern to remove MBH Bank header with all variations
+        # Handles extra spaces, newlines, and different formatting
         self.header_pattern = re.compile(
-            r"MBH\s+Bank\s+Nyrt\..*?weboldal:\s+www\.mbhbank\.hu.*?10011922-4-44\s*",
+            r"M\s*B\s*H\s+Bank\s+Nyrt\..*?(?:weboldal|Weboldal):\s*www\.mbhbank\.hu.*?(?:\d{8}-\d-\d{2}|\d{7,9}-\d-\d{2})\s*",
             re.DOTALL | re.IGNORECASE
         )
     
@@ -49,6 +50,53 @@ class IngestService:
         cleaned = self.header_pattern.sub("", text)
         # Remove any leading/trailing whitespace that may be left
         return cleaned.strip() if cleaned != text else text
+    
+    def _combine_elements_by_page(self, documents: list) -> list:
+        """
+        Combine document elements by page number.
+        UnstructuredLoader creates many tiny elements (titles, paragraphs, etc.).
+        This method combines them back into page-level documents.
+        
+        Args:
+            documents: List of document elements from UnstructuredLoader
+            
+        Returns:
+            List of combined documents, one per page
+        """
+        from langchain.schema import Document
+        
+        # Group elements by page number
+        pages = {}
+        for doc in documents:
+            # Get page number from metadata, default to 1 if not available
+            page_num = doc.metadata.get('page_number', 1)
+            
+            if page_num not in pages:
+                pages[page_num] = {
+                    'content': [],
+                    'metadata': doc.metadata.copy()
+                }
+            
+            # Add content if it's not empty
+            content = doc.page_content.strip()
+            if content:
+                pages[page_num]['content'].append(content)
+        
+        # Create combined documents
+        combined_docs = []
+        for page_num in sorted(pages.keys()):
+            page_data = pages[page_num]
+            # Join all content with double newline to preserve paragraph separation
+            combined_content = '\n\n'.join(page_data['content'])
+            
+            if combined_content:  # Only add non-empty pages
+                combined_doc = Document(
+                    page_content=combined_content,
+                    metadata=page_data['metadata']
+                )
+                combined_docs.append(combined_doc)
+        
+        return combined_docs
     
     def _clean_documents(self, documents: list) -> list:
         """
@@ -142,10 +190,18 @@ class IngestService:
             raise ValueError("ERROR: Only PDF and TXT files are supported.")
         
         docs = loader.load()
-        # Clean documents before splitting
-        docs = self._clean_documents(docs)
-        splits = self.text_splitter.split_documents(docs)
-        print(f"Split document into {len(splits)} chunks.")
+        print(f"Loaded {len(docs)} elements from document.")
+        
+        # Combine elements by page first (fixes tiny chunk issue)
+        combined_docs = self._combine_elements_by_page(docs)
+        print(f"Combined into {len(combined_docs)} pages.")
+        
+        # Clean documents (remove headers)
+        combined_docs = self._clean_documents(combined_docs)
+        
+        # Now split into semantic chunks
+        splits = self.text_splitter.split_documents(combined_docs)
+        print(f"Split into {len(splits)} chunks.")
         
         print("Initializing embedding model...")
         print("Saving to PostgreSQL with pgvector...")
@@ -180,11 +236,19 @@ class IngestService:
                 loader = TextLoader(doc_path, encoding='utf-8')
             
             docs = loader.load()
-            # Clean documents before splitting
-            docs = self._clean_documents(docs)
-            splits = self.text_splitter.split_documents(docs)
+            print(f"  → Loaded {len(docs)} elements")
+            
+            # Combine elements by page first (fixes tiny chunk issue)
+            combined_docs = self._combine_elements_by_page(docs)
+            print(f"  → Combined into {len(combined_docs)} pages")
+            
+            # Clean documents (remove headers)
+            combined_docs = self._clean_documents(combined_docs)
+            
+            # Now split into semantic chunks
+            splits = self.text_splitter.split_documents(combined_docs)
             all_splits.extend(splits)
-            print(f"  → {len(splits)} chunks")
+            print(f"  → Split into {len(splits)} chunks")
         
         print(f"\nTotal chunks: {len(all_splits)}")
         print("Saving to PostgreSQL with pgvector...")
