@@ -3,13 +3,15 @@ Document Ingestion Service.
 Handles loading PDFs and TXT files and creating vector embeddings in PostgreSQL with pgvector.
 """
 import os
-from langchain_community.document_loaders import PyPDFLoader, TextLoader
+import re
+from langchain_unstructured import UnstructuredLoader
+from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_postgres import PGVector
 from sqlalchemy import create_engine, text
 
-from src.core.config import DATA_FOLDER, DATABASE_URL, EMBEDDING_MODEL, PGVECTOR_COLLECTION_NAME
+from src.core.config import DATA_FOLDER, DATABASE_URL, EMBEDDING_MODEL, PGVECTOR_COLLECTION_NAME, PDF_LANGUAGE
 
 
 class IngestService:
@@ -24,10 +26,44 @@ class IngestService:
         )
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
-            chunk_overlap=300
+            chunk_overlap=200
         )
         self.connection_string = DATABASE_URL
         self.collection_name = PGVECTOR_COLLECTION_NAME
+        # Regex pattern to remove MBH Bank header
+        self.header_pattern = re.compile(
+            r"MBH\s+Bank\s+Nyrt\..*?weboldal:\s+www\.mbhbank\.hu.*?10011922-4-44\s*",
+            re.DOTALL | re.IGNORECASE
+        )
+    
+    def _remove_header(self, text: str) -> str:
+        """
+        Remove the MBH Bank header from text.
+        Uses regex to handle variations in whitespace and formatting.
+        
+        Args:
+            text: Text content to clean
+            
+        Returns:
+            Text with header removed
+        """
+        cleaned = self.header_pattern.sub("", text)
+        # Remove any leading/trailing whitespace that may be left
+        return cleaned.strip() if cleaned != text else text
+    
+    def _clean_documents(self, documents: list) -> list:
+        """
+        Clean documents by removing repetitive headers.
+        
+        Args:
+            documents: List of documents to clean
+            
+        Returns:
+            List of cleaned documents
+        """
+        for doc in documents:
+            doc.page_content = self._remove_header(doc.page_content)
+        return documents
     
     def _ensure_extension_exists(self) -> None:
         """Ensure pgvector extension exists."""
@@ -50,7 +86,7 @@ class IngestService:
                 connection=self.connection_string,
                 collection_name=self.collection_name,
                 use_jsonb=True,
-                pre_delete_collection=False,
+                pre_delete_collection=True  # Clear existing collection before adding new documents,
             )
             return vector_store
         except Exception as e:
@@ -100,13 +136,15 @@ class IngestService:
         print(f"Loading file: {doc_path}...")
         
         if doc_path.endswith('.pdf'):
-            loader = PyPDFLoader(doc_path)
+            loader = UnstructuredLoader(file_path=doc_path, strategy="hi_res", language=PDF_LANGUAGE)
         elif doc_path.endswith('.txt'):
             loader = TextLoader(doc_path, encoding='utf-8')
         else:
             raise ValueError("ERROR: Only PDF and TXT files are supported.")
         
         docs = loader.load()
+        # Clean documents before splitting
+        docs = self._clean_documents(docs)
         splits = self.text_splitter.split_documents(docs)
         print(f"Split document into {len(splits)} chunks.")
         
@@ -138,11 +176,13 @@ class IngestService:
             print(f"\nLoading: {doc_file}...")
             
             if doc_file.endswith('.pdf'):
-                loader = PyPDFLoader(doc_path)
+                loader = UnstructuredLoader(file_path=doc_path, strategy="hi_res", language=PDF_LANGUAGE)
             else:
                 loader = TextLoader(doc_path, encoding='utf-8')
             
             docs = loader.load()
+            # Clean documents before splitting
+            docs = self._clean_documents(docs)
             splits = self.text_splitter.split_documents(docs)
             all_splits.extend(splits)
             print(f"  → {len(splits)} chunks")

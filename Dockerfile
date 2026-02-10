@@ -9,6 +9,9 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
+    libmagic-dev \
+    poppler-utils \
+    tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for caching
@@ -25,6 +28,11 @@ WORKDIR /app
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
+    libmagic1 \
+    poppler-utils \
+    tesseract-ocr \
+    mesa-utils \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy installed packages from builder

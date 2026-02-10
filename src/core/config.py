@@ -20,6 +20,7 @@ PGVECTOR_COLLECTION_NAME = "document_embeddings"
 
 # Model configurations
 EMBEDDING_MODEL = "BAAI/bge-m3"
+PDF_LANGUAGE = os.getenv("PDF_LANGUAGE", "hun")  # Language for PDF processing (hun = Hungarian)
 
 # LLM Provider Selection
 # Options: 'groq' or 'deepseek'
