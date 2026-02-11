@@ -1,119 +1,168 @@
 """
 Document Ingestion Service.
-Handles loading PDFs and TXT files and creating vector embeddings in PostgreSQL with pgvector.
+Handles loading PDFs and other documents, creating semantic chunks,
+and storing vector embeddings in PostgreSQL with pgvector.
+
+Refactored to use unstructured 0.18.32 directly for better partitioning
+and semantic chunking with chunk_by_title strategy.
 """
 import os
-import re
-from langchain_community.document_loaders import UnstructuredPDFLoader, TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
+from typing import List
+import traceback
+
+from unstructured.partition.pdf import partition_pdf
+from unstructured.partition.text import partition_text
+from unstructured.partition.auto import partition
+from unstructured.chunking.title import chunk_by_title
+from langchain_core.documents import Document
 from langchain_postgres import PGVector
 from sqlalchemy import create_engine, text
 
-from src.core.config import DATA_FOLDER, DATABASE_URL, EMBEDDING_MODEL, PGVECTOR_COLLECTION_NAME, PDF_LANGUAGE
+from src.core.config import (
+    DATA_FOLDER,
+    DATABASE_URL,
+    PGVECTOR_COLLECTION_NAME,
+    PDF_LANGUAGE,
+    PDF_STRATEGY,
+    CHUNK_MAX_CHARACTERS,
+    CHUNK_NEW_AFTER_N_CHARS,
+    CHUNK_OVERLAP,
+    CHUNK_MULTIPAGE_SECTIONS,
+)
+from src.services.embeddings import get_embeddings
 
 
 class IngestService:
     """Service for ingesting documents into the vector database."""
     
     def __init__(self):
-        """Initialize the ingest service."""
-        self.embedding_function = HuggingFaceEmbeddings(
-            model_name=EMBEDDING_MODEL,
-            model_kwargs={'device': 'cpu'},
-            encode_kwargs={'normalize_embeddings': True}
-        )
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200
-        )
+        """Initialize the ingest service with embedding model and chunking config."""
+        self.embedding_function = get_embeddings()
         self.connection_string = DATABASE_URL
         self.collection_name = PGVECTOR_COLLECTION_NAME
-        # Improved regex pattern to remove MBH Bank header with all variations
-        # Handles extra spaces, newlines, and different formatting
-        self.header_pattern = re.compile(
-            r"M\s*B\s*H\s+Bank\s+Nyrt\..*?(?:weboldal|Weboldal):\s*www\.mbhbank\.hu.*?(?:\d{8}-\d-\d{2}|\d{7,9}-\d-\d{2})\s*",
-            re.DOTALL | re.IGNORECASE
-        )
+        
+        # Chunking configuration
+        self.chunk_max_chars = CHUNK_MAX_CHARACTERS
+        self.chunk_new_after = CHUNK_NEW_AFTER_N_CHARS
+        self.chunk_overlap = CHUNK_OVERLAP
+        self.multipage_sections = CHUNK_MULTIPAGE_SECTIONS
+        
+        # Partitioning configuration
+        self.pdf_strategy = PDF_STRATEGY
+        self.languages = [PDF_LANGUAGE] if PDF_LANGUAGE else None
     
-    def _remove_header(self, text: str) -> str:
+    def _partition_file(self, file_path: str) -> List:
         """
-        Remove the MBH Bank header from text.
-        Uses regex to handle variations in whitespace and formatting.
+        Partition a document file using unstructured library.
+        Automatically routes to the appropriate partitioner based on file extension.
         
         Args:
-            text: Text content to clean
+            file_path: Path to the document file
             
         Returns:
-            Text with header removed
+            List of unstructured Element objects
         """
-        cleaned = self.header_pattern.sub("", text)
-        # Remove any leading/trailing whitespace that may be left
-        return cleaned.strip() if cleaned != text else text
-    
-    def _combine_elements_by_page(self, documents: list) -> list:
-        """
-        Combine document elements by page number.
-        UnstructuredLoader creates many tiny elements (titles, paragraphs, etc.).
-        This method combines them back into page-level documents.
+        file_extension = os.path.splitext(file_path)[1].lower()
         
-        Args:
-            documents: List of document elements from UnstructuredLoader
-            
-        Returns:
-            List of combined documents, one per page
-        """
-        from langchain.schema import Document
-        
-        # Group elements by page number
-        pages = {}
-        for doc in documents:
-            # Get page number from metadata, default to 1 if not available
-            page_num = doc.metadata.get('page_number', 1)
-            
-            if page_num not in pages:
-                pages[page_num] = {
-                    'content': [],
-                    'metadata': doc.metadata.copy()
-                }
-            
-            # Add content if it's not empty
-            content = doc.page_content.strip()
-            if content:
-                pages[page_num]['content'].append(content)
-        
-        # Create combined documents
-        combined_docs = []
-        for page_num in sorted(pages.keys()):
-            page_data = pages[page_num]
-            # Join all content with double newline to preserve paragraph separation
-            combined_content = '\n\n'.join(page_data['content'])
-            
-            if combined_content:  # Only add non-empty pages
-                combined_doc = Document(
-                    page_content=combined_content,
-                    metadata=page_data['metadata']
+        try:
+            if file_extension == '.pdf':
+                # Use partition_pdf with strategy and language configuration
+                print(f"  Partitioning PDF with strategy='{self.pdf_strategy}', languages={self.languages}")
+                elements = partition_pdf(
+                    filename=file_path,
+                    strategy=self.pdf_strategy,
+                    languages=self.languages,
+                    include_page_breaks=True,
                 )
-                combined_docs.append(combined_doc)
-        
-        return combined_docs
+            elif file_extension == '.txt':
+                # Use partition_text for plain text files
+                print(f"  Partitioning TXT file")
+                elements = partition_text(
+                    filename=file_path,
+                )
+            else:
+                # Use auto-detection for other file types
+                print(f"  Using auto-detection for {file_extension} file")
+                elements = partition(
+                    filename=file_path,
+                    languages=self.languages,
+                )
+            
+            print(f"  → Extracted {len(elements)} elements")
+            return elements
+            
+        except Exception as e:
+            print(f"  ✗ Error partitioning file: {e}")
+            raise
     
-    def _clean_documents(self, documents: list) -> list:
+    def _chunk_elements(self, elements: List) -> List:
         """
-        Clean documents by removing repetitive headers.
+        Chunk elements using unstructured's chunk_by_title strategy.
+        This preserves section boundaries and respects semantic structure.
         
         Args:
-            documents: List of documents to clean
+            elements: List of unstructured Element objects
             
         Returns:
-            List of cleaned documents
+            List of chunked elements (CompositeElement, Table, or TableChunk)
         """
-        for doc in documents:
-            doc.page_content = self._remove_header(doc.page_content)
+        try:
+            chunks = chunk_by_title(
+                elements,
+                max_characters=self.chunk_max_chars,
+                new_after_n_chars=self.chunk_new_after,
+                overlap=self.chunk_overlap,
+                multipage_sections=self.multipage_sections,
+            )
+            print(f"  → Created {len(chunks)} semantic chunks")
+            return chunks
+            
+        except Exception as e:
+            print(f"  ✗ Error chunking elements: {e}")
+            raise
+    
+    def _elements_to_documents(self, chunks: List, source_file: str = None) -> List[Document]:
+        """
+        Convert unstructured chunks to LangChain Document objects.
+        
+        Args:
+            chunks: List of unstructured chunk elements
+            source_file: Optional source filename for metadata
+            
+        Returns:
+            List of LangChain Document objects
+        """
+        documents = []
+        
+        for chunk in chunks:
+            # Extract metadata from the chunk
+            metadata = {
+                'source': source_file or chunk.metadata.filename,
+                'element_type': chunk.category if hasattr(chunk, 'category') else 'Unknown',
+                'element_id': chunk.id if hasattr(chunk, 'id') else None,
+            }
+            
+            # Add page number if available
+            if hasattr(chunk.metadata, 'page_number') and chunk.metadata.page_number:
+                metadata['page_number'] = chunk.metadata.page_number
+            
+            # Add filename and directory if available
+            if hasattr(chunk.metadata, 'filename') and chunk.metadata.filename:
+                metadata['filename'] = chunk.metadata.filename
+            if hasattr(chunk.metadata, 'file_directory') and chunk.metadata.file_directory:
+                metadata['file_directory'] = chunk.metadata.file_directory
+            
+            # Create LangChain Document
+            doc = Document(
+                page_content=chunk.text,
+                metadata=metadata
+            )
+            documents.append(doc)
+        
         return documents
     
     def _ensure_extension_exists(self) -> None:
-        """Ensure pgvector extension exists."""
+        """Ensure pgvector extension exists in the database."""
         try:
             engine = create_engine(self.connection_string, echo=False)
             with engine.connect() as conn:
@@ -124,8 +173,16 @@ class IngestService:
         except Exception as e:
             print(f"ℹ Extension check: {type(e).__name__}")
     
-    def _create_vector_store(self, documents: list) -> PGVector:
-        """Create or update the vector store with documents."""
+    def _create_vector_store(self, documents: List[Document]) -> PGVector:
+        """
+        Create or update the vector store with documents.
+        
+        Args:
+            documents: List of document chunks to store
+            
+        Returns:
+            PGVector instance
+        """
         try:
             vector_store = PGVector.from_documents(
                 documents=documents,
@@ -133,7 +190,7 @@ class IngestService:
                 connection=self.connection_string,
                 collection_name=self.collection_name,
                 use_jsonb=True,
-                pre_delete_collection=True  # Clear existing collection before adding new documents,
+                pre_delete_collection=True  # Clear existing collection before adding
             )
             return vector_store
         except Exception as e:
@@ -141,7 +198,12 @@ class IngestService:
             raise
     
     def check_collection_exists(self) -> bool:
-        """Check if the vector collection already has documents."""
+        """
+        Check if the vector collection already has documents.
+        
+        Returns:
+            True if collection exists and has documents, False otherwise
+        """
         try:
             self._ensure_extension_exists()
             
@@ -159,100 +221,120 @@ class IngestService:
     
     def ingest_document(self, doc_path: str = None) -> None:
         """
-        Ingest a document file (PDF or TXT) into the vector database.
+        Ingest a single document file into the vector database.
         
         Args:
-            doc_path: Path to the document file. If None, uses first PDF or TXT in DATA_FOLDER.
+            doc_path: Path to the document file. If None, uses first supported file in DATA_FOLDER.
         """
         if not os.path.exists(DATA_FOLDER):
             raise FileNotFoundError(
                 f"ERROR: Folder '{DATA_FOLDER}' not found. Please create it and add a document."
             )
         
+        # Auto-detect first supported file if no path provided
         if doc_path is None:
-            pdf_files = [f for f in os.listdir(DATA_FOLDER) if f.endswith('.pdf')]
-            txt_files = [f for f in os.listdir(DATA_FOLDER) if f.endswith('.txt')]
+            supported_extensions = ['.pdf', '.txt', '.docx', '.html', '.csv']
+            files = [
+                f for f in os.listdir(DATA_FOLDER)
+                if any(f.lower().endswith(ext) for ext in supported_extensions)
+            ]
             
-            if pdf_files:
-                doc_path = os.path.join(DATA_FOLDER, pdf_files[0])
-            elif txt_files:
-                doc_path = os.path.join(DATA_FOLDER, txt_files[0])
-            else:
-                raise FileNotFoundError("ERROR: No PDF or TXT files found in 'data/' folder.")
+            if not files:
+                raise FileNotFoundError(
+                    f"ERROR: No supported files found in '{DATA_FOLDER}' folder. "
+                    f"Supported: {', '.join(supported_extensions)}"
+                )
+            
+            doc_path = os.path.join(DATA_FOLDER, files[0])
         
         print(f"Loading file: {doc_path}...")
         
-        if doc_path.endswith('.pdf'):
-            loader = UnstructuredPDFLoader(doc_path)
-        elif doc_path.endswith('.txt'):
-            loader = TextLoader(doc_path, encoding='utf-8')
-        else:
-            raise ValueError("ERROR: Only PDF and TXT files are supported.")
+        # Partition the document
+        elements = self._partition_file(doc_path)
         
-        docs = loader.load()
-        print(f"Loaded {len(docs)} elements from document.")
+        # Chunk the elements
+        chunks = self._chunk_elements(elements)
         
-        # Combine elements by page first (fixes tiny chunk issue)
-        combined_docs = self._combine_elements_by_page(docs)
-        print(f"Combined into {len(combined_docs)} pages.")
+        # Convert to LangChain Documents
+        documents = self._elements_to_documents(chunks, source_file=os.path.basename(doc_path))
+        print(f"  → Converted to {len(documents)} document chunks")
         
-        # Clean documents (remove headers)
-        combined_docs = self._clean_documents(combined_docs)
-        
-        # Now split into semantic chunks
-        splits = self.text_splitter.split_documents(combined_docs)
-        print(f"Split into {len(splits)} chunks.")
-        
-        print("Initializing embedding model...")
+        # Create vector store
         print("Saving to PostgreSQL with pgvector...")
-        self._create_vector_store(splits)
+        self._create_vector_store(documents)
         
-        print("Done! Vector embeddings saved to PostgreSQL.")
+        print("✓ Done! Vector embeddings saved to PostgreSQL.")
     
     def ingest_all_documents(self) -> None:
-        """Ingest all PDF and TXT files from the data folder."""
+        """Ingest all supported files from the data folder with per-file error handling."""
         if not os.path.exists(DATA_FOLDER):
             raise FileNotFoundError(
                 f"ERROR: Folder '{DATA_FOLDER}' not found. Please create it and add documents."
             )
         
-        pdf_files = [f for f in os.listdir(DATA_FOLDER) if f.endswith('.pdf')]
-        txt_files = [f for f in os.listdir(DATA_FOLDER) if f.endswith('.txt')]
+        # Find all supported files
+        supported_extensions = ['.pdf', '.txt', '.docx', '.html', '.csv']
+        all_files = [
+            f for f in os.listdir(DATA_FOLDER)
+            if any(f.lower().endswith(ext) for ext in supported_extensions)
+        ]
         
-        if not pdf_files and not txt_files:
-            raise FileNotFoundError("ERROR: No PDF or TXT files found in 'data/' folder.")
+        if not all_files:
+            raise FileNotFoundError(
+                f"ERROR: No supported files found in '{DATA_FOLDER}' folder. "
+                f"Supported: {', '.join(supported_extensions)}"
+            )
         
-        all_files = pdf_files + txt_files
-        print(f"Found {len(pdf_files)} PDF file(s) and {len(txt_files)} TXT file(s). Processing...")
+        print(f"Found {len(all_files)} file(s). Processing...")
         
-        all_splits = []
+        # Process all files with error isolation
+        all_documents = []
+        successful_files = []
+        failed_files = []
+        
         for doc_file in all_files:
             doc_path = os.path.join(DATA_FOLDER, doc_file)
-            print(f"\nLoading: {doc_file}...")
+            print(f"\nProcessing: {doc_file}")
             
-            if doc_file.endswith('.pdf'):
-                loader = UnstructuredPDFLoader(doc_path)
-            else:
-                loader = TextLoader(doc_path, encoding='utf-8')
-            
-            docs = loader.load()
-            print(f"  → Loaded {len(docs)} elements")
-            
-            # Combine elements by page first (fixes tiny chunk issue)
-            combined_docs = self._combine_elements_by_page(docs)
-            print(f"  → Combined into {len(combined_docs)} pages")
-            
-            # Clean documents (remove headers)
-            combined_docs = self._clean_documents(combined_docs)
-            
-            # Now split into semantic chunks
-            splits = self.text_splitter.split_documents(combined_docs)
-            all_splits.extend(splits)
-            print(f"  → Split into {len(splits)} chunks")
+            try:
+                # Partition the document
+                elements = self._partition_file(doc_path)
+                
+                # Chunk the elements
+                chunks = self._chunk_elements(elements)
+                
+                # Convert to LangChain Documents
+                documents = self._elements_to_documents(chunks, source_file=doc_file)
+                
+                all_documents.extend(documents)
+                successful_files.append(doc_file)
+                print(f"  ✓ {doc_file} processed successfully ({len(documents)} chunks)")
+                
+            except Exception as e:
+                failed_files.append((doc_file, str(e)))
+                print(f"  ✗ Failed to process {doc_file}: {e}")
+                print(f"  Traceback: {traceback.format_exc()}")
+                continue
         
-        print(f"\nTotal chunks: {len(all_splits)}")
+        # Summary
+        print(f"\n{'='*60}")
+        print(f"Processing summary:")
+        print(f"  Successful: {len(successful_files)}/{len(all_files)} files")
+        print(f"  Failed: {len(failed_files)}/{len(all_files)} files")
+        print(f"  Total chunks: {len(all_documents)}")
+        
+        if failed_files:
+            print(f"\nFailed files:")
+            for filename, error in failed_files:
+                print(f"  - {filename}: {error}")
+        
+        if not all_documents:
+            raise RuntimeError("ERROR: No documents were successfully processed. Cannot create vector store.")
+        
+        # Create vector store with all successfully processed documents
+        print(f"\n{'='*60}")
         print("Saving to PostgreSQL with pgvector...")
+        self._create_vector_store(all_documents)
         
-        self._create_vector_store(all_splits)
-        
-        print("Done! Vector embeddings saved to PostgreSQL.")
+        print("✓ Done! Vector embeddings saved to PostgreSQL.")
+        print(f"{'='*60}")

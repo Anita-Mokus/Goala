@@ -2,7 +2,6 @@
 RAG (Retrieval-Augmented Generation) Service.
 Handles document retrieval and response generation using LangChain with pgvector.
 """
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_postgres import PGVector
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
@@ -11,7 +10,6 @@ from langchain_core.output_parsers import StrOutputParser
 from src.core.config import (
     DATABASE_URL,
     PGVECTOR_COLLECTION_NAME,
-    EMBEDDING_MODEL,
     LLM_PROVIDER,
     LLM_MODEL,
     LLM_TEMPERATURE,
@@ -19,6 +17,7 @@ from src.core.config import (
     RAG_PROMPT_TEMPLATE
 )
 from src.services.llm_provider import get_llm_provider
+from src.services.embeddings import get_embeddings
 
 
 class RAGService:
@@ -26,12 +25,8 @@ class RAGService:
     
     def __init__(self):
         """Initialize RAG components."""
-        # Initialize embedding function
-        self.embedding_function = HuggingFaceEmbeddings(
-            model_name=EMBEDDING_MODEL,
-            model_kwargs={'device': 'cpu'},
-            encode_kwargs={'normalize_embeddings': True}
-        )
+        # Use shared embedding function (singleton)
+        self.embedding_function = get_embeddings()
         
         # Load vector database from PostgreSQL
         try:

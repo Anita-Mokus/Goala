@@ -22,6 +22,20 @@ PGVECTOR_COLLECTION_NAME = "document_embeddings"
 EMBEDDING_MODEL = "BAAI/bge-m3"
 PDF_LANGUAGE = os.getenv("PDF_LANGUAGE", "hun")  # Language for PDF processing (hun = Hungarian)
 
+# Unstructured partitioning configuration
+# Strategy options: "auto", "fast", "hi_res", "ocr_only"
+# - "auto": Smart selection (fast for text-heavy, hi_res for tables)
+# - "fast": Quick extraction for text-based PDFs
+# - "hi_res": Best accuracy for complex layouts and tables (slower)
+# - "ocr_only": Force OCR for scanned documents
+PDF_STRATEGY = os.getenv("PDF_STRATEGY", "auto")
+
+# Unstructured chunking configuration (using chunk_by_title strategy)
+CHUNK_MAX_CHARACTERS = int(os.getenv("CHUNK_MAX_CHARACTERS", "1000"))  # Hard maximum chunk size
+CHUNK_NEW_AFTER_N_CHARS = int(os.getenv("CHUNK_NEW_AFTER_N_CHARS", "800"))  # Soft maximum (preferred size)
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))  # Overlap between chunks (applied on text-splitting)
+CHUNK_MULTIPAGE_SECTIONS = os.getenv("CHUNK_MULTIPAGE_SECTIONS", "true").lower() == "true"  # Allow sections to span pages
+
 # LLM Provider Selection
 # Options: 'groq' or 'deepseek'
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq")

@@ -28,7 +28,7 @@ def main():
             print(f"Ingesting specific file: {doc_path}\n")
             ingest_service.ingest_document(doc_path)
         else:
-            # Ingest all documents from data folder
+            # Ingeste all documents from data folder
             print("Ingesting all documents from data folder...\n")
             ingest_service.ingest_all_documents()
         
