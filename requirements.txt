@@ -19,7 +19,6 @@ langchain-huggingface>=0.1.0,<1.0.0
 langchain-postgres==0.0.16
 
 # Unstructured PDF loading (downgraded for 0.3.x compatibility)
-# mode="elements" forces local processing without API authentication
 unstructured[pdf]>=0.15.7,<0.16.0
 pdfminer.six==20231228
 python-magic>=0.4.27
