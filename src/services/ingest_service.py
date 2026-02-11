@@ -63,7 +63,7 @@ class IngestService:
         Returns:
             List of combined documents, one per page
         """
-        from langchain.schema import Document
+        from langchain_core.documents import Document
         
         # Group elements by page number
         pages = {}

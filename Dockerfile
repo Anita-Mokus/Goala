@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagic-dev \
     poppler-utils \
     tesseract-ocr \
+    tesseract-ocr-hun \
     libgl1 \
     libglib2.0-0 \
     libmagic-dev \
@@ -35,6 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagic1 \
     poppler-utils \
     tesseract-ocr \
+    tesseract-ocr-hun \
     libgl1 \
     libglib2.0-0 \
     libmagic-dev \
@@ -52,7 +54,8 @@ COPY data/ ./data/
 ENV HONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    HF_HOME=/tmp/huggingface_cache
+    HF_HOME=/tmp/huggingface_cache \
+    UNSTRUCTURED_DISABLE_MODEL_TELEMETRY=true
 
 EXPOSE 8000
 
