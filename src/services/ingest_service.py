@@ -4,7 +4,9 @@ Handles loading PDFs and TXT files and creating vector embeddings in PostgreSQL 
 """
 import os
 import re
-from langchain_community.document_loaders import UnstructuredPDFLoader, TextLoader
+import pdfplumber
+from langchain_community.document_loaders import TextLoader
+from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_postgres import PGVector
@@ -51,52 +53,45 @@ class IngestService:
         # Remove any leading/trailing whitespace that may be left
         return cleaned.strip() if cleaned != text else text
     
-    def _combine_elements_by_page(self, documents: list) -> list:
+    def _load_pdf_with_pdfplumber(self, file_path: str) -> list:
         """
-        Combine document elements by page number.
-        UnstructuredLoader creates many tiny elements (titles, paragraphs, etc.).
-        This method combines them back into page-level documents.
+        Load PDF using pdfplumber for better table extraction.
         
         Args:
-            documents: List of document elements from UnstructuredLoader
+            file_path: Path to the PDF file
             
         Returns:
-            List of combined documents, one per page
+            List of Document objects, one per page
         """
-        from langchain_core.documents import Document
+        documents = []
+        with pdfplumber.open(file_path) as pdf:
+            for page_num, page in enumerate(pdf.pages, start=1):
+                # Extract text from the page
+                text = page.extract_text() or ""
+                
+                # Extract tables if present
+                tables = page.extract_tables()
+                if tables:
+                    # Add tables as formatted text
+                    for table in tables:
+                        if table:
+                            # Convert table to text format
+                            table_text = "\n".join(
+                                [" | ".join([str(cell) if cell else "" for cell in row]) for row in table]
+                            )
+                            text += "\n\n" + table_text
+                
+                if text.strip():  # Only add non-empty pages
+                    documents.append(Document(
+                        page_content=text,
+                        metadata={
+                            "source": file_path,
+                            "page": page_num,
+                            "page_number": page_num
+                        }
+                    ))
         
-        # Group elements by page number
-        pages = {}
-        for doc in documents:
-            # Get page number from metadata, default to 1 if not available
-            page_num = doc.metadata.get('page_number', 1)
-            
-            if page_num not in pages:
-                pages[page_num] = {
-                    'content': [],
-                    'metadata': doc.metadata.copy()
-                }
-            
-            # Add content if it's not empty
-            content = doc.page_content.strip()
-            if content:
-                pages[page_num]['content'].append(content)
-        
-        # Create combined documents
-        combined_docs = []
-        for page_num in sorted(pages.keys()):
-            page_data = pages[page_num]
-            # Join all content with double newline to preserve paragraph separation
-            combined_content = '\n\n'.join(page_data['content'])
-            
-            if combined_content:  # Only add non-empty pages
-                combined_doc = Document(
-                    page_content=combined_content,
-                    metadata=page_data['metadata']
-                )
-                combined_docs.append(combined_doc)
-        
-        return combined_docs
+        return documents
     
     def _clean_documents(self, documents: list) -> list:
         """
@@ -183,18 +178,16 @@ class IngestService:
         print(f"Loading file: {doc_path}...")
         
         if doc_path.endswith('.pdf'):
-            loader = UnstructuredPDFLoader(doc_path)
+            docs = self._load_pdf_with_pdfplumber(doc_path)
+            print(f"Loaded {len(docs)} pages from PDF.")
         elif doc_path.endswith('.txt'):
             loader = TextLoader(doc_path, encoding='utf-8')
+            docs = loader.load()
+            print(f"Loaded {len(docs)} elements from document.")
         else:
             raise ValueError("ERROR: Only PDF and TXT files are supported.")
         
-        docs = loader.load()
-        print(f"Loaded {len(docs)} elements from document.")
-        
-        # Combine elements by page first (fixes tiny chunk issue)
-        combined_docs = self._combine_elements_by_page(docs)
-        print(f"Combined into {len(combined_docs)} pages.")
+        combined_docs = docs
         
         # Clean documents (remove headers)
         combined_docs = self._clean_documents(combined_docs)
@@ -231,16 +224,14 @@ class IngestService:
             print(f"\nLoading: {doc_file}...")
             
             if doc_file.endswith('.pdf'):
-                loader = UnstructuredPDFLoader(doc_path)
-            else:
+                docs = self._load_pdf_with_pdfplumber(doc_path)
+                print(f"  → Loaded {len(docs)} pages from PDF")
+            elif doc_file.endswith('.txt'):
                 loader = TextLoader(doc_path, encoding='utf-8')
+                docs = loader.load()
+                print(f"  → Loaded {len(docs)} elements")
             
-            docs = loader.load()
-            print(f"  → Loaded {len(docs)} elements")
-            
-            # Combine elements by page first (fixes tiny chunk issue)
-            combined_docs = self._combine_elements_by_page(docs)
-            print(f"  → Combined into {len(combined_docs)} pages")
+            combined_docs = docs
             
             # Clean documents (remove headers)
             combined_docs = self._clean_documents(combined_docs)
