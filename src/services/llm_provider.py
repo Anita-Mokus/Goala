@@ -66,6 +66,32 @@ class DeepSeekProvider(LLMProvider):
                 base_url="https://api.deepseek.com",
             )
         return self._llm
+    
+class OpenRouterProvider(LLMProvider):
+    """OpenRouter API provider implementation."""
+    
+    def __init__(self, model: str = "openai/gpt-oss-120b:exacto", temperature: float = 0.3):
+        """
+        Initialize OpenRouter provider.
+        
+        Args:
+            model: Model name (default: 'openai/gpt-oss-120b:exacto')
+            temperature: Temperature parameter for generation
+        """
+        self.model = model
+        self.temperature = temperature
+        self._llm = None
+    
+    def get_llm(self):
+        """Get or create OpenRouter LLM instance."""
+        if self._llm is None:
+            from langchain_openai import ChatOpenAI
+            self._llm = ChatOpenAI(
+                model=self.model,
+                temperature=self.temperature,
+                base_url="https://openrouter.ai/api/v1",
+            )
+        return self._llm
 
 
 def get_llm_provider(provider_name: str, model: str, temperature: float) -> LLMProvider:
@@ -73,7 +99,7 @@ def get_llm_provider(provider_name: str, model: str, temperature: float) -> LLMP
     Factory function to get the appropriate LLM provider.
     
     Args:
-        provider_name: Name of the provider ('groq' or 'deepseek')
+        provider_name: Name of the provider ('groq' or 'deepseek' or 'openrouter')
         model: Model name for the provider
         temperature: Temperature parameter for generation
         
@@ -86,6 +112,7 @@ def get_llm_provider(provider_name: str, model: str, temperature: float) -> LLMP
     providers = {
         'groq': GroqProvider,
         'deepseek': DeepSeekProvider,
+        'openrouter': OpenRouterProvider,
     }
     
     if provider_name.lower() not in providers:

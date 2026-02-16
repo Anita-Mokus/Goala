@@ -37,8 +37,8 @@ CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))  # Overlap between chunks
 CHUNK_MULTIPAGE_SECTIONS = os.getenv("CHUNK_MULTIPAGE_SECTIONS", "true").lower() == "true"  # Allow sections to span pages
 
 # LLM Provider Selection
-# Options: 'groq' or 'deepseek'
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq")
+# Options: 'groq' or 'deepseek' or 'openrouter'
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openrouter")
 
 # Groq Model Options (when using Groq provider)
 # "llama-3.3-70b-versatile"  # Faster with good accuracy
