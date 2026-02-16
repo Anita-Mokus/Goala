@@ -51,11 +51,15 @@ GROQ_LLM_MODEL = os.getenv("GROQ_LLM_MODEL", "openai/gpt-oss-120b")
 # "deepseek-reasoner"         # Thinking mode (more accurate)
 DEEPSEEK_LLM_MODEL = os.getenv("DEEPSEEK_LLM_MODEL", "deepseek-chat")
 
+OPENROUTER_LLM_MODEL = os.getenv("OPENROUTER_LLM_MODEL", "openai/gpt-oss-120b:exacto")
+
 # Get the appropriate model based on provider
 if LLM_PROVIDER.lower() == "deepseek":
     LLM_MODEL = DEEPSEEK_LLM_MODEL
-else:
+elif LLM_PROVIDER.lower() == "groq":
     LLM_MODEL = GROQ_LLM_MODEL
+elif LLM_PROVIDER.lower() == "openrouter":
+    LLM_MODEL = OPENROUTER_LLM_MODEL
 
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))  # Slightly higher for friendlier responses
 
