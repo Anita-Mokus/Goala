@@ -23,7 +23,10 @@ from src.core.config import (
     LLM_MODEL,
     LLM_TEMPERATURE,
     LLM_PROVIDER,
-    RETRIEVER_K
+    RETRIEVER_K,
+    CHUNK_MAX_CHARACTERS,
+    CHUNK_NEW_AFTER_N_CHARS,
+    CHUNK_OVERLAP
 )
 
 
@@ -92,19 +95,12 @@ def parse_judge_response(response: str) -> tuple[int, str]:
 
 
 def get_chunk_config():
-    """Get chunk size and overlap from IngestService."""
-    try:
-        from src.services.ingest_service import IngestService
-        ingest_service = IngestService()
-        return {
-            "chunk_size": ingest_service.text_splitter._chunk_size,
-            "chunk_overlap": ingest_service.text_splitter._chunk_overlap
-        }
-    except Exception:
-        return {
-            "chunk_size": 'default',  # default values
-            "chunk_overlap": 'default'
-        }
+    """Get chunking configuration from config module."""
+    return {
+        "chunk_size": CHUNK_MAX_CHARACTERS,
+        "chunk_new_after": CHUNK_NEW_AFTER_N_CHARS,
+        "chunk_overlap": CHUNK_OVERLAP
+    }
 
 
 def evaluate_rag():
@@ -135,15 +131,14 @@ def evaluate_rag():
     judge_provider = get_llm_provider(LLM_PROVIDER, LLM_MODEL, JUDGE_LLM_TEMPERATURE)
     judge_llm = judge_provider.get_llm()
     
-    # Get chunking configuration
-    chunk_config = get_chunk_config()
-    
     # Prepare metadata
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    chunk_config = get_chunk_config()
     metadata = {
         "timestamp": timestamp,
         "embedding_model": EMBEDDING_MODEL,
-        "chunk_size": chunk_config["chunk_size"],
+        "chunk_max_characters": chunk_config["chunk_size"],
+        "chunk_new_after_n_chars": chunk_config["chunk_new_after"],
         "chunk_overlap": chunk_config["chunk_overlap"],
         "retriever_k": RETRIEVER_K,
         "llm_model": LLM_MODEL,

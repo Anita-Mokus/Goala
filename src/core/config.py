@@ -60,7 +60,7 @@ else:
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))  # Slightly higher for friendlier responses
 
 # Retriever settings
-RETRIEVER_K = 4  # Number of documents to retrieve
+RETRIEVER_K = 15  # Number of documents to retrieve
 
 # API settings
 API_TITLE = "AI Chat Flow API"
