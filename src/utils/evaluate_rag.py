@@ -123,7 +123,7 @@ def evaluate_rag():
     try:
         rag_service = RAGService()
     except Exception as e:
-        print(f"ERROR: Failed to initialize RAG service: {e}")
+        print(f"ERROR:  RAG service: {e}")
         sys.exit(1)
     
     # Initialize judge LLM using configured provider

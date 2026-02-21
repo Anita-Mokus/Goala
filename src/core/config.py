@@ -37,8 +37,8 @@ CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))  # Overlap between chunks
 CHUNK_MULTIPAGE_SECTIONS = os.getenv("CHUNK_MULTIPAGE_SECTIONS", "true").lower() == "true"  # Allow sections to span pages
 
 # LLM Provider Selection
-# Options: 'groq' or 'deepseek'
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq")
+# Options: 'groq' or 'deepseek' or 'openrouter'
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openrouter")
 
 # Groq Model Options (when using Groq provider)
 # "llama-3.3-70b-versatile"  # Faster with good accuracy
@@ -51,11 +51,15 @@ GROQ_LLM_MODEL = os.getenv("GROQ_LLM_MODEL", "openai/gpt-oss-120b")
 # "deepseek-reasoner"         # Thinking mode (more accurate)
 DEEPSEEK_LLM_MODEL = os.getenv("DEEPSEEK_LLM_MODEL", "deepseek-chat")
 
+OPENROUTER_LLM_MODEL = os.getenv("OPENROUTER_LLM_MODEL", "openai/gpt-oss-120b:exacto")
+
 # Get the appropriate model based on provider
 if LLM_PROVIDER.lower() == "deepseek":
     LLM_MODEL = DEEPSEEK_LLM_MODEL
-else:
+elif LLM_PROVIDER.lower() == "groq":
     LLM_MODEL = GROQ_LLM_MODEL
+elif LLM_PROVIDER.lower() == "openrouter":
+    LLM_MODEL = OPENROUTER_LLM_MODEL
 
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))  # Slightly higher for friendlier responses
 
