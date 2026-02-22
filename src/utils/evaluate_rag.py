@@ -23,10 +23,25 @@ from src.core.config import (
     LLM_MODEL,
     LLM_TEMPERATURE,
     LLM_PROVIDER,
+    # Retrieval
     RETRIEVER_K,
+    RETRIEVER_K_UNFILTERED,
+    ENABLE_METADATA_FILTER,
+    # Ingestion — partitioning
+    PDF_STRATEGY,
+    PDF_LANGUAGE,
+    # Ingestion — chunk_by_title (title strategy)
     CHUNK_MAX_CHARACTERS,
     CHUNK_NEW_AFTER_N_CHARS,
-    CHUNK_OVERLAP
+    CHUNK_OVERLAP,
+    CHUNK_MULTIPAGE_SECTIONS,
+    # Ingestion — definition strategy
+    CHUNKING_STRATEGY,
+    DEFINITION_CHUNK_MIN_CHARS,
+    DEFINITION_CHUNK_MAX_CHARS,
+    # Ingestion — semantic strategy
+    SEMANTIC_CHUNK_BREAKPOINT_TYPE,
+    SEMANTIC_CHUNK_BREAKPOINT_AMOUNT,
 )
 
 
@@ -94,12 +109,45 @@ def parse_judge_response(response: str) -> tuple[int, str]:
     return score, explanation
 
 
-def get_chunk_config():
-    """Get chunking configuration from config module."""
+def build_run_config() -> dict:
+    """Build a structured config dict capturing every parameter that affects evaluation results."""
+    ingestion = {
+        "chunking_strategy": CHUNKING_STRATEGY,
+        "pdf_strategy": PDF_STRATEGY,
+        "pdf_language": PDF_LANGUAGE,
+        "chunk_multipage_sections": CHUNK_MULTIPAGE_SECTIONS,
+    }
+    # Include strategy-specific params so it’s always clear what was active
+    if CHUNKING_STRATEGY == "semantic":
+        ingestion["semantic_breakpoint_type"]    = SEMANTIC_CHUNK_BREAKPOINT_TYPE
+        ingestion["semantic_breakpoint_amount"]  = SEMANTIC_CHUNK_BREAKPOINT_AMOUNT
+        ingestion["_definition_strategy_params"] = "(inactive)"
+        ingestion["_title_strategy_params"]      = "(inactive)"
+    elif CHUNKING_STRATEGY == "definition":
+        ingestion["definition_chunk_min_chars"]  = DEFINITION_CHUNK_MIN_CHARS
+        ingestion["definition_chunk_max_chars"]  = DEFINITION_CHUNK_MAX_CHARS
+        ingestion["_semantic_strategy_params"]   = "(inactive)"
+        ingestion["_title_strategy_params"]      = "(inactive)"
+    else:
+        ingestion["chunk_max_characters"]        = CHUNK_MAX_CHARACTERS
+        ingestion["chunk_new_after_n_chars"]     = CHUNK_NEW_AFTER_N_CHARS
+        ingestion["chunk_overlap"]               = CHUNK_OVERLAP
+        ingestion["_semantic_strategy_params"]   = "(inactive)"
+        ingestion["_definition_strategy_params"] = "(inactive)"
+
     return {
-        "chunk_size": CHUNK_MAX_CHARACTERS,
-        "chunk_new_after": CHUNK_NEW_AFTER_N_CHARS,
-        "chunk_overlap": CHUNK_OVERLAP
+        "ingestion": ingestion,
+        "retrieval": {
+            "embedding_model":      EMBEDDING_MODEL,
+            "enable_metadata_filter": ENABLE_METADATA_FILTER,
+            "retriever_k":          RETRIEVER_K,
+            "retriever_k_unfiltered": RETRIEVER_K_UNFILTERED,
+        },
+        "llm": {
+            "provider":    LLM_PROVIDER,
+            "model":       LLM_MODEL,
+            "temperature": LLM_TEMPERATURE,
+        },
     }
 
 
@@ -133,21 +181,21 @@ def evaluate_rag():
     
     # Prepare metadata
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    chunk_config = get_chunk_config()
+    run_config = build_run_config()
     metadata = {
         "timestamp": timestamp,
-        "embedding_model": EMBEDDING_MODEL,
-        "chunk_max_characters": chunk_config["chunk_size"],
-        "chunk_new_after_n_chars": chunk_config["chunk_new_after"],
-        "chunk_overlap": chunk_config["chunk_overlap"],
-        "retriever_k": RETRIEVER_K,
-        "llm_model": LLM_MODEL,
-        "llm_temperature": LLM_TEMPERATURE
+        **run_config,
     }
     
     print("\nConfiguration:")
-    for key, value in metadata.items():
-        print(f"  {key}: {value}")
+    print(f"  chunking_strategy : {run_config['ingestion']['chunking_strategy']}")
+    print(f"  pdf_strategy      : {run_config['ingestion']['pdf_strategy']}")
+    print(f"  metadata_filter   : {run_config['retrieval']['enable_metadata_filter']}")
+    print(f"  retriever_k       : {run_config['retrieval']['retriever_k']} (filtered) / "
+          f"{run_config['retrieval']['retriever_k_unfiltered']} (unfiltered)")
+    print(f"  embedding_model   : {run_config['retrieval']['embedding_model']}")
+    print(f"  llm               : {run_config['llm']['provider']} / {run_config['llm']['model']}")
+    print(f"  llm_temperature   : {run_config['llm']['temperature']}")
     print()
     
     # Prepare results

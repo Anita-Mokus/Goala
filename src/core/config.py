@@ -36,6 +36,22 @@ CHUNK_NEW_AFTER_N_CHARS = int(os.getenv("CHUNK_NEW_AFTER_N_CHARS", "800"))  # So
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))  # Overlap between chunks (applied on text-splitting)
 CHUNK_MULTIPAGE_SECTIONS = os.getenv("CHUNK_MULTIPAGE_SECTIONS", "true").lower() == "true"  # Allow sections to span pages
 
+# Chunking strategy:
+#   "semantic"   — embedding-based: split where cosine similarity drops (one chunk = one idea)
+#   "definition" — one chunk per regulation clause / glossary entry
+#   "title"      — original unstructured chunk_by_title, character-count-based (fallback)
+CHUNKING_STRATEGY = os.getenv("CHUNKING_STRATEGY", "semantic")
+
+# Semantic chunking options (used when CHUNKING_STRATEGY="semantic")
+# breakpoint_threshold_type: "percentile" | "standard_deviation" | "interquartile" | "gradient"
+# For "percentile"+95: split only on the sharpest 5% of similarity drops → larger, coherent chunks
+SEMANTIC_CHUNK_BREAKPOINT_TYPE   = os.getenv("SEMANTIC_CHUNK_BREAKPOINT_TYPE", "percentile")
+SEMANTIC_CHUNK_BREAKPOINT_AMOUNT = float(os.getenv("SEMANTIC_CHUNK_BREAKPOINT_AMOUNT", "95"))
+
+# Definition-level chunking size guards (used when CHUNKING_STRATEGY="definition")
+DEFINITION_CHUNK_MIN_CHARS = int(os.getenv("DEFINITION_CHUNK_MIN_CHARS", "50"))    # merge tiny fragments below this
+DEFINITION_CHUNK_MAX_CHARS = int(os.getenv("DEFINITION_CHUNK_MAX_CHARS", "2000"))  # hard-split entries above this
+
 # LLM Provider Selection
 # Options: 'groq' or 'deepseek' or 'openrouter'
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openrouter")
@@ -64,7 +80,12 @@ elif LLM_PROVIDER.lower() == "openrouter":
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))  # Slightly higher for friendlier responses
 
 # Retriever settings
-RETRIEVER_K = 15  # Number of documents to retrieve
+RETRIEVER_K = int(os.getenv("RETRIEVER_K", "4"))          # Number of documents to retrieve when a doc filter matches
+RETRIEVER_K_UNFILTERED = int(os.getenv("RETRIEVER_K_UNFILTERED", "6"))  # k when no filter matches (all docs)
+
+# Metadata filtering: auto-detect doc references (e.g. "H-68/2024") in the user question
+# and scope retrieval to only those chunks — prevents cross-document bleeding
+ENABLE_METADATA_FILTER = os.getenv("ENABLE_METADATA_FILTER", "true").lower() == "true"
 
 # API settings
 API_TITLE = "AI Chat Flow API"
