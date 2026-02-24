@@ -9,6 +9,7 @@ services:
     image: pgvector/pgvector:pg16
     container_name: goala-db
     restart: unless-stopped
+    env_file: .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -36,15 +37,9 @@ services:
       dockerfile: Dockerfile
     container_name: goala-api
     restart: unless-stopped
+    env_file: .env
     environment:
       - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-goala}
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - LLM_PROVIDER=${LLM_PROVIDER:-groq}
-      - GROQ_LLM_MODEL=${GROQ_LLM_MODEL:-openai/gpt-oss-120b}
-      - DEEPSEEK_LLM_MODEL=${DEEPSEEK_LLM_MODEL:-deepseek-chat}
-      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.3}
-      - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN:-}
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
