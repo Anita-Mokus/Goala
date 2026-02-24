@@ -23,7 +23,13 @@ from src.core.config import (
     LLM_MODEL,
     LLM_TEMPERATURE,
     LLM_PROVIDER,
-    RETRIEVER_K
+    RETRIEVER_K,
+    CHUNK_MAX_CHARACTERS,
+    CHUNK_NEW_AFTER_N_CHARS,
+    CHUNK_OVERLAP,
+    CHUNK_MULTIPAGE_SECTIONS,
+    PDF_STRATEGY,
+    PDF_LANGUAGE,
 )
 
 
@@ -92,19 +98,16 @@ def parse_judge_response(response: str) -> tuple[int, str]:
 
 
 def get_chunk_config():
-    """Get chunk size and overlap from IngestService."""
-    try:
-        from src.services.ingest_service import IngestService
-        ingest_service = IngestService()
-        return {
-            "chunk_size": ingest_service.text_splitter._chunk_size,
-            "chunk_overlap": ingest_service.text_splitter._chunk_overlap
-        }
-    except Exception:
-        return {
-            "chunk_size": 'default',  # default values
-            "chunk_overlap": 'default'
-        }
+    """Get chunking and RAG configuration from config module."""
+    return {
+        "chunking_strategy": "chunk_by_title",
+        "chunk_max_characters": CHUNK_MAX_CHARACTERS,
+        "chunk_new_after_n_chars": CHUNK_NEW_AFTER_N_CHARS,
+        "chunk_overlap": CHUNK_OVERLAP,
+        "chunk_multipage_sections": CHUNK_MULTIPAGE_SECTIONS,
+        "pdf_strategy": PDF_STRATEGY,
+        "pdf_language": PDF_LANGUAGE,
+    }
 
 
 def evaluate_rag():
@@ -142,12 +145,22 @@ def evaluate_rag():
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     metadata = {
         "timestamp": timestamp,
-        "embedding_model": EMBEDDING_MODEL,
-        "chunk_size": chunk_config["chunk_size"],
-        "chunk_overlap": chunk_config["chunk_overlap"],
-        "retriever_k": RETRIEVER_K,
+        "llm_provider": LLM_PROVIDER,
         "llm_model": LLM_MODEL,
-        "llm_temperature": LLM_TEMPERATURE
+        "llm_temperature": LLM_TEMPERATURE,
+        "embedding_model": EMBEDDING_MODEL,
+        "retriever_k": RETRIEVER_K,
+        "chunking": {
+            "strategy": chunk_config["chunking_strategy"],
+            "max_characters": chunk_config["chunk_max_characters"],
+            "new_after_n_chars": chunk_config["chunk_new_after_n_chars"],
+            "overlap": chunk_config["chunk_overlap"],
+            "multipage_sections": chunk_config["chunk_multipage_sections"],
+        },
+        "pdf_processing": {
+            "strategy": chunk_config["pdf_strategy"],
+            "language": chunk_config["pdf_language"],
+        },
     }
     
     print("\nConfiguration:")
