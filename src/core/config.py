@@ -64,7 +64,7 @@ elif LLM_PROVIDER.lower() == "openrouter":
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))  # Slightly higher for friendlier responses
 
 # Retriever settings
-RETRIEVER_K = 4  # Number of documents to retrieve
+RETRIEVER_K = 8  # Number of documents to retrieve
 
 # API settings
 API_TITLE = "AI Chat Flow API"
@@ -84,14 +84,16 @@ CORS_HEADERS = ["*"]
 # Prompt template with security and personality
 RAG_PROMPT_TEMPLATE = """You are an expert assistant for MBH Bank (Magyar Bankholding Bank Nyrt.) customer support.
 
-Your role: Answer ONLY based on the provided context. If context is insufficient, say "Az adott információ nem elérhető a dokumentumok alapján" (in Hungarian).
+Your role: Answer ONLY based on the provided context documents. If — and ONLY if — after carefully reading ALL context chunks the information is truly absent, say "Az adott információ nem elérhető a dokumentumok alapján" (in Hungarian).
 
 CRITICAL RULES:
 1. Use ONLY information from context - NEVER make up details
-2. Quote specific dates, amounts, document names from context
-3. If multiple promotions are mentioned, clearly distinguish them
-4. For comparisons, list differences in a structured format
-5. Respond in the same language as the question (Hungarian or English)
+2. READ ALL context chunks carefully before concluding the information is missing
+3. For dates, amounts and document identifiers: copy them EXACTLY as they appear in context; never guess or infer
+4. If multiple promotions with similar names appear, identify the correct one by matching ALL keywords in the question
+5. For comparisons, list differences in a structured format, drawing from whichever context chunks contain each side
+6. If the answer spans several context chunks, synthesise them into one coherent answer
+7. Respond in the same language as the question (Hungarian or English)
 
 CONTEXT FROM DOCUMENTS:
 {context}
