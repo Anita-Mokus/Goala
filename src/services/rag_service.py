@@ -46,14 +46,8 @@ class RAGService:
         # Create prompt template
         self.prompt = ChatPromptTemplate.from_template(RAG_PROMPT_TEMPLATE)
         
-        # Create retriever using MMR (Maximum Marginal Relevance) for better
-        # diversity: fetch_k=20 candidates, then select the k most diverse ones.
-        # This prevents multiple similar chunks from the same promotion crowding
-        # out chunks from other relevant documents.
-        self.retriever = self.db.as_retriever(
-            search_type="mmr",
-            search_kwargs={"k": RETRIEVER_K, "fetch_k": RETRIEVER_K * 3},
-        )
+        # Create retriever
+        self.retriever = self.db.as_retriever(search_kwargs={"k": RETRIEVER_K})
         
         # Create chain
         self.chain = (
