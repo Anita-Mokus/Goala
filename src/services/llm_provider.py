@@ -2,6 +2,7 @@
 LLM Provider abstraction layer.
 Allows easy switching between different LLM providers (Groq, DeepSeek, etc.)
 """
+import os
 from abc import ABC, abstractmethod
 from typing import Optional
 
@@ -60,10 +61,12 @@ class DeepSeekProvider(LLMProvider):
         """Get or create DeepSeek LLM instance."""
         if self._llm is None:
             from langchain_openai import ChatOpenAI
+            api_key = os.getenv("OPENAI_API_KEY") or os.getenv("DEEPSEEK_API_KEY")
             self._llm = ChatOpenAI(
                 model=self.model,
                 temperature=self.temperature,
                 base_url="https://api.deepseek.com",
+                api_key=api_key,
             )
         return self._llm
     
@@ -86,10 +89,12 @@ class OpenRouterProvider(LLMProvider):
         """Get or create OpenRouter LLM instance."""
         if self._llm is None:
             from langchain_openai import ChatOpenAI
+            api_key = os.getenv("OPENROUTER_API_KEY")
             self._llm = ChatOpenAI(
                 model=self.model,
                 temperature=self.temperature,
                 base_url="https://openrouter.ai/api/v1",
+                api_key=api_key,
             )
         return self._llm
 

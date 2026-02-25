@@ -36,9 +36,9 @@ from src.core.config import (
 # ============================================================================
 # CONFIGURATION - Modify these variables to change evaluation behavior
 # ============================================================================
-EVAL_FILE_NAME = "mbh_junior_hu_evalset.json"  # Evaluation dataset file
+EVAL_FILE_NAME = "liverag_eval.json"  # Evaluation dataset file
 OUTPUT_DIR_NAME = "evaluation_results"         # Directory for results
-OUTPUT_FILE_PREFIX = "eval_results_"           # Prefix for output JSON files
+OUTPUT_FILE_PREFIX = "eval_results_liveRAG"           # Prefix for output JSON files
 JUDGE_LLM_TEMPERATURE = 0                      # Temperature for judge LLM (0 = deterministic)
 MEMORY_CLEAR_INTERVAL = 5                      # Clear memory every N questions
 # ============================================================================

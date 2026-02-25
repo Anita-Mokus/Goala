@@ -1,9 +1,13 @@
 """
 LiveRAG Dataset Ingestion Service.
 
-The LiveRAG/Benchmark dataset is already pre-chunked into passages,
-so no partitioning or chunking step is needed — only embed and store.
+The LiveRAG/Benchmark dataset is a Q&A benchmark whose supporting documents
+are stored as JSON objects inside the `Supporting_Documents` column:
+  [{"content": "...", "doc_id": "..."}, ...]
+
+Each row's supporting docs are extracted, de-duplicated, and stored in PGVector.
 """
+import json
 import os
 from typing import List, Optional
 
@@ -20,7 +24,7 @@ from src.core.config import (
 from src.services.embeddings import get_embeddings
 
 
-class LiveragIngestor:
+class IngestLiveRAG:
     """Ingest pre-chunked passages from the LiveRAG/Benchmark HuggingFace dataset."""
 
     def __init__(self):
@@ -48,24 +52,47 @@ class LiveragIngestor:
         """
         Convert HuggingFace dataset rows to LangChain Document objects.
 
-        The LiveRAG/Benchmark dataset rows contain at least:
-          - 'id'       : passage identifier
-          - 'contents' : the passage text  (main content field)
-        Optional fields (used as metadata when present):
-          - 'title', 'url', 'source'
+        Each LiveRAG/Benchmark row has a `Supporting_Documents` field that is a
+        list of JSON strings (or already-parsed dicts), each with:
+          - 'content' : the passage text
+          - 'doc_id'  : unique document identifier
+
+        Rows also carry `Question` and `Index` which are stored as metadata.
+        Duplicate doc_ids across rows are de-duplicated.
         """
         documents = []
+        seen_ids: set = set()
+
         for row in dataset:
-            content = row.get("contents") or row.get("text") or row.get("passage") or ""
-            if not content.strip():
-                continue
+            supporting = row.get("Supporting_Documents") or []
 
-            metadata = {"passage_id": row.get("id", "")}
-            for field in ("title", "url", "source", "docid"):
-                if row.get(field):
-                    metadata[field] = row[field]
+            # The field may arrive as a list of dicts or a list of JSON strings.
+            for entry in supporting:
+                if isinstance(entry, str):
+                    try:
+                        entry = json.loads(entry)
+                    except json.JSONDecodeError:
+                        continue
 
-            documents.append(Document(page_content=content, metadata=metadata))
+                if not isinstance(entry, dict):
+                    continue
+
+                content = entry.get("content", "").strip()
+                doc_id = entry.get("doc_id", "")
+
+                if not content:
+                    continue
+                if doc_id and doc_id in seen_ids:
+                    continue
+                if doc_id:
+                    seen_ids.add(doc_id)
+
+                metadata: dict = {"doc_id": doc_id}
+                # Attach the source question index for traceability
+                if row.get("Index") is not None:
+                    metadata["question_index"] = row["Index"]
+
+                documents.append(Document(page_content=content, metadata=metadata))
 
         return documents
 
@@ -99,18 +126,18 @@ class LiveragIngestor:
             token=HUGGINGFACE_TOKEN or None,
         )
         total = len(ds)
-        print(f"  → {total} passages loaded")
+        print(f"  → {total} benchmark rows loaded")
 
         self._ensure_extension_exists()
 
-        print("Converting passages to Documents and storing in PGVector...")
+        print("Extracting supporting documents and storing in PGVector...")
         all_docs: List[Document] = []
 
         for start in range(0, total, batch_size):
             batch = ds.select(range(start, min(start + batch_size, total)))
             docs = self._dataset_to_documents(batch)
             all_docs.extend(docs)
-            print(f"  Converted {min(start + batch_size, total)}/{total} passages...", end="\r")
+            print(f"  Processed {min(start + batch_size, total)}/{total} rows...", end="\r")
 
         print(f"\n  → {len(all_docs)} non-empty documents ready")
 

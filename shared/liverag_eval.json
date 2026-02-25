@@ -1,0 +1,210 @@
+{
+  "datasets": [
+    {
+      "name": "liverag_benchmark_eval",
+      "description": "Questions and ground-truth answers sampled from the LiveRAG/Benchmark dataset (895 rows, FineWeb-10BT supporting documents).",
+      "questions": [
+        {
+          "input": "How deep can fish survive in the ocean trenches?",
+          "expected_output": "Fish can survive up to 8,100 meters deep. Beyond this depth, no fish live, possibly due to their inability to cope with the highest pressures."
+        },
+        {
+          "input": "Based on temperature considerations alone, is March considered a suitable month to perform the final pruning of grape vines?",
+          "expected_output": "Yes. The first week of March is a good time for the final pruning of grapes, as this is when you can prune the remainder of last year's growth down to about one or 2 inches long for spur production, or 12 to 15 inches long for cane production."
+        },
+        {
+          "input": "What major acts performed at the Brighton Hippodrome during its peak years?",
+          "expected_output": "During its heyday, the Brighton Hippodrome hosted several major acts including Houdini, Laurel and Hardy, and The Beatles."
+        },
+        {
+          "input": "What are the potential drawbacks and limitations of using a one-coat stucco system on exterior walls?",
+          "expected_output": "One-coat stucco systems have several limitations: they are less impact resistant than traditional three-coat stucco, their thinner thickness (3/8-inch) makes them less able to hide framing irregularities and more likely to have problematic thin spots, they are not completely waterproof and will allow water entry at joints, penetrations, or cracks, and they dry out slower than traditional stucco when wet. Additionally, they must be installed according to manufacturer's specific specifications to maintain warranties and code approvals."
+        },
+        {
+          "input": "I need help with a business case study - what format should I use for writing it up?",
+          "expected_output": "You should use a Report format. Reports follow a memorandum-like business format and are specifically designed for case study situations. They use short factual sentences and include supporting evidence in the form of appendix, tables and graphs, with an executive summary replacing the abstract."
+        },
+        {
+          "input": "Could you please explain the earliest documented instance of the 'wandering Jew' Passover custom in Europe?",
+          "expected_output": "The earliest documented instance of this custom was in Germany around 1210, as recorded by Rabbi Asher of Lunel in his Sefer Minhagot. He described how in Germany, after eating karpas, they would uproot the table, take the matzot, wrap them in coverings, bear them on their shoulders, walk to the corners of the house, and then return to their places to recite the Haggadah."
+        },
+        {
+          "input": "What were the main effects of Logic's song about the suicide prevention hotline?",
+          "expected_output": "Logic's song '1-800-273-8255' had several notable effects: it led to increased calls to the National Suicide Prevention Hotline, generated strong social media and website engagement after its April 2017 release, and after his 2017 VMA performance, Logic's Spotify Followers showed a notable spike."
+        },
+        {
+          "input": "What are the main collections housed in the Horniman Museum?",
+          "expected_output": "The Horniman Museum houses displays of anthropology, natural history, and musical instruments. It also includes a library collection of about 30,000 volumes, taxidermied animals, gardens, and an aquarium."
+        },
+        {
+          "input": "What is the standard recommended UV Index for Veiled and Panther Chameleons?",
+          "expected_output": "The standard recommended UV Index for Veiled and Panther Chameleons is between 3 - 6. This level has been proven effective, as females raised under these conditions can produce fully calcified eggs without dietary D3 supplementation."
+        },
+        {
+          "input": "What are the main challenges in making optical gyroscopes smaller, and how did researchers overcome these obstacles?",
+          "expected_output": "The main challenge is that the noise-to-signal ratio becomes worse as optical gyroscopes get smaller, making them easily disrupted by thermal fluctuations, vibrations, and loud noises. Researchers overcame this by using a technique called 'reciprocal sensitivity enhancement,' which uses two disks instead of one and changes the light's direction back and forth. This extends the beam path to several thousand rotations, making the noise more even across the beams and resulting in more accurate measurements."
+        },
+        {
+          "input": "What are the three essential preconditions necessary for a performance brand to have its placebo enhancement effect on athletes?",
+          "expected_output": "First, you need to believe that the brand can deliver high performance. Second, you need to experience anxiety in the task. Third, you need to believe that stress is debilitating and harms performance."
+        },
+        {
+          "input": "What are the essential guidelines for maintaining proper body alignment while performing inline skating?",
+          "expected_output": "When skating, proper alignment means keeping your hips and shoulders lined up one over the other, with your hips and torso facing forward without much side-to-side twisting. Additionally, your knees and ankles should not cave in toward each other - when looking down, they should be in alignment."
+        },
+        {
+          "input": "What is Malaysia's national flower and where can it be seen in Kuala Lumpur?",
+          "expected_output": "Malaysia's national flower is the hibiscus (Bunga Raya), and there is a garden dedicated to it in Kuala Lumpur. The garden features over 2,200 varieties of hibiscus, ranging from singles to doubles and in all colors."
+        },
+        {
+          "input": "What is considered a normal body temperature for dogs?",
+          "expected_output": "A dog's normal body temperature ranges between 38.3 and 39.2 degrees Celsius, which is higher than the human recommended body temperature of 36.5 to 37.5 degrees Celsius."
+        },
+        {
+          "input": "Is microblading safe during pregnancy?",
+          "expected_output": "No, permanent makeup including microblading is not recommended for pregnant or nursing clients."
+        },
+        {
+          "input": "What is the maximum amount of nitrate allowed in drinking water and why is this important for the Gulf of Mexico?",
+          "expected_output": "The national drinking water standard for nitrate (NO3-N) concentration is 10 mg/L. This is important because excess nitrogen is implicated in eutrophication and hypoxia (depletion of dissolved oxygen) in coastal waters of the Gulf of Mexico, and the transport of excess nitrogen from Illinois and other states in the Mississippi River Basin to the Gulf of Mexico via the Mississippi River will likely be considered in setting nitrogen criteria and standards in Illinois."
+        },
+        {
+          "input": "Where did Choan-Seng Song receive his PhD?",
+          "expected_output": "Choan-Seng Song received his Ph.D. from Union Theological Seminary, New York City, in 1965."
+        },
+        {
+          "input": "What are the differences between real time display and real time recording for surveillance DVR units?",
+          "expected_output": "Real time display and real time recording are two distinct features in DVR units. Real time display means the DVR can show live video at full frame rate, while real time recording means the DVR can record at full frame rate. A DVR may display at 480fps total across 16 channels but only record at 120fps total. Recording at lower frame rates means the DVR stores less data but can still display smooth live video."
+        },
+        {
+          "input": "What fraud detection methods are used regarding IP addresses?",
+          "expected_output": "The system checks if the IP address matches the cardholder's billing address within a customizable radius in kilometers, and detects if the cardholder is using a proxy server IP, which will flag the transaction and alert the risk team and merchant."
+        },
+        {
+          "input": "What are the three possible strategies to handle dangerous dust explosion situations?",
+          "expected_output": "The three measures are: reduce the probability of dust cloud, reduce the probability of ignition, and put in place mitigation measures like explosion vents, explosion isolation or explosion suppression."
+        },
+        {
+          "input": "What are the main symptoms of fungal toenail infections?",
+          "expected_output": "The main symptoms of fungal toenail infections include noticeably thicker toenails, white or yellowish-brown discoloration on toenails, dry, brittle, or ragged toenails, foul smell coming from toes, and unusual toenail shape."
+        },
+        {
+          "input": "What is the standard page limit for statements of case in the new Chancery guide?",
+          "expected_output": "The standard page limit for statements of case in the new Chancery guide is 25 pages normally and 40 pages exceptionally, though the Chancery guide does not require an application for permission to exceed 40 pages, unlike the Commercial Court."
+        },
+        {
+          "input": "Did Ukrainian Romanticism influence music significantly?",
+          "expected_output": "No, Romantic influences in Ukrainian music were meager and can be seen only in the works of some composers in the second half of the 19th century, such as Semen Hulak-Artemovsky, Mykola Lysenko, Viktor Matiuk, Sydir Vorobkevych, and Anatol Vakhnianyn, mainly in their compositions to the words of Romantic poets."
+        },
+        {
+          "input": "What key actions does Ready Fairfax ask residents and neighbors to take for emergency preparedness?",
+          "expected_output": "Ready Fairfax asks residents and neighbors to take four key actions: 1) stay informed about different types of emergencies that could occur and their appropriate responses, 2) make an emergency plan, 3) build an emergency supply kit, and 4) get involved in the community by taking action to prepare for emergencies."
+        },
+        {
+          "input": "What is the maximum magnification achievable by a compound microscope?",
+          "expected_output": "Modern compound microscopes can magnify an object from 1,000 to 2,000 times its original dimensions."
+        },
+        {
+          "input": "Why are mittens warmer than regular gloves?",
+          "expected_output": "Mittens keep your hands warmer over a longer period of time than gloves because your fingers are warmer when they are together, rather than being separated as they are in gloves."
+        },
+        {
+          "input": "What is the Synkie and how does it work?",
+          "expected_output": "The Synkie is a modular open source analog video processor developed by Michael Egger, Flo Kaufmann and Max Egger. It functions similarly to a Moog synthesizer but produces images instead of sound. Users can manipulate video signals using patch cables. While still under development with new modules being created, it's already complex enough to use for playing and transforming video signals."
+        },
+        {
+          "input": "What are the distinctive characteristics that make French Baroque music different from other Baroque styles?",
+          "expected_output": "French music from the period of Louis XIV until the French Revolution is not typical Baroque music. It is more equilibrated, formal and decorative in its aesthetics compared to Italian or German Baroque."
+        },
+        {
+          "input": "Name the 3 Deccani kingdoms that emerged in the 16th century.",
+          "expected_output": "The three Deccani kingdoms were Bijapur, Ahmadnagar and Golconda."
+        },
+        {
+          "input": "Can removing meniscus pieces solve knee clicking problems?",
+          "expected_output": "Yes, removing torn meniscus and reshaping the remaining meniscus to a C shape can help with painful locking and clicking within the knee. However, meniscus removal reduces shock absorber function and can lead to arthritis later in life, so meniscus repair is attempted instead of removal when possible."
+        },
+        {
+          "input": "What are the main components of algorithmic trading systems?",
+          "expected_output": "Algorithmic trading systems consist of three main components: the data handler, strategy handler, and trade execution handler. The data handler manages trading data, the strategy handler contains the system's models and decision-making logic, and the execution handler is responsible for putting through trades that the model identifies."
+        },
+        {
+          "input": "What are the four dimensions of complexity in Southern Africa?",
+          "expected_output": "The four broad interactive dimensions of complexity are diversity, ambiguity, change, and interdependence."
+        },
+        {
+          "input": "What led Mark Rylance to resign from the Royal Shakespeare Company?",
+          "expected_output": "Mark Rylance resigned from the Royal Shakespeare Company (RSC) over its sponsorship deal with oil company BP."
+        },
+        {
+          "input": "How long can sea snakes stay underwater without coming up for air?",
+          "expected_output": "Sea snakes can stay underwater for up to eight hours at a time. This remarkable ability is due to several adaptations: they have reduced lungs that take up less space in the body cavity, can store more oxygen in their blood and muscles, possess an efficient circulatory system, and can conserve oxygen by reducing their metabolism."
+        },
+        {
+          "input": "What are the possible directional paths that a golf club can take during a swing motion?",
+          "expected_output": "The club path can only take one of three directions: 1) outside-in, 2) square-to-target, and 3) inside-out. Every golfer has a natural tendency to swing on one of these paths based on their body type and range of flexibility."
+        },
+        {
+          "input": "What is the slowest speed of light measured when it passed through gallium nitride crystal?",
+          "expected_output": "Light velocity was measured to be as low as 2,100 kilometers per second when passing through bulk gallium nitride crystal, with a 1 millimeter long path causing a delay of 470 picoseconds."
+        },
+        {
+          "input": "In which month is the annual international queer tango festival held in Buenos Aires?",
+          "expected_output": "The annual international queer tango festival in Buenos Aires is held in November."
+        },
+        {
+          "input": "Is idle operation responsible for 25-30% of total compressor power consumption?",
+          "expected_output": "Yes, idle operation accounts for approximately 25-30% of the total power consumption of the compressor without generating any compressed air. Speed-controlled screw compressors reduce these costly idle times to a minimum by precisely adapting the volume flow to the compressed air requirement."
+        },
+        {
+          "input": "What are the types of narrative codes proposed by Roland Barthes?",
+          "expected_output": "Barthes proposed several codes: Enigma codes (questions that aren't immediately answered), Action codes (immediately understandable actions), Symbolic codes (decoded on a connotational level, often structured in oppositions), and Cultural codes (references to knowledge outside the text, like accents or parodies of other texts)."
+        },
+        {
+          "input": "What causes menthol different sensations?",
+          "expected_output": "Menthol produces different sensations by activating cold-sensitive receptors in the skin, creating a cooling sensation without actually lowering temperature, while at higher concentrations it can also produce a warming or tingling sensation."
+        },
+        {
+          "input": "What is the broadside shot angle recommended for bowhunting large game like elk and moose?",
+          "expected_output": "The broadside shot angle is best for large game like elk and moose. This angle provides the shortest distance through the animal's chest cavity and the best opportunity for a double-lung hit. The ideal aiming spot is straight up from the back side of the front leg, one-third of the way up from the bottom of the chest."
+        },
+        {
+          "input": "When was the Philharmonia Orchestra founded?",
+          "expected_output": "The Philharmonia Orchestra was founded in 1945, in part as a recording orchestra for the nascent home audio market."
+        },
+        {
+          "input": "What plants contain rubber from the Periplocaceae family?",
+          "expected_output": "Cryptostegia from the Periplocaceae family has been used as a source of natural rubber."
+        },
+        {
+          "input": "What are the key steps involved in safely extinguishing a campfire?",
+          "expected_output": "Water should be poured on the campfire while stirring the ashes with a shovel. Water should be added until all embers are extinguished and all heat has been removed from the ashes. The ashes and coals should be spread apart to ensure no embers remain that could spark another fire. A bucket of water and shovel should be kept ready, and the ashes should be stored in a metal container away from flammable materials."
+        },
+        {
+          "input": "What movie features a visual explanation of the Snake Lemma?",
+          "expected_output": "The Snake Lemma appears in the 1980 movie 'It's My Turn', which stars Jill Clayburgh and Michael Douglas."
+        },
+        {
+          "input": "Are roses safe for households with dogs?",
+          "expected_output": "Yes, roses are one of the best non-toxic flowers to display around pets. They come in a variety of colors, shapes, and sizes, offering variability without putting your pet at risk."
+        },
+        {
+          "input": "What happened to DJ Khaled when he showed his credit card in an online video?",
+          "expected_output": "DJ Khaled lost around $80,000 after showing a credit card during a motivational video posted online. Viewers of the video could see the credit card details clearly, and money was stolen from his credit card within moments of the video being posted."
+        },
+        {
+          "input": "What are the physical characteristics of subglacial volcanoes and how do they affect glacier movement?",
+          "expected_output": "Subglacial volcanoes have distinctive physical characteristics, featuring flattened tops and steep sides that are supported against collapse by the pressure of surrounding ice and meltwater. If the volcano melts completely through the ice layer, it forms horizontal lava flows and assumes a nearly level form."
+        },
+        {
+          "input": "What environmental factors affect sound propagation?",
+          "expected_output": "Several environmental factors influence noise levels. Temperature inversions, particularly during winter, affect sound propagation. Low cloud cover can 'reflect' sound waves, increasing their intensity on the ground. Background noise from sources like traffic, cicadas, birds, cattle, flowing water and wind can have a cumulative effect on noise levels."
+        },
+        {
+          "input": "What are the main applications of IoT water level sensors in agriculture and irrigation systems?",
+          "expected_output": "IoT water level sensors in agriculture play a vital role in optimizing agricultural water usage. They monitor soil moisture levels and irrigation structures, allowing farmers to make informed decisions regarding irrigation timing and water application, which results in improved crop yield and resource conservation."
+        }
+      ]
+    }
+  ]
+}

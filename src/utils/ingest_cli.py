@@ -11,6 +11,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from src.services import IngestService
+from src.services.ingest_liverag import IngestLiveRAG
 
 
 def main():
@@ -20,18 +21,19 @@ def main():
     print("=" * 60 + "\n")
     
     ingest_service = IngestService()
+    ingest_liveRAG_service = IngestLiveRAG()
     
     try:
         # Check if specific file is provided
-        if len(sys.argv) > 1:
-            doc_path = sys.argv[1]
-            print(f"Ingesting specific file: {doc_path}\n")
-            ingest_service.ingest_document(doc_path)
-        else:
-            # Ingeste all documents from data folder
-            print("Ingesting all documents from data folder...\n")
-            ingest_service.ingest_all_documents()
-        
+        # if len(sys.argv) > 1:
+        #     doc_path = sys.argv[1]
+        #     print(f"Ingesting specific file: {doc_path}\n")
+        #     ingest_service.ingest_document(doc_path)
+        # else:
+        #     # Ingeste all documents from data folder
+        #     print("Ingesting all documents from data folder...\n")
+        #     ingest_service.ingest_all_documents()
+        ingest_liveRAG_service.ingest()
         print("\n" + "=" * 60)
         print("Ingestion completed successfully!")
         print("=" * 60 + "\n")
