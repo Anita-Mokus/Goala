@@ -53,6 +53,8 @@ DEEPSEEK_LLM_MODEL = os.getenv("DEEPSEEK_LLM_MODEL", "deepseek-chat")
 
 OPENROUTER_LLM_MODEL = os.getenv("OPENROUTER_LLM_MODEL", "openai/gpt-oss-120b:exacto")
 
+HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN", "")
+
 # Get the appropriate model based on provider
 if LLM_PROVIDER.lower() == "deepseek":
     LLM_MODEL = DEEPSEEK_LLM_MODEL
