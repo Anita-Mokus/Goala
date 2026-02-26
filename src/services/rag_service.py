@@ -14,7 +14,8 @@ from src.core.config import (
     LLM_MODEL,
     LLM_TEMPERATURE,
     RETRIEVER_K,
-    RAG_PROMPT_TEMPLATE
+    RAG_PROMPT_TEMPLATE,
+    OLLAMA_BASE_URL
 )
 from src.services.llm_provider import get_llm_provider
 from src.services.embeddings import get_embeddings
@@ -40,7 +41,7 @@ class RAGService:
             raise RuntimeError(f"Failed to connect to vector database: {str(e)}")
         
         # Initialize LLM using the configured provider
-        llm_provider = get_llm_provider(LLM_PROVIDER, LLM_MODEL, LLM_TEMPERATURE)
+        llm_provider = get_llm_provider(LLM_PROVIDER, LLM_MODEL, LLM_TEMPERATURE, base_url=OLLAMA_BASE_URL)
         self.llm = llm_provider.get_llm()
         
         # Create prompt template

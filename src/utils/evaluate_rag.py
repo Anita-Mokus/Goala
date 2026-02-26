@@ -28,6 +28,7 @@ from src.core.config import (
     CHUNK_NEW_AFTER_N_CHARS,
     CHUNK_OVERLAP,
     CHUNK_MULTIPAGE_SECTIONS,
+    OLLAMA_BASE_URL,
     PDF_STRATEGY,
     PDF_LANGUAGE,
 )
@@ -135,7 +136,7 @@ def evaluate_rag():
     
     # Initialize judge LLM using configured provider
     print("Initializing judge LLM...")
-    judge_provider = get_llm_provider(LLM_PROVIDER, LLM_MODEL, JUDGE_LLM_TEMPERATURE)
+    judge_provider = get_llm_provider(LLM_PROVIDER, LLM_MODEL, JUDGE_LLM_TEMPERATURE, base_url=OLLAMA_BASE_URL)
     judge_llm = judge_provider.get_llm()
     
     # Get chunking configuration

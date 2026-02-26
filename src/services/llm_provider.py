@@ -94,14 +94,44 @@ class OpenRouterProvider(LLMProvider):
         return self._llm
 
 
-def get_llm_provider(provider_name: str, model: str, temperature: float) -> LLMProvider:
+class OllamaProvider(LLMProvider):
+    """Ollama local model provider implementation."""
+    
+    def __init__(self, model: str = "qwen2.5", temperature: float = 0.3, base_url: str = "http://localhost:11434"):
+        """
+        Initialize Ollama provider.
+        
+        Args:
+            model: Model name (default: 'qwen2.5')
+            temperature: Temperature parameter for generation
+            base_url: Ollama server base URL (default: 'http://localhost:11434')
+        """
+        self.model = model
+        self.temperature = temperature
+        self.base_url = base_url
+        self._llm = None
+    
+    def get_llm(self):
+        """Get or create Ollama LLM instance."""
+        if self._llm is None:
+            from langchain_ollama import ChatOllama
+            self._llm = ChatOllama(
+                model=self.model,
+                temperature=self.temperature,
+                base_url=self.base_url,
+            )
+        return self._llm
+
+
+def get_llm_provider(provider_name: str, model: str, temperature: float, base_url: Optional[str] = None) -> LLMProvider:
     """
     Factory function to get the appropriate LLM provider.
     
     Args:
-        provider_name: Name of the provider ('groq' or 'deepseek' or 'openrouter')
+        provider_name: Name of the provider ('groq', 'deepseek', 'openrouter', or 'ollama')
         model: Model name for the provider
         temperature: Temperature parameter for generation
+        base_url: Optional base URL for Ollama provider
         
     Returns:
         An instance of the requested LLM provider
@@ -113,6 +143,7 @@ def get_llm_provider(provider_name: str, model: str, temperature: float) -> LLMP
         'groq': GroqProvider,
         'deepseek': DeepSeekProvider,
         'openrouter': OpenRouterProvider,
+        'ollama': OllamaProvider,
     }
     
     if provider_name.lower() not in providers:
@@ -122,4 +153,9 @@ def get_llm_provider(provider_name: str, model: str, temperature: float) -> LLMP
         )
     
     provider_class = providers[provider_name.lower()]
+    
+    # Pass base_url to OllamaProvider if provided
+    if provider_name.lower() == 'ollama' and base_url:
+        return provider_class(model=model, temperature=temperature, base_url=base_url)
+    
     return provider_class(model=model, temperature=temperature)

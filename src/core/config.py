@@ -37,7 +37,7 @@ CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))  # Overlap between chunks
 CHUNK_MULTIPAGE_SECTIONS = os.getenv("CHUNK_MULTIPAGE_SECTIONS", "true").lower() == "true"  # Allow sections to span pages
 
 # LLM Provider Selection
-# Options: 'groq' or 'deepseek' or 'openrouter'
+# Options: 'groq', 'deepseek', 'openrouter', or 'ollama'
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openrouter")
 
 # Groq Model Options (when using Groq provider)
@@ -53,6 +53,13 @@ DEEPSEEK_LLM_MODEL = os.getenv("DEEPSEEK_LLM_MODEL", "deepseek-chat")
 
 OPENROUTER_LLM_MODEL = os.getenv("OPENROUTER_LLM_MODEL", "openai/gpt-oss-120b:exacto")
 
+# Ollama Model Options (when using Ollama provider)
+# "qwen2.5"                   # Qwen 2.5 model
+# "llama2"                    # Llama 2 model
+# "mistral"                   # Mistral model
+OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "qwen2.5")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
 # Get the appropriate model based on provider
 if LLM_PROVIDER.lower() == "deepseek":
     LLM_MODEL = DEEPSEEK_LLM_MODEL
@@ -60,11 +67,13 @@ elif LLM_PROVIDER.lower() == "groq":
     LLM_MODEL = GROQ_LLM_MODEL
 elif LLM_PROVIDER.lower() == "openrouter":
     LLM_MODEL = OPENROUTER_LLM_MODEL
+elif LLM_PROVIDER.lower() == "ollama":
+    LLM_MODEL = OLLAMA_LLM_MODEL
 
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))  # Slightly higher for friendlier responses
 
 # Retriever settings
-RETRIEVER_K = 4  # Number of documents to retrieve
+RETRIEVER_K = 8  # Number of documents to retrieve
 
 # API settings
 API_TITLE = "AI Chat Flow API"
