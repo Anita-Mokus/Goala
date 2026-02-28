@@ -1,0 +1,91 @@
+---
+description: RAG pipeline architecture, service patterns, and LLM provider conventions
+globs: src/**/*.py
+alwaysApply: false
+---
+
+# RAG Pipeline — Service Patterns
+
+## Architecture Flow
+
+```
+POST /chat
+  └─► RAGService.query(message)
+        ├─ PGVector similarity search (top K docs, default 8)
+        ├─ Format context string
+        └─ LLMProvider.generate(prompt + context)
+```
+
+## Embedding Model
+
+- **Model**: `BAAI/bge-m3` (multilingual — supports any language, suitable for multi-company deployments)
+- **Device**: CPU only — do NOT change to GPU without updating Dockerfile
+- **Normalization**: enabled
+- **Access pattern**: always via singleton in `src/services/embeddings.py`
+
+```python
+# CORRECT — use the module singleton
+from src.services.embeddings import get_embeddings
+embeddings = get_embeddings()
+
+# WRONG — never instantiate directly in other modules
+from langchain_huggingface import HuggingFaceEmbeddings
+embeddings = HuggingFaceEmbeddings(...)
+```
+
+## Vector Store
+
+- **Backend**: PostgreSQL + pgvector
+- **Collection**: `document_embeddings`
+- **Driver**: `psycopg` (psycopg3) — connection string uses `postgresql+psycopg://`
+- **Retrieval**: cosine similarity, configurable K via `RETRIEVER_K` env var
+
+## LLM Providers
+
+Provider is selected via `LLM_PROVIDER` env var. Factory in `src/services/llm_provider.py`.
+
+| Provider | Env var key | Default model |
+|----------|-------------|---------------|
+| `openrouter` | `OPENAI_API_KEY` | `openai/gpt-oss-120b:exacto` |
+| `groq` | `GROQ_API_KEY` | `llama-3.3-70b-versatile` |
+| `deepseek` | `OPENAI_API_KEY` | `deepseek-chat` |
+| `ollama` | — | `qwen2.5` (local via `OLLAMA_BASE_URL`) |
+
+When adding a new provider, extend `LLMProvider` base class and register in the factory function.
+
+## Document Ingestion
+
+- Entry point: `src/services/ingest_service.py`
+- Parser: `unstructured` library (`partition_*` functions)
+- Chunking: `chunk_by_title` (semantic, title-aware) — NOT recursive character splitting
+- Supported formats: PDF, TXT, DOCX, HTML, CSV
+- Errors are isolated per file — one bad file does not abort the whole batch
+
+### Chunking env vars
+
+| Var | Default | Meaning |
+|-----|---------|---------|
+| `CHUNK_MAX_CHARACTERS` | 1000 | Hard max chunk size |
+| `CHUNK_NEW_AFTER_N_CHARS` | 800 | Preferred chunk size |
+| `CHUNK_OVERLAP` | 200 | Overlap between chunks |
+| `CHUNK_MULTIPAGE_SECTIONS` | true | Allow sections spanning pages |
+| `PDF_LANGUAGE` | `hun` | Tesseract OCR language |
+| `PDF_STRATEGY` | `auto` | `auto/fast/hi_res/ocr_only` |
+
+## Configuration
+
+All settings are in `src/core/config.py` via Pydantic `BaseSettings`. Always read config from there — never hardcode values or read `os.environ` directly in service code.
+
+## Per-Company Customization
+
+Each deployment is differentiated through:
+- **System prompt** in `src/core/config.py` — defines the assistant's persona and scope for the specific company
+- **`data/` folder** — company-specific documents to ingest (PDF, TXT, DOCX, HTML, CSV)
+- **`PDF_LANGUAGE`** env var — set to the company's primary language for OCR
+- **LLM provider + model** — chosen based on the company's cost/performance requirements
+
+The platform is multi-tenant by configuration, not by code — each Docker deployment is isolated per company.
+
+## Evaluation
+
+`src/utils/evaluate_rag.py` runs batch evaluation using an LLM judge (1–5 scoring rubric). Evaluation datasets live in `shared/`.
