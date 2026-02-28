@@ -30,11 +30,14 @@ function SettingsForm({ settings, onSave, saving }: SettingsFormProps) {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    const { name, value, type } = e.target;
+    const { name, value } = e.target;
+    const target = e.target as HTMLInputElement;
+    const type = target.type;
+    
     setFormData((prev) => ({
       ...prev,
       [name]:
-        type === 'number'
+        type === 'number' || type === 'range'
           ? parseFloat(value)
           : value,
     }));
