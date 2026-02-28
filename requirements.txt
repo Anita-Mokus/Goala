@@ -8,7 +8,7 @@ pydantic>=2.7.4,<3.0.0
 
 # LangChain 0.3.x family (pinned to prevent 1.x upgrades)
 langchain-core>=0.3.55,<1.0.0
-langchain>=0.3.0,<0.4.0
+langchain==0.3.24
 langchain-text-splitters>=0.3.6,<1.0.0
 
 # LangChain integrations (compatible with 0.3.x core)
@@ -16,7 +16,7 @@ langchain-groq>=0.2.0,<1.0.0
 langchain-openai>=0.2.0,<1.0.0
 langchain-huggingface>=0.1.0,<1.0.0
 langchain-postgres==0.0.16
-langchain-ollama>=1.0.1
+langchain-ollama>=0.2.0,<1.0.0
 
 # Unstructured for direct partitioning and chunking
 unstructured[pdf]==0.18.32
