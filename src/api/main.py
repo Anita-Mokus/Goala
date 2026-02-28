@@ -16,6 +16,7 @@ from src.core.config import (
     CORS_HEADERS,
     DATABASE_URL,
 )
+from src.api.routes import settings, history
 
 # Global service instance (lazy initialization to prevent startup crashes)
 _rag_service = None
@@ -50,6 +51,10 @@ app.add_middleware(
     allow_methods=CORS_METHODS,
     allow_headers=CORS_HEADERS,
 )
+
+# Register API routers
+app.include_router(settings.router)
+app.include_router(history.router)
 
 
 # Startup event: Initialize vector database on first run

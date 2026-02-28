@@ -1,0 +1,53 @@
+.settings-page {
+  max-width: 900px;
+}
+
+.settings-page h1 {
+  margin-bottom: 0.5rem;
+}
+
+.settings-description {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 2rem;
+}
+
+.loading {
+  padding: 2rem;
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+.error-message {
+  background-color: #ff4444;
+  color: white;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.success-message {
+  background-color: #44ff44;
+  color: #000;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.settings-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+@media (prefers-color-scheme: light) {
+  .settings-description {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  .settings-footer {
+    border-top-color: #e0e0e0;
+    color: rgba(0, 0, 0, 0.5);
+  }
+}

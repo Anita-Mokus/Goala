@@ -1,5 +1,5 @@
-# Docker Compose for Goala Development Environment
-# Services: PostgreSQL (pgvector), FastAPI Backend, Frontend (placeholder)
+# Docker Compose for Goala
+# Services: PostgreSQL (pgvector), FastAPI Backend, React Frontend
 
 services:
   # =============================================================================
@@ -19,6 +19,7 @@ services:
     volumes:
       - pgvector_data:/var/lib/postgresql/data
       - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - ./docker/migrations:/migrations:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-goala}"]
       interval: 10s
@@ -59,22 +60,20 @@ services:
       - goala-network
 
   # =============================================================================
-  # Frontend (Placeholder - to be implemented)
+  # Frontend (React Admin Panel)
   # =============================================================================
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   container_name: goala-frontend
-  #   restart: unless-stopped
-  #   ports:
-  #     - "${FRONTEND_PORT:-3000}:3000"
-  #   environment:
-  #     - API_URL=http://api:8000
-  #   depends_on:
-  #     - api
-  #   networks:
-  #     - goala-network
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: goala-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      - api
+    networks:
+      - goala-network
 
 # =============================================================================
 # Networks
