@@ -20,17 +20,17 @@ from src.services import RAGService
 from src.services.llm_provider import get_llm_provider
 from src.core.config import (
     EMBEDDING_MODEL,
-    LLM_MODEL,
-    LLM_TEMPERATURE,
-    LLM_PROVIDER,
-    RETRIEVER_K,
-    CHUNK_MAX_CHARACTERS,
-    CHUNK_NEW_AFTER_N_CHARS,
-    CHUNK_OVERLAP,
-    CHUNK_MULTIPAGE_SECTIONS,
     OLLAMA_BASE_URL,
-    PDF_STRATEGY,
-    PDF_LANGUAGE,
+    CHUNK_MULTIPAGE_SECTIONS,
+    get_current_llm_model,
+    get_current_llm_temperature,
+    get_current_llm_provider,
+    get_current_retriever_k,
+    get_current_chunk_max_characters,
+    get_current_chunk_new_after_n_chars,
+    get_current_chunk_overlap,
+    get_current_pdf_strategy,
+    get_current_pdf_language,
 )
 
 
@@ -99,15 +99,15 @@ def parse_judge_response(response: str) -> tuple[int, str]:
 
 
 def get_chunk_config():
-    """Get chunking and RAG configuration from config module."""
+    """Get chunking and RAG configuration from DB or env."""
     return {
         "chunking_strategy": "chunk_by_title",
-        "chunk_max_characters": CHUNK_MAX_CHARACTERS,
-        "chunk_new_after_n_chars": CHUNK_NEW_AFTER_N_CHARS,
-        "chunk_overlap": CHUNK_OVERLAP,
+        "chunk_max_characters": get_current_chunk_max_characters(),
+        "chunk_new_after_n_chars": get_current_chunk_new_after_n_chars(),
+        "chunk_overlap": get_current_chunk_overlap(),
         "chunk_multipage_sections": CHUNK_MULTIPAGE_SECTIONS,
-        "pdf_strategy": PDF_STRATEGY,
-        "pdf_language": PDF_LANGUAGE,
+        "pdf_strategy": get_current_pdf_strategy(),
+        "pdf_language": get_current_pdf_language(),
     }
 
 
@@ -136,7 +136,9 @@ def evaluate_rag():
     
     # Initialize judge LLM using configured provider
     print("Initializing judge LLM...")
-    judge_provider = get_llm_provider(LLM_PROVIDER, LLM_MODEL, JUDGE_LLM_TEMPERATURE, base_url=OLLAMA_BASE_URL)
+    llm_provider = get_current_llm_provider()
+    llm_model = get_current_llm_model()
+    judge_provider = get_llm_provider(llm_provider, llm_model, JUDGE_LLM_TEMPERATURE, base_url=OLLAMA_BASE_URL)
     judge_llm = judge_provider.get_llm()
     
     # Get chunking configuration
@@ -146,11 +148,11 @@ def evaluate_rag():
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     metadata = {
         "timestamp": timestamp,
-        "llm_provider": LLM_PROVIDER,
-        "llm_model": LLM_MODEL,
-        "llm_temperature": LLM_TEMPERATURE,
+        "llm_provider": llm_provider,
+        "llm_model": llm_model,
+        "llm_temperature": get_current_llm_temperature(),
         "embedding_model": EMBEDDING_MODEL,
-        "retriever_k": RETRIEVER_K,
+        "retriever_k": get_current_retriever_k(),
         "chunking": {
             "strategy": chunk_config["chunking_strategy"],
             "max_characters": chunk_config["chunk_max_characters"],
