@@ -41,12 +41,14 @@ services:
     env_file: .env
     environment:
       - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-goala}
+      - HF_HOME=/app/huggingface_cache
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
       - ./src:/app/src  
       - ./data:/app/data:ro
       - ./shared:/app/shared
+      - huggingface_cache:/app/huggingface_cache
     depends_on:
       db:
         condition: service_healthy
@@ -67,11 +69,10 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: goala-frontend
+    env_file: .env
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
-    depends_on:
-      - api
     networks:
       - goala-network
 
@@ -88,3 +89,5 @@ networks:
 volumes:
   pgvector_data:
     name: goala-pgvector-data
+  huggingface_cache:
+    name: goala-huggingface-cache
