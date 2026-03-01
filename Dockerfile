@@ -51,10 +51,10 @@ COPY src/ ./src/
 COPY data/ ./data/
 
 # Environment variables
-ENV HONDONTWRITEBYTECODE=1 \
+ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    HF_HOME=/tmp/huggingface_cache
+    HF_HOME=/app/huggingface_cache
 
 EXPOSE 8000
 
