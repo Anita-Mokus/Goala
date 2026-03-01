@@ -3,3 +3,4 @@ alwaysApply: true
 ---
 
 Never try running docker commands.  
+Never create markdown files for sumaries.
