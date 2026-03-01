@@ -31,6 +31,8 @@ from src.core.config import (
     CHUNK_MULTIPAGE_SECTIONS,
     PDF_STRATEGY,
     PDF_LANGUAGE,
+    JUDGE_LLM_PROVIDER,
+    JUDGE_LLM_MODEL,
 )
 
 
@@ -198,8 +200,9 @@ def evaluate_rag():
     
     # Initialize judge LLM using configured provider
     print("Initializing judge LLM...")
-    judge_provider = get_llm_provider(LLM_PROVIDER, LLM_MODEL, JUDGE_LLM_TEMPERATURE)
+    judge_provider = get_llm_provider(JUDGE_LLM_PROVIDER, JUDGE_LLM_MODEL, JUDGE_LLM_TEMPERATURE)
     judge_llm = judge_provider.get_llm()
+    print(f"  Judge: {JUDGE_LLM_PROVIDER} / {JUDGE_LLM_MODEL}")
     
     # Get chunking configuration
     chunk_config = get_chunk_config()
@@ -211,6 +214,8 @@ def evaluate_rag():
         "llm_provider": LLM_PROVIDER,
         "llm_model": LLM_MODEL,
         "llm_temperature": LLM_TEMPERATURE,
+        "judge_llm_provider": JUDGE_LLM_PROVIDER,
+        "judge_llm_model": JUDGE_LLM_MODEL,
         "embedding_model": EMBEDDING_MODEL,
         "retriever_k": RETRIEVER_K,
         "chunking": {

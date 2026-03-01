@@ -23,7 +23,7 @@ def get_embeddings() -> HuggingFaceEmbeddings:
         print(f"Initializing embeddings model: {EMBEDDING_MODEL}")
         _embeddings_instance = HuggingFaceEmbeddings(
             model_name=EMBEDDING_MODEL,
-            model_kwargs={'device': 'cpu'},
+            model_kwargs={'device': 'cuda'},
             encode_kwargs={'normalize_embeddings': True}
         )
         print("✓ Embeddings model loaded")

@@ -190,6 +190,8 @@ class IngestLiveRAG:
         for start in range(0, total, batch_size):
             batch = ds.select(range(start, min(start + batch_size, total)))
             docs = self._dataset_to_documents(batch)
+            print(batch)
+            print(50 * "*")
             all_docs.extend(docs)
             print(f"  Processed {min(start + batch_size, total)}/{total} rows...", end="\r")
 
