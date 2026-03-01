@@ -41,6 +41,7 @@ from src.core.config import (
 # ============================================================================
 EVAL_FILE_NAME = "liverag_eval.json"          # Evaluation dataset file
 MRR_LABELS_FILE = "liverag_mrr_labels.csv"    # Manually-labelled relevance CSV (see generate_mrr_template.py)
+QUESTION_DOCIDS_FILE = "liverag_question_docids.json"  # Question → doc_ids map (produced by ingest)
 OUTPUT_DIR_NAME = "evaluation_results"        # Directory for results
 OUTPUT_FILE_PREFIX = "eval_results_liveRAG"   # Prefix for output JSON files
 JUDGE_LLM_TEMPERATURE = 0                     # Temperature for judge LLM (0 = deterministic)
@@ -160,7 +161,69 @@ def get_chunk_config():
         "pdf_language": PDF_LANGUAGE,
     }
 
+def compute_score_stats(results: list, label: str) -> dict | None:
+    """
+    Compute score distribution and MRR statistics for a subset of results.
 
+    Args:
+        results: List of result dicts (full or filtered).
+        label:   Human-readable group name used in console output.
+
+    Returns:
+        Statistics dict, or None if there are no results.
+    """
+    if not results:
+        return None
+
+    scores = [r["score"] for r in results if isinstance(r["score"], int)]
+    rr_values = [r["reciprocal_rank"] for r in results if r.get("reciprocal_rank") is not None]
+
+    stats: dict = {
+        "label": label,
+        "total_questions": len(results),
+        "average_score": round(sum(scores) / len(scores), 2) if scores else None,
+        "score_distribution": {
+            "score_5": {"count": scores.count(5), "percentage": round(scores.count(5) / len(scores) * 100, 1)},
+            "score_4": {"count": scores.count(4), "percentage": round(scores.count(4) / len(scores) * 100, 1)},
+            "score_3": {"count": scores.count(3), "percentage": round(scores.count(3) / len(scores) * 100, 1)},
+            "score_2": {"count": scores.count(2), "percentage": round(scores.count(2) / len(scores) * 100, 1)},
+            "score_1": {"count": scores.count(1), "percentage": round(scores.count(1) / len(scores) * 100, 1)},
+        } if scores else {},
+    }
+
+    if rr_values:
+        mrr = round(sum(rr_values) / len(rr_values), 4)
+        stats["mrr"] = {
+            "mean_reciprocal_rank": mrr,
+            "questions_with_ground_truth": len(rr_values),
+            "questions_hit_at_1": sum(1 for rr in rr_values if rr == 1.0),
+            "questions_hit_at_3": sum(1 for rr in rr_values if rr >= 1 / 3),
+            "questions_hit_at_5": sum(1 for rr in rr_values if rr >= 1 / 5),
+            "questions_hit_at_k": sum(1 for rr in rr_values if rr > 0),
+        }
+
+    return stats
+
+
+def print_stats(stats: dict) -> None:
+    """Print a statistics block to stdout."""
+    print(f"\n--- {stats['label']} ({stats['total_questions']} questions) ---")
+    if stats.get("average_score") is not None:
+        print(f"  Average score: {stats['average_score']}/5")
+    if stats.get("score_distribution"):
+        print("  Score Distribution:")
+        for level, data in stats["score_distribution"].items():
+            print(f"    {level}: {data['count']} ({data['percentage']}%)")
+    if "mrr" in stats:
+        m = stats["mrr"]
+        n = m["questions_with_ground_truth"]
+        print(f"  Retrieval — Mean Reciprocal Rank (MRR):")
+        print(f"    MRR:              {m['mean_reciprocal_rank']:.4f}")
+        print(f"    Questions w/ GT:  {n}")
+        print(f"    Hit@1:            {m['questions_hit_at_1']} ({round(m['questions_hit_at_1']/n*100,1)}%)")
+        print(f"    Hit@3:            {m['questions_hit_at_3']} ({round(m['questions_hit_at_3']/n*100,1)}%)")
+        print(f"    Hit@5:            {m['questions_hit_at_5']} ({round(m['questions_hit_at_5']/n*100,1)}%)")
+        print(f"    Hit@K (any rank): {m['questions_hit_at_k']} ({round(m['questions_hit_at_k']/n*100,1)}%)")
 
 def evaluate_rag():
     """Run the RAG evaluation."""
@@ -177,8 +240,15 @@ def evaluate_rag():
     with open(eval_file, 'r', encoding='utf-8') as f:
         eval_data = json.load(f)
 
-    # Load manually-labelled MRR CSV (produced by generate_mrr_template.py)
-    labels_file = project_root / 'shared' / MRR_LABELS_FILE
+    # Load question → doc_ids map to know how many supporting docs each question has
+    docids_path = project_root / 'shared' / QUESTION_DOCIDS_FILE
+    question_docids_map: dict = {}
+    if docids_path.exists():
+        with open(docids_path, 'r', encoding='utf-8') as f:
+            question_docids_map = json.load(f)
+        print(f"  Loaded question→doc_ids map: {len(question_docids_map)} entries")
+    else:
+        print(f"  INFO: {QUESTION_DOCIDS_FILE} not found — single/multi-doc split will be skipped.")    labels_file = project_root / 'shared' / MRR_LABELS_FILE
     mrr_labels: dict[int, list[int]] = {}
     if labels_file.exists():
         mrr_labels = load_mrr_labels(labels_file)
@@ -218,17 +288,6 @@ def evaluate_rag():
         "judge_llm_model": JUDGE_LLM_MODEL,
         "embedding_model": EMBEDDING_MODEL,
         "retriever_k": RETRIEVER_K,
-        "chunking": {
-            "strategy": chunk_config["chunking_strategy"],
-            "max_characters": chunk_config["chunk_max_characters"],
-            "new_after_n_chars": chunk_config["chunk_new_after_n_chars"],
-            "overlap": chunk_config["chunk_overlap"],
-            "multipage_sections": chunk_config["chunk_multipage_sections"],
-        },
-        "pdf_processing": {
-            "strategy": chunk_config["pdf_strategy"],
-            "language": chunk_config["pdf_language"],
-        },
     }
     
     print("\nConfiguration:")
@@ -292,6 +351,9 @@ def evaluate_rag():
                 labels = []
                 rr = None
 
+            # Tag with number of supporting docs (for split statistics)
+            supporting_doc_count = len(question_docids_map.get(question, []))
+
             # Store result
             results.append({
                 "question": question,
@@ -302,6 +364,7 @@ def evaluate_rag():
                 "explanation": explanation,
                 "reciprocal_rank": rr,
                 "mrr_labels": labels,
+                "supporting_doc_count": supporting_doc_count,
                 "retrieved_doc_ids": [
                     doc.metadata.get("doc_id", "") for doc in retrieved_docs
                 ],
@@ -315,32 +378,21 @@ def evaluate_rag():
             
             print()
     
-    # Calculate statistics
-    scores = [r["score"] for r in results if isinstance(r["score"], int)]
-    rr_values = [r["reciprocal_rank"] for r in results if r.get("reciprocal_rank") is not None]
-    statistics = {}
-    if scores:
-        statistics = {
-            "total_questions": len(results),
-            "average_score": round(sum(scores) / len(scores), 2),
-            "score_distribution": {
-                "score_5": {"count": scores.count(5), "percentage": round(scores.count(5)/len(scores)*100, 1)},
-                "score_4": {"count": scores.count(4), "percentage": round(scores.count(4)/len(scores)*100, 1)},
-                "score_3": {"count": scores.count(3), "percentage": round(scores.count(3)/len(scores)*100, 1)},
-                "score_2": {"count": scores.count(2), "percentage": round(scores.count(2)/len(scores)*100, 1)},
-                "score_1": {"count": scores.count(1), "percentage": round(scores.count(1)/len(scores)*100, 1)}
-            },
-        }
-        if rr_values:
-            mrr = round(sum(rr_values) / len(rr_values), 4)
-            statistics["mrr"] = {
-                "mean_reciprocal_rank": mrr,
-                "questions_with_ground_truth": len(rr_values),
-                "questions_hit_at_1": sum(1 for rr in rr_values if rr == 1.0),
-                "questions_hit_at_3": sum(1 for rr in rr_values if rr >= 1/3),
-                "questions_hit_at_5": sum(1 for rr in rr_values if rr >= 1/5),
-                "questions_hit_at_k": sum(1 for rr in rr_values if rr > 0),
-            }
+    # Calculate statistics — overall + split by single vs multi supporting doc
+    single_doc = [r for r in results if r.get("supporting_doc_count") == 1]
+    multi_doc  = [r for r in results if r.get("supporting_doc_count", 0) > 1]
+    unknown    = [r for r in results if r.get("supporting_doc_count", 0) == 0]
+
+    stats_overall = compute_score_stats(results, "Overall")
+    stats_single  = compute_score_stats(single_doc, "Single supporting document")
+    stats_multi   = compute_score_stats(multi_doc,  "Multiple supporting documents")
+
+    statistics = {
+        "overall": stats_overall,
+        "single_supporting_doc": stats_single,
+        "multi_supporting_doc": stats_multi,
+        "unknown_doc_count": len(unknown),
+    }
     
     # Prepare final output
     output_data = {
@@ -363,22 +415,11 @@ def evaluate_rag():
     
     # Print statistics
     print(f"\nResults saved to: {output_file}")
-    if statistics:
-        print(f"\nStatistics:")
-        print(f"  Total questions: {statistics['total_questions']}")
-        print(f"  Average score: {statistics['average_score']}/5")
-        print(f"\nScore Distribution:")
-        for score_level, data in statistics['score_distribution'].items():
-            print(f"  {score_level}: {data['count']} ({data['percentage']}%)")
-        if "mrr" in statistics:
-            m = statistics["mrr"]
-            print(f"\nRetrieval — Mean Reciprocal Rank (MRR):")
-            print(f"  MRR:              {m['mean_reciprocal_rank']:.4f}")
-            print(f"  Questions w/ GT:  {m['questions_with_ground_truth']}")
-            print(f"  Hit@1:            {m['questions_hit_at_1']} ({round(m['questions_hit_at_1']/m['questions_with_ground_truth']*100,1)}%)")
-            print(f"  Hit@3:            {m['questions_hit_at_3']} ({round(m['questions_hit_at_3']/m['questions_with_ground_truth']*100,1)}%)")
-            print(f"  Hit@5:            {m['questions_hit_at_5']} ({round(m['questions_hit_at_5']/m['questions_with_ground_truth']*100,1)}%)")
-            print(f"  Hit@K (any rank): {m['questions_hit_at_k']} ({round(m['questions_hit_at_k']/m['questions_with_ground_truth']*100,1)}%)")
+    for stats in [stats_overall, stats_single, stats_multi]:
+        if stats:
+            print_stats(stats)
+    if unknown:
+        print(f"\n  ({len(unknown)} questions had no doc_id info — not split)")
     
     print("\n" + "=" * 60)
     print("Evaluation completed!")
