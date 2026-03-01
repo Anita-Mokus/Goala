@@ -6,9 +6,13 @@ are stored as JSON objects inside the `Supporting_Documents` column:
   [{"content": "...", "doc_id": "..."}, ...]
 
 Each row's supporting docs are extracted, de-duplicated, and stored in PGVector.
+A side-output ``shared/liverag_question_docids.json`` maps every question text
+to its list of ground-truth doc_ids; this file is consumed by the MRR
+computation in the evaluation script.
 """
 import json
 import os
+from pathlib import Path
 from typing import List, Optional
 
 from datasets import load_dataset
@@ -94,6 +98,8 @@ class IngestLiveRAG:
 
                 documents.append(Document(page_content=content, metadata=metadata))
 
+        print(len(documents))
+
         return documents
 
     def _store_documents(self, documents: List[Document]) -> None:
@@ -106,6 +112,54 @@ class IngestLiveRAG:
             use_jsonb=True,
             pre_delete_collection=True,
         )
+
+    def _build_question_docids_map(self, dataset) -> dict:
+        """
+        Build a mapping of question text → list of ground-truth doc_ids.
+
+        This is used during evaluation to compute Mean Reciprocal Rank (MRR):
+        for each question we need to know which doc_ids are relevant so we
+        can check whether the retriever surfaces them at the top of its ranking.
+
+        Args:
+            dataset: Full HuggingFace dataset (all rows, not batched).
+
+        Returns:
+            Dict mapping question string → list of doc_id strings.
+        """
+        mapping: dict = {}
+        for row in dataset:
+            question = (row.get("Question") or "").strip()
+            if not question:
+                continue
+            supporting = row.get("Supporting_Documents") or []
+            doc_ids = []
+            for entry in supporting:
+                if isinstance(entry, str):
+                    try:
+                        entry = json.loads(entry)
+                    except json.JSONDecodeError:
+                        continue
+                if isinstance(entry, dict):
+                    doc_id = entry.get("doc_id", "")
+                    if doc_id:
+                        doc_ids.append(doc_id)
+            mapping[question] = doc_ids
+        return mapping
+
+    def _save_question_docids_map(self, mapping: dict) -> None:
+        """
+        Persist the question → doc_ids mapping to ``shared/liverag_question_docids.json``.
+
+        The file is written relative to this module's project root so it works
+        both inside and outside Docker.
+        """
+        project_root = Path(__file__).parent.parent.parent
+        output_path = project_root / "shared" / "liverag_question_docids.json"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as fh:
+            json.dump(mapping, fh, ensure_ascii=False, indent=2)
+        print(f"✓ Question→doc_ids map saved to {output_path} ({len(mapping)} entries)")
 
     # ------------------------------------------------------------------
     # Public API
@@ -144,6 +198,11 @@ class IngestLiveRAG:
         if not all_docs:
             raise RuntimeError("No documents produced — check the dataset field names.")
 
+        print("Building question → doc_ids map for MRR evaluation...")
+        question_docids_map = self._build_question_docids_map(ds)
+        self._save_question_docids_map(question_docids_map)
+
         print("Saving embeddings to PostgreSQL...")
         self._store_documents(all_docs)
         print(f"✓ Done! {len(all_docs)} passages stored in collection '{self.collection_name}'.")
+

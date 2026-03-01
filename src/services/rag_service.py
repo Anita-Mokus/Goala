@@ -80,6 +80,28 @@ class RAGService:
         """
         return self.chain.invoke(question)
 
+    def query_with_sources(self, question: str) -> tuple[str, list]:
+        """
+        Query the RAG system and also return the retrieved source documents.
+
+        This is used by the evaluation pipeline to compute retrieval metrics
+        (e.g. MRR) without a redundant second retriever call.
+
+        Args:
+            question: The user's question
+
+        Returns:
+            Tuple of (answer_string, list_of_retrieved_Documents).
+            Each Document has a ``metadata["doc_id"]`` field when the
+            LiveRAG/Benchmark collection was ingested.
+        """
+        retrieved_docs = self.retriever.invoke(question)
+        context = self._format_docs(retrieved_docs)
+        prompt_value = self.prompt.invoke({"context": context, "question": question})
+        answer = self.llm.invoke(prompt_value)
+        answer_text = answer.content if hasattr(answer, "content") else str(answer)
+        return answer_text, retrieved_docs
+
 
 # Singleton instance
 _rag_service_instance = None

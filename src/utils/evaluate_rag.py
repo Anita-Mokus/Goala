@@ -4,6 +4,7 @@ Tests the RAG system using questions from mbh_junior_hu_evalset.json
 and evaluates responses using an LLM judge.
 Outputs results in JSON format with configuration metadata.
 """
+import csv
 import sys
 import json
 import gc
@@ -36,11 +37,12 @@ from src.core.config import (
 # ============================================================================
 # CONFIGURATION - Modify these variables to change evaluation behavior
 # ============================================================================
-EVAL_FILE_NAME = "liverag_eval.json"  # Evaluation dataset file
-OUTPUT_DIR_NAME = "evaluation_results"         # Directory for results
-OUTPUT_FILE_PREFIX = "eval_results_liveRAG"           # Prefix for output JSON files
-JUDGE_LLM_TEMPERATURE = 0                      # Temperature for judge LLM (0 = deterministic)
-MEMORY_CLEAR_INTERVAL = 5                      # Clear memory every N questions
+EVAL_FILE_NAME = "liverag_eval.json"          # Evaluation dataset file
+MRR_LABELS_FILE = "liverag_mrr_labels.csv"    # Manually-labelled relevance CSV (see generate_mrr_template.py)
+OUTPUT_DIR_NAME = "evaluation_results"        # Directory for results
+OUTPUT_FILE_PREFIX = "eval_results_liveRAG"   # Prefix for output JSON files
+JUDGE_LLM_TEMPERATURE = 0                     # Temperature for judge LLM (0 = deterministic)
+MEMORY_CLEAR_INTERVAL = 5                     # Clear memory every N questions
 # ============================================================================
 
 
@@ -79,6 +81,53 @@ EXPLANATION: <brief explanation>
 """
 
 
+def load_mrr_labels(labels_path: Path) -> dict[int, list[int]]:
+    """
+    Load the manually-filled MRR labels CSV.
+
+    Expected CSV format (produced by generate_mrr_template.py)::
+
+        question_index,c1,c2,c3,...,cK
+        0,1,0,0,0,0,0,0,0
+        1,0,0,1,0,0,0,0,0
+
+    Returns a dict mapping ``question_index`` (int) → list of binary ints
+    (one element per retrieved rank position, 1 = relevant).
+    """
+    labels: dict[int, list[int]] = {}
+    with open(labels_path, "r", encoding="utf-8", newline="") as fh:
+        reader = csv.DictReader(fh)
+        for row in reader:
+            try:
+                idx = int(row["question_index"])
+            except (KeyError, ValueError):
+                continue
+            # collect all cN columns in order
+            rank_cols = sorted(
+                (k for k in row if k.startswith("c")),
+                key=lambda k: int(k[1:]),
+            )
+            labels[idx] = [int(row[col] or 0) for col in rank_cols]
+    return labels
+
+
+def compute_reciprocal_rank_from_labels(labels: list[int]) -> float:
+    """
+    Compute the reciprocal rank from a binary relevance label list.
+
+    Args:
+        labels: List of 0/1 values aligned with retrieval rank order.
+                ``labels[0]`` corresponds to rank 1 (highest-ranked doc).
+
+    Returns:
+        ``1 / rank`` of the first relevant position, or ``0.0`` if none.
+    """
+    for rank, relevant in enumerate(labels, start=1):
+        if relevant:
+            return 1.0 / rank
+    return 0.0
+
+
 def parse_judge_response(response: str) -> tuple[int, str]:
     """Parse the judge's response to extract score and explanation."""
     lines = response.strip().split('\n')
@@ -110,6 +159,7 @@ def get_chunk_config():
     }
 
 
+
 def evaluate_rag():
     """Run the RAG evaluation."""
     print("\n" + "=" * 60)
@@ -124,6 +174,19 @@ def evaluate_rag():
     
     with open(eval_file, 'r', encoding='utf-8') as f:
         eval_data = json.load(f)
+
+    # Load manually-labelled MRR CSV (produced by generate_mrr_template.py)
+    labels_file = project_root / 'shared' / MRR_LABELS_FILE
+    mrr_labels: dict[int, list[int]] = {}
+    if labels_file.exists():
+        mrr_labels = load_mrr_labels(labels_file)
+        labelled = sum(1 for v in mrr_labels.values() if any(v))
+        print(f"  Loaded MRR labels: {len(mrr_labels)} questions "
+              f"({labelled} with at least one relevant context marked)")
+    else:
+        print(f"  INFO: {MRR_LABELS_FILE} not found — MRR will be skipped.")
+        print(f"        Run 'python -m src.utils.generate_mrr_template' to create it,")
+        print(f"        then fill in the relevance labels and re-run evaluation.")
     
     # Initialize RAG service
     print("Initializing RAG service...")
@@ -180,14 +243,16 @@ def evaluate_rag():
         print(f"Total questions: {len(questions)}\n")
         
         for i, item in enumerate(questions, 1):
-            question = item.get("input", "")
+            question     = item.get("input", "")
             expected_output = item.get("expected_output", "")
+            question_idx = i - 1  # 0-based index used in the MRR CSV
             
             print(f"[{i}/{len(questions)}] Question: {question[:60]}...")
-            
-            # Get RAG answer
+
+            # Get RAG answer + retrieved docs in one call (avoids double retrieval)
+            retrieved_docs = []
             try:
-                llm_answer = rag_service.query(question)
+                llm_answer, retrieved_docs = rag_service.query_with_sources(question)
                 print(f"  RAG Answer: {llm_answer[:200]}...")
             except Exception as e:
                 print(f"  ERROR getting RAG answer: {e}")
@@ -210,13 +275,31 @@ def evaluate_rag():
                 score = 0
                 explanation = f"ERROR: {str(e)}"
             
+            # Compute reciprocal rank from the manually-labelled CSV
+            if question_idx in mrr_labels:
+                labels = mrr_labels[question_idx]
+                rr = compute_reciprocal_rank_from_labels(labels)
+                first_relevant = next((r + 1 for r, v in enumerate(labels) if v), None)
+                print(f"  Reciprocal Rank: {rr:.4f}  "
+                      f"(first relevant at rank {first_relevant}, "
+                      f"{sum(labels)} labelled relevant out of {len(labels)})")
+            else:
+                labels = []
+                rr = None
+
             # Store result
             results.append({
                 "question": question,
+                "question_index": question_idx,
                 "expected_output": expected_output,
                 "llm_answer": llm_answer,
                 "score": score,
-                "explanation": explanation
+                "explanation": explanation,
+                "reciprocal_rank": rr,
+                "mrr_labels": labels,
+                "retrieved_doc_ids": [
+                    doc.metadata.get("doc_id", "") for doc in retrieved_docs
+                ],
             })
             
             # Clear memory every N questions to prevent slowdown; !!! this caused issues
@@ -229,6 +312,7 @@ def evaluate_rag():
     
     # Calculate statistics
     scores = [r["score"] for r in results if isinstance(r["score"], int)]
+    rr_values = [r["reciprocal_rank"] for r in results if r.get("reciprocal_rank") is not None]
     statistics = {}
     if scores:
         statistics = {
@@ -240,8 +324,18 @@ def evaluate_rag():
                 "score_3": {"count": scores.count(3), "percentage": round(scores.count(3)/len(scores)*100, 1)},
                 "score_2": {"count": scores.count(2), "percentage": round(scores.count(2)/len(scores)*100, 1)},
                 "score_1": {"count": scores.count(1), "percentage": round(scores.count(1)/len(scores)*100, 1)}
-            }
+            },
         }
+        if rr_values:
+            mrr = round(sum(rr_values) / len(rr_values), 4)
+            statistics["mrr"] = {
+                "mean_reciprocal_rank": mrr,
+                "questions_with_ground_truth": len(rr_values),
+                "questions_hit_at_1": sum(1 for rr in rr_values if rr == 1.0),
+                "questions_hit_at_3": sum(1 for rr in rr_values if rr >= 1/3),
+                "questions_hit_at_5": sum(1 for rr in rr_values if rr >= 1/5),
+                "questions_hit_at_k": sum(1 for rr in rr_values if rr > 0),
+            }
     
     # Prepare final output
     output_data = {
@@ -271,6 +365,15 @@ def evaluate_rag():
         print(f"\nScore Distribution:")
         for score_level, data in statistics['score_distribution'].items():
             print(f"  {score_level}: {data['count']} ({data['percentage']}%)")
+        if "mrr" in statistics:
+            m = statistics["mrr"]
+            print(f"\nRetrieval — Mean Reciprocal Rank (MRR):")
+            print(f"  MRR:              {m['mean_reciprocal_rank']:.4f}")
+            print(f"  Questions w/ GT:  {m['questions_with_ground_truth']}")
+            print(f"  Hit@1:            {m['questions_hit_at_1']} ({round(m['questions_hit_at_1']/m['questions_with_ground_truth']*100,1)}%)")
+            print(f"  Hit@3:            {m['questions_hit_at_3']} ({round(m['questions_hit_at_3']/m['questions_with_ground_truth']*100,1)}%)")
+            print(f"  Hit@5:            {m['questions_hit_at_5']} ({round(m['questions_hit_at_5']/m['questions_with_ground_truth']*100,1)}%)")
+            print(f"  Hit@K (any rank): {m['questions_hit_at_k']} ({round(m['questions_hit_at_k']/m['questions_with_ground_truth']*100,1)}%)")
     
     print("\n" + "=" * 60)
     print("Evaluation completed!")
