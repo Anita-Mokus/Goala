@@ -29,8 +29,6 @@ from src.core.config import (
     CHUNK_NEW_AFTER_N_CHARS,
     CHUNK_OVERLAP,
     CHUNK_MULTIPAGE_SECTIONS,
-    PDF_STRATEGY,
-    PDF_LANGUAGE,
     JUDGE_LLM_PROVIDER,
     JUDGE_LLM_MODEL,
 )
@@ -157,8 +155,6 @@ def get_chunk_config():
         "chunk_new_after_n_chars": CHUNK_NEW_AFTER_N_CHARS,
         "chunk_overlap": CHUNK_OVERLAP,
         "chunk_multipage_sections": CHUNK_MULTIPAGE_SECTIONS,
-        "pdf_strategy": PDF_STRATEGY,
-        "pdf_language": PDF_LANGUAGE,
     }
 
 def compute_score_stats(results: list, label: str) -> dict | None:
@@ -248,7 +244,8 @@ def evaluate_rag():
             question_docids_map = json.load(f)
         print(f"  Loaded question→doc_ids map: {len(question_docids_map)} entries")
     else:
-        print(f"  INFO: {QUESTION_DOCIDS_FILE} not found — single/multi-doc split will be skipped.")    labels_file = project_root / 'shared' / MRR_LABELS_FILE
+        print(f"  INFO: {QUESTION_DOCIDS_FILE} not found — single/multi-doc split will be skipped.")    
+    labels_file = project_root / 'shared' / MRR_LABELS_FILE
     mrr_labels: dict[int, list[int]] = {}
     if labels_file.exists():
         mrr_labels = load_mrr_labels(labels_file)
@@ -415,11 +412,22 @@ def evaluate_rag():
     
     # Print statistics
     print(f"\nResults saved to: {output_file}")
-    for stats in [stats_overall, stats_single, stats_multi]:
-        if stats:
-            print_stats(stats)
-    if unknown:
-        print(f"\n  ({len(unknown)} questions had no doc_id info — not split)")
+    if statistics:
+        print(f"\nStatistics:")
+        print(f"  Total questions: {statistics['total_questions']}")
+        print(f"  Average score: {statistics['average_score']}/5")
+        print(f"\nScore Distribution:")
+        for score_level, data in statistics['score_distribution'].items():
+            print(f"  {score_level}: {data['count']} ({data['percentage']}%)")
+        if "mrr" in statistics:
+            m = statistics["mrr"]
+            print(f"\nRetrieval — Mean Reciprocal Rank (MRR):")
+            print(f"  MRR:              {m['mean_reciprocal_rank']:.4f}")
+            print(f"  Questions w/ GT:  {m['questions_with_ground_truth']}")
+            print(f"  Hit@1:            {m['questions_hit_at_1']} ({round(m['questions_hit_at_1']/m['questions_with_ground_truth']*100,1)}%)")
+            print(f"  Hit@3:            {m['questions_hit_at_3']} ({round(m['questions_hit_at_3']/m['questions_with_ground_truth']*100,1)}%)")
+            print(f"  Hit@5:            {m['questions_hit_at_5']} ({round(m['questions_hit_at_5']/m['questions_with_ground_truth']*100,1)}%)")
+            print(f"  Hit@K (any rank): {m['questions_hit_at_k']} ({round(m['questions_hit_at_k']/m['questions_with_ground_truth']*100,1)}%)")
     
     print("\n" + "=" * 60)
     print("Evaluation completed!")

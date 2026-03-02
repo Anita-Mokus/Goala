@@ -20,7 +20,6 @@ PGVECTOR_COLLECTION_NAME = "document_embeddings"
 
 # Model configurations
 EMBEDDING_MODEL = "BAAI/bge-m3"
-PDF_LANGUAGE = os.getenv("PDF_LANGUAGE", "hun")  # Language for PDF processing (hun = Hungarian)
 
 # Unstructured partitioning configuration
 # Strategy options: "auto", "fast", "hi_res", "ocr_only"
@@ -28,7 +27,6 @@ PDF_LANGUAGE = os.getenv("PDF_LANGUAGE", "hun")  # Language for PDF processing (
 # - "fast": Quick extraction for text-based PDFs
 # - "hi_res": Best accuracy for complex layouts and tables (slower)
 # - "ocr_only": Force OCR for scanned documents
-PDF_STRATEGY = os.getenv("PDF_STRATEGY", "auto")
 
 # Unstructured chunking configuration (using chunk_by_title strategy)
 CHUNK_MAX_CHARACTERS = int(os.getenv("CHUNK_MAX_CHARACTERS", "1000"))  # Hard maximum chunk size
