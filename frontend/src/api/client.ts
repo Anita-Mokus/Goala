@@ -45,6 +45,20 @@ export interface ChatHistoryResponse {
   total_pages: number;
 }
 
+export interface MessengerStatus {
+  running: boolean;
+  paused: boolean;
+  message_count: number;
+  last_message_timestamp: string | null;
+  uptime_seconds: number;
+  config_valid: boolean;
+}
+
+export interface MessengerActionResponse {
+  status: string;
+  message: string;
+}
+
 export const apiClient = {
   async getSettings(): Promise<Settings> {
     const response = await fetch(`${API_BASE_URL}/settings`);
@@ -82,5 +96,62 @@ export const apiClient = {
       throw new Error(`Failed to fetch chat history: ${response.statusText}`);
     }
     return response.json();
+  },
+
+  // Messenger Bot API
+  async getMessengerStatus(): Promise<MessengerStatus> {
+    const response = await fetch(`${API_BASE_URL}/messenger/status`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch messenger status: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  async startMessenger(): Promise<MessengerActionResponse> {
+    const response = await fetch(`${API_BASE_URL}/messenger/start`, {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || `Failed to start messenger bot: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  async stopMessenger(): Promise<MessengerActionResponse> {
+    const response = await fetch(`${API_BASE_URL}/messenger/stop`, {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || `Failed to stop messenger bot: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  async pauseMessenger(): Promise<MessengerActionResponse> {
+    const response = await fetch(`${API_BASE_URL}/messenger/pause`, {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || `Failed to pause messenger bot: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  async resumeMessenger(): Promise<MessengerActionResponse> {
+    const response = await fetch(`${API_BASE_URL}/messenger/resume`, {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || `Failed to resume messenger bot: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  getMessengerLoginUrl(): string {
+    return `${API_BASE_URL}/messenger/login-redirect`;
   },
 };

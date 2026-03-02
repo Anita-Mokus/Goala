@@ -33,6 +33,14 @@ function Layout({ children }: LayoutProps) {
               Chat History
             </Link>
           </li>
+          <li>
+            <Link
+              to="/messenger"
+              className={location.pathname === '/messenger' ? 'active' : ''}
+            >
+              Messenger Bot
+            </Link>
+          </li>
         </ul>
       </nav>
       <main className="main-content">{children}</main>

@@ -42,13 +42,16 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-goala}
       - HF_HOME=/app/huggingface_cache
+      - MESSENGER_CHROME_PROFILE_PATH=/app/chrome_profile
     ports:
       - "${API_PORT:-8000}:8000"
+      - "5900:5900"  # VNC port to view Chrome
     volumes:
       - ./src:/app/src  
       - ./data:/app/data:ro
       - ./shared:/app/shared
       - huggingface_cache:/app/huggingface_cache
+      - chrome_profile:/app/chrome_profile
     depends_on:
       db:
         condition: service_healthy
@@ -91,3 +94,5 @@ volumes:
     name: goala-pgvector-data
   huggingface_cache:
     name: goala-huggingface-cache
+  chrome_profile:
+    name: goala-chrome-profile

@@ -78,7 +78,8 @@ class RAGService:
         """Format retrieved documents for the prompt."""
         return "\n\n".join(doc.page_content for doc in docs)
     
-    def _log_to_history(self, question: str, answer: str, response_time_ms: int):
+    def _log_to_history(self, question: str, answer: str, response_time_ms: int, 
+                        source: str = "api", message_metadata: dict = None):
         """
         Log Q&A to chat history table.
         
@@ -86,6 +87,8 @@ class RAGService:
             question: The user's question
             answer: The AI-generated answer
             response_time_ms: Response time in milliseconds
+            source: The source of the message (api, messenger, etc.)
+            message_metadata: Additional metadata (e.g., sender info)
         """
         try:
             from src.models.database import ChatHistory, get_db_session
@@ -95,7 +98,9 @@ class RAGService:
                     question=question,
                     answer=answer,
                     model_used=self.current_model,
-                    response_time_ms=response_time_ms
+                    response_time_ms=response_time_ms,
+                    source=source,
+                    message_metadata=message_metadata
                 )
                 session.add(history_entry)
                 session.commit()
@@ -125,6 +130,35 @@ class RAGService:
         
         # Log to history
         self._log_to_history(question, answer, response_time_ms)
+        
+        return answer
+    
+    def query_with_metadata(self, question: str, source: str = "api", 
+                           message_metadata: dict = None) -> str:
+        """
+        Query the RAG system with a question and log with custom metadata.
+        
+        Args:
+            question: The user's question
+            source: The source of the message (api, messenger, etc.)
+            message_metadata: Additional metadata (e.g., sender info)
+            
+        Returns:
+            The AI-generated response
+        """
+        # Clear settings cache to ensure fresh read on each query
+        clear_settings_cache()
+        
+        # Reinitialize chain with potentially updated settings
+        self._initialize_chain()
+        
+        # Measure response time
+        start_time = time.time()
+        answer = self.chain.invoke(question)
+        response_time_ms = int((time.time() - start_time) * 1000)
+        
+        # Log to history with metadata
+        self._log_to_history(question, answer, response_time_ms, source, message_metadata)
         
         return answer
 
