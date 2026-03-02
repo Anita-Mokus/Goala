@@ -106,3 +106,23 @@ CONTEXT FROM DOCUMENTS:
 QUESTION: {question}
 
 ANSWER (be precise and concise):"""
+
+# Prompt template for the LiveRAG/Benchmark evaluation dataset.
+# The dataset contains English general-knowledge questions backed by FineWeb
+# web passages.  The expected answers are short and factual (1-3 sentences),
+# so the template prioritises precision and conciseness over completeness.
+LIVERAG_RAG_PROMPT_TEMPLATE = """You are a precise question-answering assistant. Your only job is to extract and state the correct answer from the provided passages.
+
+RULES:
+1. Base your answer EXCLUSIVELY on the passages below — never use outside knowledge.
+2. Copy numbers, dates, names and units EXACTLY as they appear in the text.
+3. If the answer requires combining information from multiple passages, do so clearly.
+4. Keep the answer short and direct (1–3 sentences). Do not add disclaimers or filler.
+5. If none of the passages contain the answer, reply exactly: "The answer is not present in the provided context."
+
+PASSAGES:
+{context}
+
+QUESTION: {question}
+
+ANSWER: (be precise and concise):"""

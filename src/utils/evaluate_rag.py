@@ -19,6 +19,7 @@ if str(project_root) not in sys.path:
 
 from src.services import RAGService
 from src.services.llm_provider import get_llm_provider
+from langchain_core.prompts import ChatPromptTemplate
 from src.core.config import (
     EMBEDDING_MODEL,
     LLM_MODEL,
@@ -31,6 +32,7 @@ from src.core.config import (
     CHUNK_MULTIPAGE_SECTIONS,
     JUDGE_LLM_PROVIDER,
     JUDGE_LLM_MODEL,
+    LIVERAG_RAG_PROMPT_TEMPLATE,
 )
 
 
@@ -261,6 +263,10 @@ def evaluate_rag():
     print("Initializing RAG service...")
     try:
         rag_service = RAGService()
+        # Override the prompt with the LiveRAG-specific template so the
+        # production MBH Bank prompt is not used during this evaluation.
+        rag_service.prompt = ChatPromptTemplate.from_template(LIVERAG_RAG_PROMPT_TEMPLATE)
+        print("  Prompt overridden with LIVERAG_RAG_PROMPT_TEMPLATE")
     except Exception as e:
         print(f"ERROR:  RAG service: {e}")
         sys.exit(1)
@@ -283,6 +289,7 @@ def evaluate_rag():
         "llm_temperature": LLM_TEMPERATURE,
         "judge_llm_provider": JUDGE_LLM_PROVIDER,
         "judge_llm_model": JUDGE_LLM_MODEL,
+        "rag_prompt_template": "LIVERAG_RAG_PROMPT_TEMPLATE",
         "embedding_model": EMBEDDING_MODEL,
         "retriever_k": RETRIEVER_K,
     }
