@@ -55,8 +55,8 @@ HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN", "")
 
 # Judge LLM — used only during evaluation, kept separate from the RAG LLM
 # so the model scoring answers is independent of the model producing them.
-JUDGE_LLM_PROVIDER = os.getenv("JUDGE_LLM_PROVIDER", "openrouter")
-JUDGE_LLM_MODEL = os.getenv("JUDGE_LLM_MODEL", "openai/gpt-4o")
+JUDGE_LLM_PROVIDER = os.getenv("JUDGE_LLM_PROVIDER", "ollama")
+JUDGE_LLM_MODEL = os.getenv("JUDGE_LLM_MODEL", "llama3.1:8b")
 
 # Get the appropriate model based on provider
 if LLM_PROVIDER.lower() == "deepseek":
