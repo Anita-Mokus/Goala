@@ -22,8 +22,6 @@ from src.core.config import (
     DATA_FOLDER,
     DATABASE_URL,
     PGVECTOR_COLLECTION_NAME,
-    PDF_LANGUAGE,
-    PDF_STRATEGY,
     CHUNK_MAX_CHARACTERS,
     CHUNK_NEW_AFTER_N_CHARS,
     CHUNK_OVERLAP,
@@ -47,9 +45,6 @@ class IngestService:
         self.chunk_overlap = CHUNK_OVERLAP
         self.multipage_sections = CHUNK_MULTIPAGE_SECTIONS
         
-        # Partitioning configuration
-        self.pdf_strategy = PDF_STRATEGY
-        self.languages = [PDF_LANGUAGE] if PDF_LANGUAGE else None
     
     def _partition_file(self, file_path: str) -> List:
         """

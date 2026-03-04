@@ -14,7 +14,7 @@ from src.core.config import (
     LLM_MODEL,
     LLM_TEMPERATURE,
     RETRIEVER_K,
-    RAG_PROMPT_TEMPLATE
+    LIVERAG_RAG_PROMPT_TEMPLATE,
 )
 from src.services.llm_provider import get_llm_provider
 from src.services.embeddings import get_embeddings
@@ -44,7 +44,7 @@ class RAGService:
         self.llm = llm_provider.get_llm()
         
         # Create prompt template
-        self.prompt = ChatPromptTemplate.from_template(RAG_PROMPT_TEMPLATE)
+        self.prompt = ChatPromptTemplate.from_template(LIVERAG_RAG_PROMPT_TEMPLATE)
         
         # Create retriever using MMR (Maximum Marginal Relevance) for better
         # diversity: fetch_k=20 candidates, then select the k most diverse ones.
