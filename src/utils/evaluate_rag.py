@@ -7,6 +7,7 @@ Outputs results in JSON format with configuration metadata.
 import csv
 import sys
 import json
+import time
 import gc
 import torch
 from pathlib import Path
@@ -228,6 +229,9 @@ def evaluate_rag():
     print("\n" + "=" * 60)
     print("AI Chat Flow - RAG Evaluation")
     print("=" * 60 + "\n")
+    print(f"Starting evalaution at {time.localtime().tm_hour}:{time.localtime().tm_min}:{time.localtime().tm_sec}")
+    start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     
     # Load evaluation dataset
     eval_file = project_root / 'shared' / EVAL_FILE_NAME
@@ -438,6 +442,10 @@ def evaluate_rag():
     
     print("\n" + "=" * 60)
     print("Evaluation completed!")
+    finish_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"Started at: {start_time}")
+    print(f"Finished at: {finish_time}")
+    print(f"Duration: {datetime.strptime(finish_time, '%Y-%m-%d %H:%M:%S') - datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')}")
     print("=" * 60 + "\n")
 
 
