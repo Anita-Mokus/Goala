@@ -10,10 +10,11 @@ A side-output ``shared/liverag_question_docids.json`` maps every question text
 to its list of ground-truth doc_ids; this file is consumed by the MRR
 computation in the evaluation script.
 """
+import gc
 import json
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from datasets import load_dataset
 from langchain_core.documents import Document
@@ -54,18 +55,7 @@ class IngestLiveRAG:
         except Exception as e:
             print(f"ℹ Extension check: {type(e).__name__}: {e}")
 
-    def _get_questions_and_answers(self, dataset) -> List[tuple[str, str]]:
-        """ Extract question-answer pairs from the dataset in order to build liverag_eval_questions.json, which is used during evaluation. """
-        question_answers = []
-        for row in dataset:
-            question = str(row.get("Question", "")).strip()
-            answer = str(row.get("Answer", "")).strip()
-            if not question or not answer:
-                continue
-            question_answers.append((question, answer))
-        return question_answers
-
-    def _dataset_to_documents(self, dataset) -> List[Document]:
+    def _dataset_to_documents(self, dataset, seen_ids: Set[str]) -> List[Document]:
         """
         Convert HuggingFace dataset rows to LangChain Document objects.
 
@@ -75,10 +65,9 @@ class IngestLiveRAG:
           - 'doc_id'  : unique document identifier
 
         Rows also carry `Question` and `Index` which are stored as metadata.
-        Duplicate doc_ids across rows are de-duplicated.
+        ``seen_ids`` is shared across all batch calls to deduplicate globally.
         """
         documents = []
-        seen_ids: set = set()
 
         for row in dataset:
             supporting = row.get("Supporting_Documents") or []
@@ -219,56 +208,116 @@ class IngestLiveRAG:
     # Public API
     # ------------------------------------------------------------------
 
-    def ingest(self, split: str = "train", batch_size: int = 500) -> None:
+    def ingest(self, split: str = "train", batch_size: int = 100) -> None:
         """
-        Load the LiveRAG/Benchmark dataset and store all passages in PGVector.
+        Load the LiveRAG/Benchmark dataset in streaming mode and store all
+        passages in PGVector.
+
+        Uses ``streaming=True`` so the dataset is **never fully loaded into
+        RAM** — each row is fetched, processed, and discarded before the next
+        one arrives.  Q&A pairs and the doc-id map are accumulated as lightweight
+        string structures and flushed to disk after the single pass.
 
         Args:
             split:      Dataset split to load (default: 'train').
-            batch_size: Number of rows to convert at a time (memory safety).
+            batch_size: Number of dataset rows to buffer before each embed +
+                        store flush (default: 100, ≈500 docs per flush).
         """
-        print(f"Loading LiveRAG/Benchmark (split='{split}') from HuggingFace...")
+        print(f"Loading LiveRAG/Benchmark (split='{split}') in streaming mode...")
         ds = load_dataset(
             "LiveRAG/Benchmark",
             split=split,
             token=HUGGINGFACE_TOKEN or None,
+            streaming=True,
         )
-        total = len(ds)
-        print(f"  → {total} benchmark rows loaded")
 
         self._ensure_extension_exists()
 
-        # Build and save side-outputs before the expensive embedding pass
-        print("Building question → doc_ids map for MRR evaluation...")
-        question_docids_map = self._build_question_docids_map(ds)
-        self._save_question_docids_map(question_docids_map)
-
-        print("Extracting question-answer pairs...")
-        question_answers = self._get_questions_and_answers(ds)
-        self._save_question_answers(question_answers)
-
-        #Generate the MRR template contexts and labels files after liverag_eval.json has been created
-        print("Generating MRR template contexts and labels files...")
-        generate_mrr_template_main()
-
-        # Embed and store documents in batches — never accumulate all in memory
-        print("Extracting supporting documents and storing in PGVector...")
+        # Single streaming pass — nothing is held in memory beyond one row at a time
+        # except the lightweight side-output dicts and the current doc buffer.
+        print("Processing dataset (single streaming pass)...")
         store: Optional[PGVector] = None
+        seen_ids: Set[str] = set()
+        question_docids_map: dict = {}
+        question_answers: List[tuple] = []
+        doc_buffer: List[Document] = []
         total_docs = 0
+        row_count = 0
         first_batch = True
 
-        for start in range(0, total, batch_size):
-            batch = ds.select(range(start, min(start + batch_size, total)))
-            docs = self._dataset_to_documents(batch)
-            if not docs:
-                continue
-            store = self._store_documents_batch(docs, store, first_batch)
-            first_batch = False
-            total_docs += len(docs)
-            print(f"  Stored {min(start + batch_size, total)}/{total} rows ({total_docs} docs so far)...")
+        for row in ds:
+            row_count += 1
+
+            question = (row.get("Question") or "").strip()
+            answer = str(row.get("Answer", "")).strip()
+            if question and answer:
+                question_answers.append((question, answer))
+
+            supporting = row.get("Supporting_Documents") or []
+            doc_ids_for_q: List[str] = []
+
+            for entry in supporting:
+                if isinstance(entry, str):
+                    try:
+                        entry = json.loads(entry)
+                    except json.JSONDecodeError:
+                        continue
+                if not isinstance(entry, dict):
+                    continue
+
+                doc_id = entry.get("doc_id", "")
+                content = entry.get("content", "").strip()
+
+                if doc_id:
+                    doc_ids_for_q.append(doc_id)
+
+                if not content:
+                    continue
+                if doc_id and doc_id in seen_ids:
+                    continue
+                if doc_id:
+                    seen_ids.add(doc_id)
+
+                metadata: dict = {"doc_id": doc_id}
+                if row.get("Index") is not None:
+                    metadata["question_index"] = row["Index"]
+                doc_buffer.append(Document(page_content=content, metadata=metadata))
+
+            if question:
+                question_docids_map[question] = doc_ids_for_q
+
+            # Flush the doc buffer every batch_size rows
+            if row_count % batch_size == 0:
+                if doc_buffer:
+                    store = self._store_documents_batch(doc_buffer, store, first_batch)
+                    first_batch = False
+                    total_docs += len(doc_buffer)
+                    doc_buffer = []
+                    gc.collect()
+                print(f"  Processed {row_count} rows ({total_docs} docs stored)...")
+
+        # Flush any remaining docs
+        if doc_buffer:
+            store = self._store_documents_batch(doc_buffer, store, first_batch)
+            total_docs += len(doc_buffer)
+            doc_buffer = []
 
         if total_docs == 0:
             raise RuntimeError("No documents produced — check the dataset field names.")
+
+        print(f"  → {row_count} rows processed, {total_docs} documents stored")
+
+        # Persist side outputs
+        print("Saving question → doc_ids map for MRR evaluation...")
+        self._save_question_docids_map(question_docids_map)
+        del question_docids_map
+
+        print("Saving question-answer pairs...")
+        self._save_question_answers(question_answers)
+        del question_answers
+
+        print("Generating MRR template contexts and labels files...")
+        generate_mrr_template_main()
 
         print(f"✓ Done! {total_docs} passages stored in collection '{self.collection_name}'.")
 
