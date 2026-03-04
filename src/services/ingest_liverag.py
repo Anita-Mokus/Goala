@@ -20,6 +20,8 @@ from langchain_core.documents import Document
 from langchain_postgres import PGVector
 from sqlalchemy import create_engine, text
 
+from src.utils.generate_mrr_template import main as generate_mrr_template_main
+
 from src.core.config import (
     HUGGINGFACE_TOKEN,
     DATABASE_URL,
@@ -51,6 +53,17 @@ class IngestLiveRAG:
             print("✓ pgvector extension confirmed")
         except Exception as e:
             print(f"ℹ Extension check: {type(e).__name__}: {e}")
+
+    def _get_questions_and_answers(self, dataset) -> List[tuple[str, str]]:
+        """ Extract question-answer pairs from the dataset in order to build liverag_eval_questions.json, which is used during evaluation. """
+        question_answers = []
+        for row in dataset:
+            question = str(row.get("Question", "")).strip()
+            answer = str(row.get("Answer", "")).strip()
+            if not question or not answer:
+                continue
+            question_answers.append((question, answer))
+        return question_answers
 
     def _dataset_to_documents(self, dataset) -> List[Document]:
         """
@@ -98,20 +111,33 @@ class IngestLiveRAG:
 
                 documents.append(Document(page_content=content, metadata=metadata))
 
-        print(len(documents))
-
         return documents
 
-    def _store_documents(self, documents: List[Document]) -> None:
-        """Embed and store documents in PGVector, replacing any existing collection."""
-        PGVector.from_documents(
-            documents=documents,
-            embedding=self.embedding_function,
-            connection=self.connection_string,
-            collection_name=self.collection_name,
-            use_jsonb=True,
-            pre_delete_collection=True,
-        )
+    def _store_documents_batch(
+        self,
+        documents: List[Document],
+        store: Optional[PGVector],
+        first_batch: bool,
+    ) -> PGVector:
+        """
+        Embed and store a batch of documents in PGVector.
+
+        On the first call the collection is recreated (pre_delete_collection=True)
+        and the PGVector store object is returned so subsequent calls can reuse
+        it via ``store.add_documents()`` instead of reconnecting each time.
+        """
+        if first_batch or store is None:
+            store = PGVector.from_documents(
+                documents=documents,
+                embedding=self.embedding_function,
+                connection=self.connection_string,
+                collection_name=self.collection_name,
+                use_jsonb=True,
+                pre_delete_collection=True,
+            )
+        else:
+            store.add_documents(documents)
+        return store
 
     def _build_question_docids_map(self, dataset) -> dict:
         """
@@ -161,6 +187,34 @@ class IngestLiveRAG:
             json.dump(mapping, fh, ensure_ascii=False, indent=2)
         print(f"✓ Question→doc_ids map saved to {output_path} ({len(mapping)} entries)")
 
+    def _save_question_answers(self, question_answers: List[tuple]) -> None:
+        """
+        Persist question-answer pairs to ``shared/liverag_eval.json``.
+
+        The output matches the existing eval file schema:
+          { "datasets": [ { "name": ..., "questions": [ {"input": ..., "expected_output": ...} ] } ] }
+        """
+        project_root = Path(__file__).parent.parent.parent
+        output_path = project_root / "shared" / "liverag_eval.json"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        data = {
+            "datasets": [
+                {
+                    "name": "liverag_benchmark_eval",
+                    "description": (
+                        f"Questions and ground-truth answers from the LiveRAG/Benchmark dataset "
+                        f"({len(question_answers)} rows, FineWeb-10BT supporting documents)."
+                    ),
+                    "questions": [
+                        {"input": q, "expected_output": a} for q, a in question_answers
+                    ],
+                }
+            ]
+        }
+        with open(output_path, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, ensure_ascii=False, indent=2)
+        print(f"✓ Question-answer pairs saved to {output_path} ({len(question_answers)} entries)")
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -184,27 +238,37 @@ class IngestLiveRAG:
 
         self._ensure_extension_exists()
 
-        print("Extracting supporting documents and storing in PGVector...")
-        all_docs: List[Document] = []
-
-        for start in range(0, total, batch_size):
-            batch = ds.select(range(start, min(start + batch_size, total)))
-            docs = self._dataset_to_documents(batch)
-            print(batch)
-            print(50 * "*")
-            all_docs.extend(docs)
-            print(f"  Processed {min(start + batch_size, total)}/{total} rows...", end="\r")
-
-        print(f"\n  → {len(all_docs)} non-empty documents ready")
-
-        if not all_docs:
-            raise RuntimeError("No documents produced — check the dataset field names.")
-
+        # Build and save side-outputs before the expensive embedding pass
         print("Building question → doc_ids map for MRR evaluation...")
         question_docids_map = self._build_question_docids_map(ds)
         self._save_question_docids_map(question_docids_map)
 
-        print("Saving embeddings to PostgreSQL...")
-        self._store_documents(all_docs)
-        print(f"✓ Done! {len(all_docs)} passages stored in collection '{self.collection_name}'.")
+        print("Extracting question-answer pairs...")
+        question_answers = self._get_questions_and_answers(ds)
+        self._save_question_answers(question_answers)
+
+        #Generate the MRR template contexts and labels files after liverag_eval.json has been created
+        print("Generating MRR template contexts and labels files...")
+        generate_mrr_template_main()
+
+        # Embed and store documents in batches — never accumulate all in memory
+        print("Extracting supporting documents and storing in PGVector...")
+        store: Optional[PGVector] = None
+        total_docs = 0
+        first_batch = True
+
+        for start in range(0, total, batch_size):
+            batch = ds.select(range(start, min(start + batch_size, total)))
+            docs = self._dataset_to_documents(batch)
+            if not docs:
+                continue
+            store = self._store_documents_batch(docs, store, first_batch)
+            first_batch = False
+            total_docs += len(docs)
+            print(f"  Stored {min(start + batch_size, total)}/{total} rows ({total_docs} docs so far)...")
+
+        if total_docs == 0:
+            raise RuntimeError("No documents produced — check the dataset field names.")
+
+        print(f"✓ Done! {total_docs} passages stored in collection '{self.collection_name}'.")
 

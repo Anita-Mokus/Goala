@@ -24,7 +24,7 @@ def get_embeddings() -> HuggingFaceEmbeddings:
         _embeddings_instance = HuggingFaceEmbeddings(
             model_name=EMBEDDING_MODEL,
             model_kwargs={'device': 'cpu'},
-            encode_kwargs={'normalize_embeddings': True}
+            encode_kwargs={'normalize_embeddings': True, 'batch_size': 256}
         )
         print("✓ Embeddings model loaded")
     

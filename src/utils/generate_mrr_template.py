@@ -112,11 +112,11 @@ def main() -> None:
     print(f"\n✓ Context review saved to:  {contexts_path}")
     print(f"✓ Blank CSV template saved: {labels_path}")
     print()
-    print("Next steps:")
-    print(f"  1. Open {CONTEXTS_FILE} and read each question's retrieved contexts.")
-    print(f"  2. In {LABELS_CSV_FILE}, set the column to 1 for the rank that gives")
-    print(f"     the correct answer (leave all 0 if none of the contexts are correct).")
-    print(f"  3. Re-run evaluate_rag.py — it will read the filled CSV and compute MRR.")
+    # print("Next steps:")
+    # print(f"  1. Open {CONTEXTS_FILE} and read each question's retrieved contexts.")
+    # print(f"  2. In {LABELS_CSV_FILE}, set the column to 1 for the rank that gives")
+    # print(f"     the correct answer (leave all 0 if none of the contexts are correct).")
+    # print(f"  3. Re-run evaluate_rag.py — it will read the filled CSV and compute MRR.")
 
 
 if __name__ == "__main__":
