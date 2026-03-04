@@ -231,7 +231,6 @@ def evaluate_rag():
     print("=" * 60 + "\n")
     print(f"Starting evalaution at {time.localtime().tm_hour}:{time.localtime().tm_min}:{time.localtime().tm_sec}")
     start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
     
     # Load evaluation dataset
     eval_file = project_root / 'shared' / EVAL_FILE_NAME
@@ -241,6 +240,7 @@ def evaluate_rag():
     
     with open(eval_file, 'r', encoding='utf-8') as f:
         eval_data = json.load(f)
+    
 
     # Load question → doc_ids map to know how many supporting docs each question has
     docids_path = project_root / 'shared' / QUESTION_DOCIDS_FILE
@@ -251,6 +251,7 @@ def evaluate_rag():
         print(f"  Loaded question→doc_ids map: {len(question_docids_map)} entries")
     else:
         print(f"  INFO: {QUESTION_DOCIDS_FILE} not found — single/multi-doc split will be skipped.")    
+    
     labels_file = project_root / 'shared' / MRR_LABELS_FILE
     mrr_labels: dict[int, list[int]] = {}
     if labels_file.exists():
@@ -305,6 +306,7 @@ def evaluate_rag():
     
     # Prepare results
     results = []
+
     
     # Process each dataset
     for dataset in eval_data.get("datasets", []):
@@ -313,78 +315,89 @@ def evaluate_rag():
         
         print(f"\nEvaluating dataset: {dataset_name}")
         print(f"Total questions: {len(questions)}\n")
-        
+
+        # Print size of single_doc_questions
+        single_doc_questions = [q for q in questions if len(question_docids_map.get(q.get("input", ""), [])) == 1]
+        print(f"Questions with single supporting document: {len(single_doc_questions)} \n")
+
         for i, item in enumerate(questions, 1):
             question     = item.get("input", "")
-            expected_output = item.get("expected_output", "")
-            question_idx = i - 1  # 0-based index used in the MRR CSV
-            
-            print(f"[{i}/{len(questions)}] Question: {question[:60]}...")
 
-            # Get RAG answer + retrieved docs in one call (avoids double retrieval)
-            retrieved_docs = []
-            try:
-                llm_answer, retrieved_docs = rag_service.query_with_sources(question)
-                print(f"  RAG Answer: {llm_answer[:200]}...")
-            except Exception as e:
-                print(f"  ERROR getting RAG answer: {e}")
-                llm_answer = f"ERROR: {str(e)}"
-            
-            # Get judge evaluation
-            try:
-                judge_prompt = JUDGE_PROMPT_TEMPLATE.format(
-                    question=question,
-                    answer=expected_output,
-                    llm_answer=llm_answer
-                )
-                judge_response = judge_llm.invoke(judge_prompt)
-                judge_text = judge_response.content if hasattr(judge_response, 'content') else str(judge_response)
-                score, explanation = parse_judge_response(judge_text)
-                print(f"  Score: {score}/5")
-                print(f"  Explanation: {explanation[:60]}...")
-            except Exception as e:
-                print(f"  ERROR getting judge evaluation: {e}")
-                score = 0
-                explanation = f"ERROR: {str(e)}"
-            
-            # Compute reciprocal rank from the manually-labelled CSV
-            if question_idx in mrr_labels:
-                labels = mrr_labels[question_idx]
-                rr = compute_reciprocal_rank_from_labels(labels)
-                first_relevant = next((r + 1 for r, v in enumerate(labels) if v), None)
-                print(f"  Reciprocal Rank: {rr:.4f}  "
-                      f"(first relevant at rank {first_relevant}, "
-                      f"{sum(labels)} labelled relevant out of {len(labels)})")
-            else:
-                labels = []
-                rr = None
+            doc_ids = question_docids_map.get(question, [])
+            if len(doc_ids) == 0:
+                print(f"  WARNING: No supporting doc_ids found for question: {question[:60]}...")
+            elif len(doc_ids) > 1:
+                continue   # skip multi-doc questions for the moment
+            else:   # single-doc questions only
+                expected_output = item.get("expected_output", "")
+                question_idx = i - 1  # 0-based index used in the MRR CSV
+                
+                print(f"[{i}/{len(questions)}] Question: {question[:60]}...")
 
-            # Tag with number of supporting docs (for split statistics)
-            supporting_doc_count = len(question_docids_map.get(question, []))
+                # Get RAG answer + retrieved docs in one call (avoids double retrieval)
+                retrieved_docs = []
+                try:
+                    llm_answer, retrieved_docs = rag_service.query_with_sources(question)
+                    print(f"  RAG Answer: {llm_answer[:200]}...")
+                except Exception as e:
+                    print(f"  ERROR getting RAG answer: {e}")
+                    llm_answer = f"ERROR: {str(e)}"
+                
+                # Get judge evaluation
+                try:
+                    judge_prompt = JUDGE_PROMPT_TEMPLATE.format(
+                        question=question,
+                        answer=expected_output,
+                        llm_answer=llm_answer
+                    )
+                    judge_response = judge_llm.invoke(judge_prompt)
+                    judge_text = judge_response.content if hasattr(judge_response, 'content') else str(judge_response)
+                    score, explanation = parse_judge_response(judge_text)
+                    print(f"  Score: {score}/5")
+                    print(f"  Explanation: {explanation[:60]}...")
+                except Exception as e:
+                    print(f"  ERROR getting judge evaluation: {e}")
+                    score = 0
+                    explanation = f"ERROR: {str(e)}"
+                
+                # Compute reciprocal rank from the manually-labelled CSV
+                if question_idx in mrr_labels:
+                    labels = mrr_labels[question_idx]
+                    rr = compute_reciprocal_rank_from_labels(labels)
+                    first_relevant = next((r + 1 for r, v in enumerate(labels) if v), None)
+                    print(f"  Reciprocal Rank: {rr:.4f}  "
+                        f"(first relevant at rank {first_relevant}, "
+                        f"{sum(labels)} labelled relevant out of {len(labels)})")
+                else:
+                    labels = []
+                    rr = None
 
-            # Store result
-            results.append({
-                "question": question,
-                "question_index": question_idx,
-                "expected_output": expected_output,
-                "llm_answer": llm_answer,
-                "score": score,
-                "explanation": explanation,
-                "reciprocal_rank": rr,
-                "mrr_labels": labels,
-                "supporting_doc_count": supporting_doc_count,
-                "retrieved_doc_ids": [
-                    doc.metadata.get("doc_id", "") for doc in retrieved_docs
-                ],
-            })
-            
-            # Clear memory every N questions to prevent slowdown; !!! this caused issues
-            # if i % MEMORY_CLEAR_INTERVAL == 0:
-            #     gc.collect()
-            #     if torch.cuda.is_available():
-            #         torch.cuda.empty_cache()
-            
-            print()
+                # Tag with number of supporting docs (for split statistics)
+                supporting_doc_count = len(question_docids_map.get(question, []))
+
+                # Store result
+                results.append({
+                    "question": question,
+                    "question_index": question_idx,
+                    "expected_output": expected_output,
+                    "llm_answer": llm_answer,
+                    "score": score,
+                    "explanation": explanation,
+                    "reciprocal_rank": rr,
+                    "mrr_labels": labels,
+                    "supporting_doc_count": supporting_doc_count,
+                    "retrieved_doc_ids": [
+                        doc.metadata.get("doc_id", "") for doc in retrieved_docs
+                    ],
+                })
+                
+                # Clear memory every N questions to prevent slowdown; !!! this caused issues
+                # if i % MEMORY_CLEAR_INTERVAL == 0:
+                #     gc.collect()
+                #     if torch.cuda.is_available():
+                #         torch.cuda.empty_cache()
+
+                print()
     
     # Calculate statistics — overall + split by single vs multi supporting doc
     single_doc = [r for r in results if r.get("supporting_doc_count") == 1]

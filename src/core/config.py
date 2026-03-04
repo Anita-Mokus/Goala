@@ -35,13 +35,14 @@ CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))  # Overlap between chunks
 CHUNK_MULTIPAGE_SECTIONS = os.getenv("CHUNK_MULTIPAGE_SECTIONS", "true").lower() == "true"  # Allow sections to span pages
 
 # LLM Provider Selection
-# Options: 'groq' or 'deepseek' or 'openrouter'
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openrouter")
+# Options: 'groq' or 'deepseek' or 'openrouter' or 'ollama
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
 
 # Groq Model Options (when using Groq provider)
 # "llama-3.3-70b-versatile"  # Faster with good accuracy
 # "qwen/qwen3-32b"            # Pretty slow, but accurate
 # "openai/gpt-oss-120b"       # Result after evaluation: 90%
+
 GROQ_LLM_MODEL = os.getenv("GROQ_LLM_MODEL", "openai/gpt-oss-120b")
 
 # DeepSeek Model Options (when using DeepSeek provider)
@@ -56,7 +57,7 @@ HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN", "")
 # Judge LLM — used only during evaluation, kept separate from the RAG LLM
 # so the model scoring answers is independent of the model producing them.
 JUDGE_LLM_PROVIDER = os.getenv("JUDGE_LLM_PROVIDER", "ollama")
-JUDGE_LLM_MODEL = os.getenv("JUDGE_LLM_MODEL", "llama3.1:8b")
+JUDGE_LLM_MODEL = os.getenv("JUDGE_LLM_MODEL", "qwen2.5")
 
 # Get the appropriate model based on provider
 if LLM_PROVIDER.lower() == "deepseek":
@@ -65,6 +66,8 @@ elif LLM_PROVIDER.lower() == "groq":
     LLM_MODEL = GROQ_LLM_MODEL
 elif LLM_PROVIDER.lower() == "openrouter":
     LLM_MODEL = OPENROUTER_LLM_MODEL
+elif LLM_PROVIDER.lower() == "ollama":
+    LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "llama3.1:8b")
 
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))  # Slightly higher for friendlier responses
 
