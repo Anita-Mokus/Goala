@@ -1,60 +1,45 @@
 # ============================================
-# Stage 1: Base image with heavy dependencies
+# Single-stage build with CUDA 12.8 + Python
 # ============================================
-FROM python:3.11-slim AS base
+# CUDA 12.8 + cuDNN: minimum required for RTX 5060 (Blackwell SM_120).
+# Swap back to python:3.11-slim if you have no NVIDIA GPU (and revert
+# requirements.txt torch index to whl/cpu).
+FROM nvidia/cuda:12.8.0-cudnn-runtime-ubuntu22.04
 
-WORKDIR /app
-
-# Install system dependencies for PDF processing
+# Install Python 3.11 + all system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.11 python3.11-dev python3-pip python3.11-distutils \
     build-essential \
     libpq-dev \
-    libmagic-dev \
-    poppler-utils \
-    tesseract-ocr \
-    tesseract-ocr-hun \
-    libgl1 \
-    libglib2.0-0 \
-    libmagic-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements and install all Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# ============================================
-# Stage 2: Final runtime image
-# ============================================
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install only runtime system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
+    libmagic-dev \
     libmagic1 \
     poppler-utils \
     tesseract-ocr \
     tesseract-ocr-hun \
     libgl1 \
     libglib2.0-0 \
-    libmagic-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python \
+    && ln -sf /usr/bin/pip3 /usr/bin/pip
 
-# Copy Python packages from base stage
-COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=base /usr/local/bin /usr/local/bin
+WORKDIR /app
+
+# Install all Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY src/ ./src/
 COPY data/ ./data/
 
 # Environment variables
-ENV HONDONTWRITEBYTECODE=1 \
+ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    HF_HOME=/tmp/huggingface_cache
+    HF_HOME=/tmp/huggingface_cache \
+    PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 EXPOSE 8000
 

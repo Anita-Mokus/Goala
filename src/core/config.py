@@ -52,6 +52,8 @@ DEEPSEEK_LLM_MODEL = os.getenv("DEEPSEEK_LLM_MODEL", "deepseek-chat")
 
 OPENROUTER_LLM_MODEL = os.getenv("OPENROUTER_LLM_MODEL", "openai/gpt-oss-120b:exacto")
 
+OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "llama3.2")
+
 HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN", "")
 
 # Judge LLM — used only during evaluation, kept separate from the RAG LLM
@@ -67,16 +69,17 @@ elif LLM_PROVIDER.lower() == "groq":
 elif LLM_PROVIDER.lower() == "openrouter":
     LLM_MODEL = OPENROUTER_LLM_MODEL
 elif LLM_PROVIDER.lower() == "ollama":
-    LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "llama3.1:8b")
+    LLM_MODEL = OLLAMA_LLM_MODEL
 
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))  # Slightly higher for friendlier responses
 
 # Retriever settings
-RETRIEVER_K = 8  # Number of documents to retrieve
+RETRIEVER_K = 5  # Number of documents to retrieve
 
 # API settings
 API_TITLE = "AI Chat Flow API"
-API_DESCRIPTION = "Hotel Chatbot API with RAG capabilities"
+#API_DESCRIPTION = "Hotel Chatbot API with RAG capabilities"
+API_DESCRIPTION = "LiveRAG API for answering general-knowledge questions based on provided web passages."
 API_VERSION = "1.0.0"
 
 # CORS settings

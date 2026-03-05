@@ -245,6 +245,7 @@ def evaluate_rag():
     # Load question → doc_ids map to know how many supporting docs each question has
     docids_path = project_root / 'shared' / QUESTION_DOCIDS_FILE
     question_docids_map: dict = {}
+    
     if docids_path.exists():
         with open(docids_path, 'r', encoding='utf-8') as f:
             question_docids_map = json.load(f)
@@ -321,7 +322,7 @@ def evaluate_rag():
         print(f"Questions with single supporting document: {len(single_doc_questions)} \n")
 
         for i, item in enumerate(questions, 1):
-            question     = item.get("input", "")
+            question = item.get("input", "")
 
             doc_ids = question_docids_map.get(question, [])
             if len(doc_ids) == 0:

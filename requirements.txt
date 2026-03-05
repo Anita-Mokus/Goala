@@ -21,8 +21,8 @@ langchain-postgres==0.0.16
 # Unstructured for direct partitioning and chunking
 unstructured[pdf]==0.18.32
 
-# Embeddings & HF stack (CPU-only torch)
---extra-index-url https://download.pytorch.org/whl/cpu
+# Embeddings & HF stack (CUDA 12.8 torch for RTX 5060 / Blackwell SM_120)
+--extra-index-url https://download.pytorch.org/whl/cu128
 torch>=2.6.0
 transformers>=4.41.0,<5.0.0
 huggingface-hub>=0.26.0,<1.0.0

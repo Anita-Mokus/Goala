@@ -208,7 +208,7 @@ class IngestLiveRAG:
     # Public API
     # ------------------------------------------------------------------
 
-    def ingest(self, split: str = "train", batch_size: int = 100) -> None:
+    def ingest(self, split: str = "train", batch_size: int = 600, max_rows: Optional[int] = None) -> None:
         """
         Load the LiveRAG/Benchmark dataset in streaming mode and store all
         passages in PGVector.
@@ -221,7 +221,11 @@ class IngestLiveRAG:
         Args:
             split:      Dataset split to load (default: 'train').
             batch_size: Number of dataset rows to buffer before each embed +
-                        store flush (default: 100, ≈500 docs per flush).
+                        store flush (default: 600, ≈5000 docs per flush).
+                        Larger values reduce DB round-trips; tune to your RAM.
+            max_rows:   If set, stop after processing this many rows.  Useful
+                        for smoke-testing the pipeline on a small slice without
+                        waiting for the full dataset.
         """
         print(f"Loading LiveRAG/Benchmark (split='{split}') in streaming mode...")
         ds = load_dataset(
@@ -247,6 +251,9 @@ class IngestLiveRAG:
 
         for row in ds:
             row_count += 1
+            if max_rows is not None and row_count > max_rows:
+                print(f"  Reached max_rows={max_rows}, stopping early.")
+                break
 
             question = (row.get("Question") or "").strip()
             answer = str(row.get("Answer", "")).strip()

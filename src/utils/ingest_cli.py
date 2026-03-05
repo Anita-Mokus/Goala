@@ -1,6 +1,10 @@
 """
 Command-line interface for ingesting documents.
 Processes PDFs and TXT files from the data folder into the vector database.
+
+Usage:
+    python -m src.utils.ingest_cli            # full ingest
+    python -m src.utils.ingest_cli 200        # only first 200 rows (smoke-test)
 """
 import sys
 from pathlib import Path
@@ -10,7 +14,7 @@ project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from src.services import IngestService
+#from src.services import IngestService
 from src.services.ingest_liverag import IngestLiveRAG
 
 
@@ -19,21 +23,15 @@ def main():
     print("\n" + "=" * 60)
     print("AI Chat Flow - Document Ingestion Tool")
     print("=" * 60 + "\n")
-    
-    ingest_service = IngestService()
+
+    max_rows = int(sys.argv[1]) if len(sys.argv) > 1 else None
+    if max_rows is not None:
+        print(f"⚠  max_rows={max_rows} — partial ingest for testing\n")
+
     ingest_liveRAG_service = IngestLiveRAG()
     
     try:
-        # Check if specific file is provided
-        # if len(sys.argv) > 1:
-        #     doc_path = sys.argv[1]
-        #     print(f"Ingesting specific file: {doc_path}\n")
-        #     ingest_service.ingest_document(doc_path)
-        # else:
-        #     # Ingeste all documents from data folder
-        #     print("Ingesting all documents from data folder...\n")
-        #     ingest_service.ingest_all_documents()
-        ingest_liveRAG_service.ingest()
+        ingest_liveRAG_service.ingest(max_rows=max_rows)
         print("\n" + "=" * 60)
         print("Ingestion completed successfully!")
         print("=" * 60 + "\n")
