@@ -301,6 +301,12 @@ class IngestLiveRAG:
                     total_docs += len(doc_buffer)
                     doc_buffer = []
                     gc.collect()
+                    try:
+                        import torch
+                        if torch.cuda.is_available():
+                            torch.cuda.empty_cache()
+                    except Exception:
+                        pass
                 print(f"  Processed {row_count} rows ({total_docs} docs stored)...")
 
         # Flush any remaining docs

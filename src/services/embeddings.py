@@ -30,12 +30,12 @@ def get_embeddings() -> HuggingFaceEmbeddings:
     
     if _embeddings_instance is None:
         device = _best_device()
-        # Batch sizes tuned for BGE-M3 (2.2 GB weights) on an 8 GB GPU.
+        # Batch sizes tuned for BGE-M3 (2.2 GB weights).
         # FineWeb passages are long (~400 tokens avg), so VRAM per doc is high.
-        #   cuda → 32 keeps peak VRAM under ~6 GB
-        #   mps  → 16 (unified memory, conservative)
+        #   cuda → 8  conservative to avoid OOM on cards < 8 GB
+        #   mps  → 8  (unified memory, conservative)
         #   cpu  → 32
-        batch_size = 32 if device == "cuda" else (16 if device == "mps" else 32)
+        batch_size = 8 if device == "cuda" else (8 if device == "mps" else 32)
         print(f"Initializing embeddings model: {EMBEDDING_MODEL} (device={device}, batch_size={batch_size})")
         _embeddings_instance = HuggingFaceEmbeddings(
             model_name=EMBEDDING_MODEL,
