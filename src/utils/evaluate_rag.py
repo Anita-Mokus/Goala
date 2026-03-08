@@ -132,6 +132,47 @@ def compute_reciprocal_rank_from_labels(labels: list[int]) -> float:
     return 0.0
 
 
+def compute_reciprocal_rank_from_docids(
+    retrieved_docs: list, ground_truth_doc_ids: list
+) -> float:
+    """
+    Compute the reciprocal rank by matching retrieved doc_ids against ground truth.
+
+    Args:
+        retrieved_docs:       Ordered list of LangChain Document objects from the retriever.
+        ground_truth_doc_ids: List of relevant doc_id strings for the question.
+
+    Returns:
+        ``1 / rank`` of the first retrieved doc whose doc_id is in
+        ``ground_truth_doc_ids``, or ``0.0`` if none match.
+    """
+    gt_set = set(ground_truth_doc_ids)
+    for rank, doc in enumerate(retrieved_docs, start=1):
+        if doc.metadata.get("doc_id", "") in gt_set:
+            return 1.0 / rank
+    return 0.0
+
+
+def compute_recall_at_k(retrieved_docs: list, ground_truth_doc_ids: list) -> float:
+    """
+    Compute Recall@K: fraction of ground-truth doc_ids found anywhere in the
+    retrieved list.
+
+    Args:
+        retrieved_docs:       Ordered list of LangChain Document objects from the retriever.
+        ground_truth_doc_ids: List of relevant doc_id strings for the question.
+
+    Returns:
+        Number of hits / total ground-truth docs, in [0.0, 1.0].
+        Returns 0.0 when ``ground_truth_doc_ids`` is empty.
+    """
+    if not ground_truth_doc_ids:
+        return 0.0
+    retrieved_ids = {doc.metadata.get("doc_id", "") for doc in retrieved_docs}
+    hits = sum(1 for doc_id in ground_truth_doc_ids if doc_id in retrieved_ids)
+    return hits / len(ground_truth_doc_ids)
+
+
 def parse_judge_response(response: str) -> tuple[int, str]:
     """Parse the judge's response to extract score and explanation."""
     lines = response.strip().split('\n')
@@ -176,6 +217,7 @@ def compute_score_stats(results: list, label: str) -> dict | None:
 
     scores = [r["score"] for r in results if isinstance(r["score"], int)]
     rr_values = [r["reciprocal_rank"] for r in results if r.get("reciprocal_rank") is not None]
+    recall_values = [r["recall_at_k"] for r in results if r.get("recall_at_k") is not None]
 
     stats: dict = {
         "label": label,
@@ -201,6 +243,13 @@ def compute_score_stats(results: list, label: str) -> dict | None:
             "questions_hit_at_k": sum(1 for rr in rr_values if rr > 0),
         }
 
+    if recall_values:
+        stats["recall_at_k"] = {
+            "mean_recall": round(sum(recall_values) / len(recall_values), 4),
+            "questions_with_ground_truth": len(recall_values),
+            "perfect_recall_count": sum(1 for r in recall_values if r == 1.0),
+        }
+
     return stats
 
 
@@ -223,6 +272,13 @@ def print_stats(stats: dict) -> None:
         print(f"    Hit@3:            {m['questions_hit_at_3']} ({round(m['questions_hit_at_3']/n*100,1)}%)")
         print(f"    Hit@5:            {m['questions_hit_at_5']} ({round(m['questions_hit_at_5']/n*100,1)}%)")
         print(f"    Hit@K (any rank): {m['questions_hit_at_k']} ({round(m['questions_hit_at_k']/n*100,1)}%)")
+    if "recall_at_k" in stats:
+        rc = stats["recall_at_k"]
+        n = rc["questions_with_ground_truth"]
+        print(f"  Retrieval — Recall@K:")
+        print(f"    Mean Recall@K:    {rc['mean_recall']:.4f}")
+        print(f"    Questions w/ GT:  {n}")
+        print(f"    Perfect recall:   {rc['perfect_recall_count']} ({round(rc['perfect_recall_count']/n*100,1)}%)")
 
 def evaluate_rag():
     """Run the RAG evaluation."""
@@ -361,17 +417,37 @@ def evaluate_rag():
                     score = 0
                     explanation = f"ERROR: {str(e)}"
                 
-                # Compute reciprocal rank from the manually-labelled CSV
-                if question_idx in mrr_labels:
-                    labels = mrr_labels[question_idx]
+                # Compute reciprocal rank and Recall@K
+                # Primary: auto-compute from ground-truth doc_ids if available
+                # Fallback: use manually-labelled CSV if it has any 1s
+                doc_ids = question_docids_map.get(question, [])
+                csv_labels = mrr_labels.get(question_idx, [])
+
+                if doc_ids:
+                    rr = compute_reciprocal_rank_from_docids(retrieved_docs, doc_ids)
+                    recall = compute_recall_at_k(retrieved_docs, doc_ids)
+                    labels = csv_labels
+                    first_relevant = next(
+                        (rank for rank, doc in enumerate(retrieved_docs, start=1)
+                         if doc.metadata.get("doc_id", "") in set(doc_ids)),
+                        None,
+                    )
+                    print(f"  Reciprocal Rank: {rr:.4f}  "
+                          f"(first relevant at rank {first_relevant}, "
+                          f"GT doc_ids: {doc_ids})")
+                    print(f"  Recall@K:        {recall:.4f}")
+                elif csv_labels and any(csv_labels):
+                    # Fallback: CSV was manually filled
+                    labels = csv_labels
                     rr = compute_reciprocal_rank_from_labels(labels)
+                    recall = None
                     first_relevant = next((r + 1 for r, v in enumerate(labels) if v), None)
                     print(f"  Reciprocal Rank: {rr:.4f}  "
-                        f"(first relevant at rank {first_relevant}, "
-                        f"{sum(labels)} labelled relevant out of {len(labels)})")
+                          f"(CSV labels — first relevant at rank {first_relevant})")
                 else:
-                    labels = []
+                    labels = csv_labels
                     rr = None
+                    recall = None
 
                 # Tag with number of supporting docs (for split statistics)
                 supporting_doc_count = len(question_docids_map.get(question, []))
@@ -385,6 +461,7 @@ def evaluate_rag():
                     "score": score,
                     "explanation": explanation,
                     "reciprocal_rank": rr,
+                    "recall_at_k": recall,
                     "mrr_labels": labels,
                     "supporting_doc_count": supporting_doc_count,
                     "retrieved_doc_ids": [
@@ -437,22 +514,10 @@ def evaluate_rag():
     
     # Print statistics
     print(f"\nResults saved to: {output_file}")
-    if statistics:
-        print(f"\nStatistics:")
-        print(f"  Total questions: {statistics['total_questions']}")
-        print(f"  Average score: {statistics['average_score']}/5")
-        print(f"\nScore Distribution:")
-        for score_level, data in statistics['score_distribution'].items():
-            print(f"  {score_level}: {data['count']} ({data['percentage']}%)")
-        if "mrr" in statistics:
-            m = statistics["mrr"]
-            print(f"\nRetrieval — Mean Reciprocal Rank (MRR):")
-            print(f"  MRR:              {m['mean_reciprocal_rank']:.4f}")
-            print(f"  Questions w/ GT:  {m['questions_with_ground_truth']}")
-            print(f"  Hit@1:            {m['questions_hit_at_1']} ({round(m['questions_hit_at_1']/m['questions_with_ground_truth']*100,1)}%)")
-            print(f"  Hit@3:            {m['questions_hit_at_3']} ({round(m['questions_hit_at_3']/m['questions_with_ground_truth']*100,1)}%)")
-            print(f"  Hit@5:            {m['questions_hit_at_5']} ({round(m['questions_hit_at_5']/m['questions_with_ground_truth']*100,1)}%)")
-            print(f"  Hit@K (any rank): {m['questions_hit_at_k']} ({round(m['questions_hit_at_k']/m['questions_with_ground_truth']*100,1)}%)")
+    for stats_key in ("overall", "single_supporting_doc", "multi_supporting_doc"):
+        s = statistics.get(stats_key)
+        if s:
+            print_stats(s)
     
     print("\n" + "=" * 60)
     print("Evaluation completed!")
