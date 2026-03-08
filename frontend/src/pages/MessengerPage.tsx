@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient, MessengerStatus } from '../api/client';
+import VncViewer from '../components/VncViewer';
 import './MessengerPage.css';
 
 const MessengerPage: React.FC = () => {
@@ -211,24 +212,18 @@ const MessengerPage: React.FC = () => {
       </div>
 
       <div className="info-section">
+        <h3>Chrome Browser — Live View</h3>
+        <VncViewer connected={status.running} />
+      </div>
+
+      <div className="info-section">
         <h3>Setup Instructions</h3>
         <div className="info-card">
           <div className="info-step">
             <div className="step-number">1</div>
             <div className="step-content">
-              <h4>Connect to Chrome via VNC</h4>
-              <p>The bot runs inside Docker with a visible Chrome window. You can view it using any VNC client:</p>
-              <div className="code-block">
-                <code>Host: localhost</code><br />
-                <code>Port: 5900</code><br />
-                <code>Password: (none)</code>
-              </div>
-              <p><strong>Recommended VNC Clients:</strong></p>
-              <ul>
-                <li>Windows: TightVNC, RealVNC</li>
-                <li>macOS: Built-in "Screen Sharing" app</li>
-                <li>Linux: Remmina, TigerVNC</li>
-              </ul>
+              <h4>Start the Bot</h4>
+              <p>Click the "Start Bot" button above. Chrome will launch inside Docker and open Messenger automatically. You'll see it appear in the live view above.</p>
             </div>
           </div>
 
@@ -236,15 +231,15 @@ const MessengerPage: React.FC = () => {
             <div className="step-number">2</div>
             <div className="step-content">
               <h4>Log in to Messenger</h4>
-              <p>Once connected to VNC, you'll see the Chrome window. Click "Start Bot" below, and Chrome will open to Messenger. Log in with your Facebook account and check "Stay logged in".</p>
+              <p>Use the live Chrome view above to log in with your Facebook account. Check "Stay logged in" so the session persists across restarts.</p>
             </div>
           </div>
 
           <div className="info-step">
             <div className="step-number">3</div>
             <div className="step-content">
-              <h4>Start the Bot</h4>
-              <p>After logging in via VNC, the bot will automatically monitor your Messenger and respond using the Goala RAG system. You can watch it work in real-time through the VNC connection!</p>
+              <h4>Let the Bot Work</h4>
+              <p>Once logged in, the bot will automatically monitor your Messenger inbox and respond using the Goala RAG system. You can watch it work in real-time in the viewer above!</p>
             </div>
           </div>
         </div>

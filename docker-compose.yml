@@ -45,13 +45,14 @@ services:
       - MESSENGER_CHROME_PROFILE_PATH=/app/chrome_profile
     ports:
       - "${API_PORT:-8000}:8000"
-      - "5900:5900"  # VNC port to view Chrome
+      - "6080:6080"  # noVNC WebSocket port
     volumes:
       - ./src:/app/src  
       - ./data:/app/data:ro
       - ./shared:/app/shared
       - huggingface_cache:/app/huggingface_cache
       - chrome_profile:/app/chrome_profile
+    shm_size: '2gb'  # Required for Chrome to run properly in Docker
     depends_on:
       db:
         condition: service_healthy

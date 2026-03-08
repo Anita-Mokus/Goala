@@ -25,19 +25,18 @@ echo "Starting fluxbox window manager..."
 DISPLAY=:99 fluxbox &
 sleep 1
 
-# Start x11vnc server (allows you to view the display via VNC)
-# -nopw: no password
-# -forever: keep running after client disconnects
-# -shared: allow multiple clients
-# -noxdamage: better performance
-# -rfbport 5900: use standard VNC port
-# -listen 0.0.0.0: listen on all interfaces (allows localhost connections)
-echo "Starting VNC server on port 5900..."
-x11vnc -display :99 -forever -shared -rfbport 5900 -nopw -noxdamage -listen 0.0.0.0 &
+# Start x11vnc server (VNC backend, only listens locally)
+echo "Starting x11vnc..."
+x11vnc -display :99 -forever -shared -rfbport 5900 -nopw -noxdamage -listen 127.0.0.1 &
 VNC_PID=$!
 
+# Start websockify to bridge VNC over WebSocket for noVNC
+echo "Starting websockify on port 6080..."
+websockify 0.0.0.0:6080 localhost:5900 &
+WEBSOCKIFY_PID=$!
+
 echo "✓ Virtual display ready!"
-echo "✓ You can connect to VNC at localhost:5900 to see Chrome running"
+echo "✓ noVNC WebSocket available on port 6080"
 
 # Execute the main command (uvicorn)
 exec "$@"

@@ -47,6 +47,7 @@ def create_stealth_driver(profile_path: str, chrome_driver_path: Optional[str] =
     
     # Use persistent Chrome profile (MOST IMPORTANT for stealth)
     options.add_argument(f"--user-data-dir={profile_path}")
+    options.add_argument("--profile-directory=Default")
     
     # Disable automation flags
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -61,13 +62,10 @@ def create_stealth_driver(profile_path: str, chrome_driver_path: Optional[str] =
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
-    options.add_argument("--remote-debugging-port=9222")
     
     # Additional stability flags
     options.add_argument("--disable-software-rasterizer")
-    options.add_argument("--disable-extensions")
     options.add_argument("--disable-setuid-sandbox")
-    options.add_argument("--disable-web-security")
     
     # Prevent crashes
     options.add_argument("--disable-crash-reporter")
