@@ -35,6 +35,7 @@ from src.core.config import RETRIEVER_K
 EVAL_FILE_NAME   = "liverag_eval.json"
 CONTEXTS_FILE    = "liverag_mrr_contexts.txt"
 LABELS_CSV_FILE  = "liverag_mrr_labels.csv"
+QUESTION_DOCIDS_FILE = "liverag_question_docids.json"
 SEPARATOR        = "=" * 72
 # ────────────────────────────────────────────────────────────────────────────
 
@@ -62,6 +63,16 @@ def main() -> None:
 
     print(f"Loaded {len(all_questions)} questions from {EVAL_FILE_NAME}")
 
+    # Load ground-truth doc_ids for auto-labeling the CSV
+    docids_path = project_root / "shared" / QUESTION_DOCIDS_FILE
+    question_docids_map: dict = {}
+    if docids_path.exists():
+        with open(docids_path, "r", encoding="utf-8") as fh:
+            question_docids_map = json.load(fh)
+        print(f"  Auto-labeling enabled: {len(question_docids_map)} questions in doc_ids map")
+    else:
+        print(f"  INFO: {QUESTION_DOCIDS_FILE} not found — CSV labels will be all-zeros (fill manually)")
+
     print("Initializing RAG service...")
     rag_service = RAGService()
 
@@ -87,36 +98,40 @@ def main() -> None:
                 retrieved_docs = []
 
             # ── human-readable review file ───────────────────────────────
+            gt_ids = set(question_docids_map.get(question, []))
+
             ctx_fh.write(f"{SEPARATOR}\n")
             ctx_fh.write(f"QUESTION INDEX: {idx}\n")
             ctx_fh.write(f"QUESTION: {question}\n")
+            if gt_ids:
+                ctx_fh.write(f"GROUND TRUTH DOC_IDs: {', '.join(gt_ids)}\n")
             ctx_fh.write(f"{SEPARATOR}\n\n")
 
             for rank, doc in enumerate(retrieved_docs, start=1):
                 doc_id  = doc.metadata.get("doc_id", "n/a")
                 snippet = doc.page_content.strip().replace("\n", " ")
-                ctx_fh.write(f"  Rank {rank}  [doc_id: {doc_id}]\n")
+                match_marker = " ← GT MATCH" if doc_id in gt_ids else ""
+                ctx_fh.write(f"  Rank {rank}  [doc_id: {doc_id}]{match_marker}\n")
                 ctx_fh.write(f"  {snippet}\n\n")
 
             if not retrieved_docs:
                 ctx_fh.write("  (no documents retrieved)\n\n")
 
-            # ── CSV row: all zeros — user fills in the correct rank ───────
-            # Pad to RETRIEVER_K columns in case fewer docs were returned
-            n = len(retrieved_docs)
+            # ── CSV row: auto-label using doc_id matching ─────────────────
+            # 1 at the rank position(s) where a GT doc was retrieved, 0 elsewhere.
+            # If liverag_question_docids.json is missing, defaults to all-zeros.
             labels = [0] * RETRIEVER_K
-            # Mark unreturned positions so the user knows they are empty
-            # (they stay 0; the review file makes this clear)
-            writer.writerow([idx] + labels[:RETRIEVER_K])
+            for rank_i, doc in enumerate(retrieved_docs[:RETRIEVER_K]):
+                if doc.metadata.get("doc_id", "") in gt_ids:
+                    labels[rank_i] = 1
+
+            writer.writerow([idx] + labels)
 
     print(f"\n✓ Context review saved to:  {contexts_path}")
-    print(f"✓ Blank CSV template saved: {labels_path}")
+    print(f"✓ Auto-labeled CSV saved to: {labels_path}")
+    print(f"  (Labels set to 1 where retrieved doc_id matches ground truth;")
+    print(f"   edit the CSV manually to override any labels.)")
     print()
-    # print("Next steps:")
-    # print(f"  1. Open {CONTEXTS_FILE} and read each question's retrieved contexts.")
-    # print(f"  2. In {LABELS_CSV_FILE}, set the column to 1 for the rank that gives")
-    # print(f"     the correct answer (leave all 0 if none of the contexts are correct).")
-    # print(f"  3. Re-run evaluate_rag.py — it will read the filled CSV and compute MRR.")
 
 
 if __name__ == "__main__":
