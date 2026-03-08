@@ -12,9 +12,11 @@ interface VncViewerProps {
 
 const VncViewer: React.FC<VncViewerProps> = ({ wsUrl, connected = true }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const rfbRef = useRef<RFB | null>(null);
   const [status, setStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
   const [error, setError] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   /** Build the default WebSocket URL from the current page origin */
   const getWsUrl = useCallback((): string => {
@@ -87,6 +89,31 @@ const VncViewer: React.FC<VncViewerProps> = ({ wsUrl, connected = true }) => {
     setStatus('disconnected');
   }, []);
 
+  /** Toggle fullscreen mode */
+  const toggleFullscreen = useCallback(() => {
+    if (!wrapperRef.current) return;
+
+    if (!document.fullscreenElement) {
+      wrapperRef.current.requestFullscreen().catch((err) => {
+        console.error('Error attempting to enable fullscreen:', err);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }, []);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   // Auto-connect / disconnect when the `connected` prop changes
   useEffect(() => {
     if (connected) {
@@ -100,7 +127,7 @@ const VncViewer: React.FC<VncViewerProps> = ({ wsUrl, connected = true }) => {
   }, [connected, connect, disconnect]);
 
   return (
-    <div className="vnc-viewer-wrapper">
+    <div className="vnc-viewer-wrapper" ref={wrapperRef}>
       {/* Toolbar */}
       <div className="vnc-toolbar">
         <div className="vnc-status">
@@ -112,6 +139,19 @@ const VncViewer: React.FC<VncViewerProps> = ({ wsUrl, connected = true }) => {
           </span>
         </div>
         <div className="vnc-actions">
+          {status === 'connected' && (
+            <button
+              className="btn btn-sm btn-secondary"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            >
+              {isFullscreen ? (
+                <span>↲ Exit Fullscreen</span>
+              ) : (
+                <span>⛶ Fullscreen</span>
+              )}
+            </button>
+          )}
           {status === 'disconnected' && (
             <button className="btn btn-sm btn-primary" onClick={connect}>
               Reconnect

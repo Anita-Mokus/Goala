@@ -9,6 +9,18 @@
   flex-direction: column;
 }
 
+/* Fullscreen mode */
+.vnc-viewer-wrapper:fullscreen {
+  border-radius: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+.vnc-viewer-wrapper:fullscreen .vnc-canvas {
+  min-height: calc(100vh - 50px); /* Account for toolbar */
+  height: calc(100vh - 50px);
+}
+
 /* Toolbar */
 .vnc-toolbar {
   display: flex;
