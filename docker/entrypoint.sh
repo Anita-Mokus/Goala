@@ -35,6 +35,8 @@ echo "Starting websockify on port 6080..."
 websockify 0.0.0.0:6080 localhost:5900 &
 WEBSOCKIFY_PID=$!
 
+export DISPLAY=:99
+
 echo "✓ Virtual display ready!"
 echo "✓ noVNC WebSocket available on port 6080"
 

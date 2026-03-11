@@ -111,17 +111,17 @@ def start_messenger_bot():
         _bot_thread = threading.Thread(target=_bot_instance.start, daemon=True)
         _bot_thread.start()
         
-        # Give it a moment to initialize
+        # Give Chrome a moment to launch and detect an early crash
         import time
-        time.sleep(2)
+        time.sleep(3)
         
-        if _bot_instance.running:
-            return MessengerActionResponse(
-                status="started",
-                message="Messenger bot has been started successfully"
-            )
-        else:
-            raise Exception("Bot failed to start")
+        if not _bot_thread.is_alive():
+            raise Exception("Bot thread crashed during startup. Check server logs for details.")
+        
+        return MessengerActionResponse(
+            status="starting",
+            message="Messenger bot is starting. Check /status for current state (Chrome is loading and waiting for login)."
+        )
     
     except Exception as e:
         _bot_instance = None

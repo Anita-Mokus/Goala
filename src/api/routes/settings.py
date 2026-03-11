@@ -4,6 +4,7 @@ API routes for application settings management.
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from datetime import datetime
+from typing import Optional
 
 from src.models.database import AppSettings, get_db_session
 
@@ -22,7 +23,7 @@ class SettingsResponse(BaseModel):
     chunk_max_characters: int
     chunk_new_after_n_chars: int
     chunk_overlap: int
-    rag_prompt_template: str
+    rag_prompt_template: Optional[str] = ""
     updated_at: datetime
 
     class Config:
@@ -73,7 +74,7 @@ def get_settings():
                 chunk_max_characters=settings.chunk_max_characters,
                 chunk_new_after_n_chars=settings.chunk_new_after_n_chars,
                 chunk_overlap=settings.chunk_overlap,
-                rag_prompt_template=settings.rag_prompt_template,
+                rag_prompt_template=settings.rag_prompt_template or "",
                 updated_at=settings.updated_at
             )
     except HTTPException:
@@ -131,7 +132,7 @@ def update_settings(settings_update: SettingsUpdate):
                 chunk_max_characters=settings.chunk_max_characters,
                 chunk_new_after_n_chars=settings.chunk_new_after_n_chars,
                 chunk_overlap=settings.chunk_overlap,
-                rag_prompt_template=settings.rag_prompt_template,
+                rag_prompt_template=settings.rag_prompt_template or "",
                 updated_at=settings.updated_at
             )
     except HTTPException:
