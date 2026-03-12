@@ -11,7 +11,7 @@ from typing import Optional, Dict, List
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException, WebDriverException
 
 from src.integrations.messenger.config import MessengerConfig
 from src.integrations.messenger.stealth_driver import create_stealth_driver
@@ -169,6 +169,16 @@ class MessengerBot:
                 print("\n\nKeyboard interrupt received. Stopping bot...")
                 self.stop()
                 break
+            except WebDriverException as e:
+                if "no such window" in str(e) or "web view not found" in str(e):
+                    print(f"ERROR: Browser window closed. Attempting recovery...")
+                    if not self._recover_window():
+                        print("Recovery failed. Stopping bot.")
+                        self.stop()
+                        break
+                else:
+                    print(f"ERROR in main loop (WebDriver): {e}")
+                    time.sleep(5)
             except Exception as e:
                 print(f"ERROR in main loop: {e}")
                 print("Continuing operation...")
@@ -200,10 +210,6 @@ class MessengerBot:
                             # Get conversation identifier
                             conv_id = conv.get_attribute("id") or conv.text[:50]
                             
-                            # Skip if already processed
-                            if conv_id in self._processed_messages:
-                                continue
-                            
                             # Click to open conversation
                             conv.click()
                             time.sleep(1)
@@ -212,9 +218,15 @@ class MessengerBot:
                             message = self._extract_latest_message()
                             
                             if message:
+                                # Track by conversation + message text to allow new messages
+                                message_key = f"{conv_id}:{message['text'][:100]}"
+                                
+                                if message_key in self._processed_messages:
+                                    continue
+                                
                                 message['conversation_id'] = conv_id
                                 unread_messages.append(message)
-                                self._processed_messages.add(conv_id)
+                                self._processed_messages.add(message_key)
                         
                         except (StaleElementReferenceException, NoSuchElementException) as e:
                             print(f"Warning: Could not process conversation: {e}")
@@ -446,6 +458,44 @@ class MessengerBot:
             print(f"  ERROR sending message: {e}")
             return False
     
+    def _recover_window(self) -> bool:
+        """
+        Attempt to recover from a closed/crashed browser window.
+        First tries to switch to an existing window handle; if none available,
+        restarts the driver and re-navigates to Messenger.
+
+        Returns:
+            True if recovery succeeded, False otherwise
+        """
+        try:
+            # Try switching to any still-open window handle
+            handles = self.driver.window_handles
+            if handles:
+                self.driver.switch_to.window(handles[-1])
+                print("Switched to existing window. Navigating back to Messenger...")
+                self.driver.get("https://www.messenger.com")
+                return self._wait_for_login(timeout=60)
+        except Exception:
+            pass
+
+        # Full driver restart
+        print("No open windows found. Restarting Chrome driver...")
+        try:
+            self.driver.quit()
+        except Exception:
+            pass
+
+        try:
+            self.driver = create_stealth_driver(self.config.CHROME_PROFILE_PATH)
+            self.driver.get("https://www.messenger.com")
+            if self._wait_for_login(timeout=120):
+                print("✓ Driver restarted and logged in successfully")
+                return True
+        except Exception as e:
+            print(f"ERROR during driver restart: {e}")
+
+        return False
+
     def pause(self):
         """Pause message processing (but keep bot running)."""
         with self._lock:
