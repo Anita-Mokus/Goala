@@ -13,6 +13,7 @@ router = APIRouter(prefix="/api/messenger", tags=["messenger"])
 # Global bot instance (initialized when bot is started)
 _bot_instance = None
 _bot_thread = None
+_bot_start_error: Optional[str] = None
 
 
 def set_bot_instance(bot):
@@ -34,6 +35,7 @@ class MessengerStatusResponse(BaseModel):
     last_message_timestamp: Optional[str]
     uptime_seconds: int
     config_valid: bool
+    last_error: Optional[str] = None
 
 
 class MessengerActionResponse(BaseModel):
@@ -54,7 +56,7 @@ def get_messenger_status():
     
     bot = get_bot_instance()
     config_valid = MessengerConfig.validate()
-    
+
     if not bot:
         return MessengerStatusResponse(
             running=False,
@@ -62,11 +64,13 @@ def get_messenger_status():
             message_count=0,
             last_message_timestamp=None,
             uptime_seconds=0,
-            config_valid=config_valid
+            config_valid=config_valid,
+            last_error=_bot_start_error
         )
-    
+
     status = bot.get_status()
     status['config_valid'] = config_valid
+    status['last_error'] = _bot_start_error
     return MessengerStatusResponse(**status)
 
 
@@ -103,26 +107,31 @@ def start_messenger_bot():
             detail="Invalid configuration. Please check MESSENGER_CHROME_PROFILE_PATH in .env"
         )
     
+    global _bot_start_error
+    _bot_start_error = None
+
+    def _run_bot():
+        global _bot_start_error, _bot_instance, _bot_thread
+        try:
+            _bot_instance.start()
+        except Exception as e:
+            _bot_start_error = str(e)
+            import logging
+            logging.getLogger(__name__).error(f"Messenger bot crashed: {e}", exc_info=True)
+        finally:
+            _bot_instance = None
+            _bot_thread = None
+
     try:
-        # Create bot instance
         _bot_instance = MessengerBot()
-        
-        # Start bot in background thread
-        _bot_thread = threading.Thread(target=_bot_instance.start, daemon=True)
+        _bot_thread = threading.Thread(target=_run_bot, daemon=True)
         _bot_thread.start()
-        
-        # Give Chrome a moment to launch and detect an early crash
-        import time
-        time.sleep(3)
-        
-        if not _bot_thread.is_alive():
-            raise Exception("Bot thread crashed during startup. Check server logs for details.")
-        
+
         return MessengerActionResponse(
             status="starting",
-            message="Messenger bot is starting. Check /status for current state (Chrome is loading and waiting for login)."
+            message="Messenger bot is starting. Poll /api/messenger/status to track progress."
         )
-    
+
     except Exception as e:
         _bot_instance = None
         _bot_thread = None

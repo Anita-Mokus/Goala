@@ -35,7 +35,25 @@ def create_stealth_driver(profile_path: str, chrome_driver_path: Optional[str] =
     if not os.path.exists(profile_path):
         os.makedirs(profile_path, mode=0o777)
         logger.info(f"Created Chrome profile directory: {profile_path}")
-    
+
+    # Remove stale Chrome lock files left behind by a previous crash.
+    # If these exist when Chrome starts, it exits immediately (SessionNotCreatedException).
+    lock_files = [
+        os.path.join(profile_path, "SingletonLock"),
+        os.path.join(profile_path, "SingletonSocket"),
+        os.path.join(profile_path, "SingletonCookie"),
+        os.path.join(profile_path, "Default", "SingletonLock"),
+        os.path.join(profile_path, "Default", "SingletonSocket"),
+        os.path.join(profile_path, "Default", "SingletonCookie"),
+    ]
+    for lock_file in lock_files:
+        if os.path.exists(lock_file):
+            try:
+                os.remove(lock_file)
+                logger.info(f"Removed stale lock file: {lock_file}")
+            except OSError as e:
+                logger.warning(f"Could not remove lock file {lock_file}: {e}")
+
     # Create First Run file to prevent Chrome first-run setup
     first_run_file = os.path.join(profile_path, "First Run")
     if not os.path.exists(first_run_file):

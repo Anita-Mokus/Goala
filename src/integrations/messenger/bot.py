@@ -11,6 +11,8 @@ from typing import Optional, Dict, List
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException, WebDriverException
 
 from src.integrations.messenger.config import MessengerConfig
@@ -199,6 +201,7 @@ class MessengerBot:
                 '[aria-label*="unread"]',
                 '[aria-label*="Unread"]',
                 'div[role="button"][aria-label*="message"]',
+
             ]
             
             for selector in unread_selectors:
@@ -400,49 +403,57 @@ class MessengerBot:
     def _send_message(self, text: str) -> bool:
         """
         Send a message in the currently open conversation.
-        
+
         Args:
             text: Message text to send
-            
+
         Returns:
             True if successful, False otherwise
         """
         try:
-            # Find input box with multiple selector strategies
             input_selectors = [
                 'div[contenteditable="true"][role="textbox"]',
-                '[aria-label*="Message"]',
-                '[aria-label*="Aa"]',
+                '[aria-label*="Message"][contenteditable="true"]',
+                '[aria-label*="Aa"][contenteditable="true"]',
                 'div[contenteditable="true"]',
             ]
-            
+
             input_box = None
             for selector in input_selectors:
                 try:
-                    input_box = self.driver.find_element(By.CSS_SELECTOR, selector)
+                    input_box = WebDriverWait(self.driver, 5).until(
+                        EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
+                    )
                     if input_box:
                         break
-                except NoSuchElementException:
+                except TimeoutException:
                     continue
-            
+
             if not input_box:
                 print("  ERROR: Could not find message input box")
                 return False
-            
-            # Paste text (no typing simulation)
-            input_box.click()
+
+            # Scroll into view and focus via ActionChains, then JS as fallback
+            self.driver.execute_script("arguments[0].scrollIntoView(true);", input_box)
+            time.sleep(0.3)
+
+            ActionChains(self.driver).move_to_element(input_box).click().perform()
+            time.sleep(0.3)
+
+            # Ensure the element is focused via JS (handles contenteditable edge cases)
+            self.driver.execute_script("arguments[0].focus();", input_box)
+            time.sleep(0.2)
+
             input_box.send_keys(text)
-            
-            # Wait a moment for text to be entered
             time.sleep(0.5)
-            
-            # Find and click send button
+
+            # Try send button first, fall back to Enter key
             send_selectors = [
+                '[aria-label="Send"]',
                 '[aria-label*="Send"]',
                 '[aria-label*="Press enter"]',
-                'div[aria-label="Send"]',
             ]
-            
+
             for selector in send_selectors:
                 try:
                     send_button = self.driver.find_element(By.CSS_SELECTOR, selector)
@@ -450,10 +461,11 @@ class MessengerBot:
                     return True
                 except NoSuchElementException:
                     continue
-            
-            print("  ERROR: Could not find send button")
-            return False
-        
+
+            # Fallback: press Enter to send
+            input_box.send_keys(Keys.RETURN)
+            return True
+
         except Exception as e:
             print(f"  ERROR sending message: {e}")
             return False
