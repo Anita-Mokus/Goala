@@ -284,11 +284,8 @@ def messenger_login_redirect():
 @router.get("/debug")
 def debug_messenger_bot():
     """
-    Debug endpoint: inspects the live Messenger page and returns which DOM selectors
-    currently match, making it easy to diagnose when Facebook changes its layout.
-
-    Returns:
-        Dict mapping each selector to its match count and up to 5 sample aria-labels/text.
+    Debug endpoint: inspects the live Messenger page and reports conversation links
+    found in the sidebar along with their bold (unread) detection result.
     """
     from selenium.webdriver.common.by import By
 
@@ -298,35 +295,54 @@ def debug_messenger_bot():
     if not bot.driver:
         return {"error": "Chrome driver not initialised yet"}
 
-    selectors_to_probe = [
-        '[aria-label*=" unread"]',
-        '[aria-label*="unread message"]',
-        '[aria-label*=" Unread"]',
-        '[aria-label*="Unread message"]',
-        '[aria-label*="unread"]',
-        '[aria-label*="Unread"]',
-        'div[role="button"][aria-label*="message"]',
-        'div[role="listitem"]',
-        'div[contenteditable="true"][role="textbox"]',
-        '[aria-label*="Message"]',
-        'div[dir="auto"]',
-    ]
-
     result: dict = {
         "page_title": bot.driver.title,
         "current_url": bot.driver.current_url,
+        "conversation_links": [],
         "selectors": {},
     }
 
-    for selector in selectors_to_probe:
+    # Check all conversation links in the sidebar
+    try:
+        conv_links = bot.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/t/"], a[href*="/e2ee/t/"]')
+        # Skip the first 4 fixed Facebook nav buttons (Chatek, Marketplace, Kérések, Archiválás)
+        conversation_links = conv_links[4:]
+        result["conversation_links_total"] = len(conversation_links)
+        for link in conversation_links[:20]:  # cap at 20 to avoid huge responses
+            try:
+                is_bold = bot.driver.execute_script("""
+                    var el = arguments[0];
+                    var children = el.querySelectorAll('*');
+                    for (var i = 0; i < children.length; i++) {
+                        var fw = window.getComputedStyle(children[i]).fontWeight;
+                        if (fw === '700' || fw === 'bold') { return true; }
+                    }
+                    return false;
+                """, link)
+                result["conversation_links"].append({
+                    "href": link.get_attribute("href"),
+                    "aria_label": (link.get_attribute("aria-label") or "")[:80],
+                    "text": (link.text or "")[:80],
+                    "is_unread_bold": is_bold,
+                })
+            except Exception as exc:
+                result["conversation_links"].append({"error": str(exc)})
+    except Exception as exc:
+        result["conversation_links_error"] = str(exc)
+
+    # Also probe a few extra selectors for reference
+    extra_selectors = [
+        'div[contenteditable="true"][role="textbox"]',
+        'div[dir="auto"]',
+        '[aria-label*="olvasatlan"]',
+        '[aria-label*="unread"]',
+    ]
+    for selector in extra_selectors:
         try:
             elements = bot.driver.find_elements(By.CSS_SELECTOR, selector)
             result["selectors"][selector] = {
                 "count": len(elements),
-                "samples": [
-                    (el.get_attribute("aria-label") or el.text or "")[:80]
-                    for el in elements[:5]
-                ],
+                "samples": [(el.get_attribute("aria-label") or el.text or "")[:80] for el in elements[:5]],
             }
         except Exception as exc:
             result["selectors"][selector] = {"error": str(exc)}

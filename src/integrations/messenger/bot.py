@@ -214,63 +214,75 @@ class MessengerBot:
         unread_messages = []
 
         try:
-            # Selector strategies for unread conversations on modern Messenger (2025-2026).
-            # Ordered from most specific to least specific.
-            # Note: leading space in " unread" avoids partial-word false matches on
-            # elements whose aria-label merely starts with "unread".
-            unread_selectors = [
-                '[aria-label*=" unread"]',           # e.g. "John Doe, 2 unread messages"
-                '[aria-label*="unread message"]',    # e.g. "1 unread message"
-                '[aria-label*=" Unread"]',
-                '[aria-label*="Unread message"]',
-                '[aria-label*="unread"]',             # broader fallback
-                '[aria-label*="Unread"]',
-            ]
+            # Messenger always shows the sidebar alongside an open conversation —
+            # there is no standalone "inbox" view. So we scan the sidebar in-place.
+            #
+            # Detection strategy: find all conversation links in the left sidebar,
+            # then use JavaScript to check for bold text on child elements.
+            # Messenger bolds the conversation name and/or message preview when
+            # there are unread messages, regardless of the UI language.
 
-            for selector in unread_selectors:
+            conv_links = self.driver.find_elements(
+                By.CSS_SELECTOR,
+                'a[href*="/t/"], a[href*="/e2ee/t/"]'
+            )
+
+            # The first 4 links are always fixed Facebook navigation buttons
+            # (Chatek, Marketplace, Kérések, Archiválás) — skip them.
+            conversation_links = conv_links[4:]
+            print(f"[DEBUG] Found {len(conversation_links)} conversation link(s) in sidebar:")
+            for i, link in enumerate(conversation_links):
+                label = (link.get_attribute("aria-label") or link.text or "").strip().replace("\n", " | ")
+                href = link.get_attribute("href") or ""
+                print(f"[DEBUG]   [{i}] {label[:70]}  →  {href}")
+
+            unread_hrefs: List[str] = []
+            for link in conversation_links:
                 try:
-                    conversations = self.driver.find_elements(By.CSS_SELECTOR, selector)
-                    print(f"[DEBUG] Selector '{selector}' → {len(conversations)} element(s)")
+                    is_unread = self.driver.execute_script("""
+                        var el = arguments[0];
+                        var children = el.querySelectorAll('*');
+                        for (var i = 0; i < children.length; i++) {
+                            var fw = window.getComputedStyle(children[i]).fontWeight;
+                            if (fw === '700' || fw === 'bold') { return true; }
+                        }
+                        return false;
+                    """, link)
 
-                    for conv in conversations:
-                        try:
-                            # Click to open conversation
-                            conv.click()
-                            time.sleep(1.2)
+                    if is_unread:
+                        href = link.get_attribute("href")
+                        if href and href not in unread_hrefs:
+                            unread_hrefs.append(href)
+                            label = link.get_attribute("aria-label") or href
+                            print(f"[DEBUG] Unread: {label[:70]}")
+                except Exception:
+                    continue
 
-                            # Use the URL after navigation as a stable conversation ID.
-                            # It contains Facebook's thread ID, unlike element id/text which are
-                            # unstable across DOM re-renders.
-                            conv_id = self.driver.current_url
+            print(f"[DEBUG] {len(unread_hrefs)} unread conversation(s) detected")
 
-                            # Extract latest message
-                            message = self._extract_latest_message()
+            for href in unread_hrefs:
+                try:
+                    self.driver.get(href)
+                    time.sleep(1.5)
 
-                            if message:
-                                msg_hash = hashlib.sha256(message['text'].encode(errors='replace')).hexdigest()[:16]
-                                message_key = (conv_id, msg_hash)
+                    conv_id = self.driver.current_url
+                    message = self._extract_latest_message()
 
-                                # Skip if already processed
-                                if message_key in self._processed_messages:
-                                    continue
+                    if message:
+                        msg_hash = hashlib.sha256(message['text'].encode(errors='replace')).hexdigest()[:16]
+                        message_key = (conv_id, msg_hash)
 
-                                # Skip if this is the last message we ourselves sent
-                                # (prevents replying to our own replies on the next cycle)
-                                if self._last_sent.get(conv_id) == msg_hash:
-                                    continue
-
-                                message['conversation_id'] = conv_id
-                                message['_msg_hash'] = msg_hash
-                                unread_messages.append(message)
-
-                        except (StaleElementReferenceException, NoSuchElementException) as e:
-                            print(f"Warning: Could not process conversation: {e}")
+                        if message_key in self._processed_messages:
+                            continue
+                        if self._last_sent.get(conv_id) == msg_hash:
                             continue
 
-                    if unread_messages:
-                        break  # Found new messages, no need to try other selectors
+                        message['conversation_id'] = conv_id
+                        message['_msg_hash'] = msg_hash
+                        unread_messages.append(message)
 
-                except NoSuchElementException:
+                except (StaleElementReferenceException, NoSuchElementException) as e:
+                    print(f"Warning: Could not process conversation {href}: {e}")
                     continue
 
             if not unread_messages:
