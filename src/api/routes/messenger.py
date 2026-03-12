@@ -7,6 +7,8 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 import threading
+import os
+import json
 
 router = APIRouter(prefix="/api/messenger", tags=["messenger"])
 
@@ -24,6 +26,32 @@ def set_bot_instance(bot):
 def get_bot_instance():
     """Get the global bot instance."""
     return _bot_instance
+
+
+def _read_status_file():
+    """
+    Read bot status from shared file (used when bot runs in another process, e.g. standalone).
+    Returns dict with running, paused, message_count, last_message_timestamp, uptime_seconds,
+    or None if file missing/invalid or process no longer alive.
+    """
+    from src.integrations.messenger.config import MessengerConfig
+    path = MessengerConfig.STATUS_FILE
+    if not path or not os.path.isfile(path):
+        return None
+    try:
+        with open(path) as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+    if not data.get("running"):
+        return data
+    pid = data.get("pid")
+    if pid is not None:
+        try:
+            os.kill(pid, 0)
+        except (OSError, TypeError):
+            return {**data, "running": False}
+    return data
 
 
 class MessengerStatusResponse(BaseModel):
@@ -56,6 +84,17 @@ def get_messenger_status():
     config_valid = MessengerConfig.validate()
     
     if not bot:
+        # Bot may be running in another process (e.g. standalone); check status file
+        file_status = _read_status_file()
+        if file_status is not None and file_status.get("running"):
+            return MessengerStatusResponse(
+                running=True,
+                paused=file_status.get("paused", False),
+                message_count=file_status.get("message_count", 0),
+                last_message_timestamp=file_status.get("last_message_timestamp"),
+                uptime_seconds=file_status.get("uptime_seconds", 0),
+                config_valid=config_valid
+            )
         return MessengerStatusResponse(
             running=False,
             paused=False,
@@ -111,17 +150,19 @@ def start_messenger_bot():
         _bot_thread = threading.Thread(target=_bot_instance.start, daemon=True)
         _bot_thread.start()
         
-        # Give it a moment to initialize
+        # Give the thread a moment to confirm it has started.
+        # running is now set at the very start of bot.start(), so is_alive() is
+        # the right signal here (Chrome launch takes longer than 2 s).
         import time
         time.sleep(2)
-        
-        if _bot_instance.running:
+
+        if _bot_thread.is_alive():
             return MessengerActionResponse(
                 status="started",
                 message="Messenger bot has been started successfully"
             )
         else:
-            raise Exception("Bot failed to start")
+            raise Exception("Bot thread exited immediately — check server logs for errors")
     
     except Exception as e:
         _bot_instance = None
@@ -238,6 +279,59 @@ def messenger_login_redirect():
     This allows users to log in to Messenger from the frontend.
     """
     return RedirectResponse(url="https://www.messenger.com")
+
+
+@router.get("/debug")
+def debug_messenger_bot():
+    """
+    Debug endpoint: inspects the live Messenger page and returns which DOM selectors
+    currently match, making it easy to diagnose when Facebook changes its layout.
+
+    Returns:
+        Dict mapping each selector to its match count and up to 5 sample aria-labels/text.
+    """
+    from selenium.webdriver.common.by import By
+
+    bot = get_bot_instance()
+    if not bot:
+        return {"error": "Bot is not running"}
+    if not bot.driver:
+        return {"error": "Chrome driver not initialised yet"}
+
+    selectors_to_probe = [
+        '[aria-label*=" unread"]',
+        '[aria-label*="unread message"]',
+        '[aria-label*=" Unread"]',
+        '[aria-label*="Unread message"]',
+        '[aria-label*="unread"]',
+        '[aria-label*="Unread"]',
+        'div[role="button"][aria-label*="message"]',
+        'div[role="listitem"]',
+        'div[contenteditable="true"][role="textbox"]',
+        '[aria-label*="Message"]',
+        'div[dir="auto"]',
+    ]
+
+    result: dict = {
+        "page_title": bot.driver.title,
+        "current_url": bot.driver.current_url,
+        "selectors": {},
+    }
+
+    for selector in selectors_to_probe:
+        try:
+            elements = bot.driver.find_elements(By.CSS_SELECTOR, selector)
+            result["selectors"][selector] = {
+                "count": len(elements),
+                "samples": [
+                    (el.get_attribute("aria-label") or el.text or "")[:80]
+                    for el in elements[:5]
+                ],
+            }
+        except Exception as exc:
+            result["selectors"][selector] = {"error": str(exc)}
+
+    return result
 
 
 @router.get("/diagnostics")

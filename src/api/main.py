@@ -2,6 +2,7 @@
 FastAPI application for AI Chat Flow.
 Main API endpoints for the hotel chatbot.
 """
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -62,6 +63,15 @@ app.include_router(messenger.router)
 @app.on_event("startup")
 def startup_event():
     """Run ingestion on startup if vector database doesn't have documents."""
+    # Clear stale Messenger bot status file from previous container runs
+    try:
+        from src.integrations.messenger.config import MessengerConfig
+        if MessengerConfig.STATUS_FILE and os.path.exists(MessengerConfig.STATUS_FILE):
+            os.remove(MessengerConfig.STATUS_FILE)
+            print("Cleared stale Messenger bot status file")
+    except Exception as e:
+        print(f"Warning: Could not clear Messenger status file: {e}")
+    
     try:
         from src.services.ingest_service import IngestService
         ingest_service = IngestService()

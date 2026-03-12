@@ -29,6 +29,9 @@ class MessengerConfig:
     # Goala RAG API endpoint
     API_URL: str = os.getenv("MESSENGER_API_URL", "http://localhost:8000/chat")
     
+    # Status file for cross-process status (API vs standalone bot)
+    STATUS_FILE: str = os.getenv("MESSENGER_STATUS_FILE", "/tmp/goala_messenger_status.json")
+    
     @classmethod
     def validate(cls) -> bool:
         """

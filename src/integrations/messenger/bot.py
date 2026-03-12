@@ -6,9 +6,14 @@ import time
 import random
 import requests
 import threading
+import hashlib
+import os
+import json
 from datetime import datetime
 from typing import Optional, Dict, List
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
@@ -56,15 +61,31 @@ class MessengerBot:
         # Driver (initialized on start)
         self.driver = None
         
-        # Processed message tracking (to avoid duplicates)
+        # Processed message tracking: (conv_id, message_hash) so we only skip
+        # the exact same message, not the whole conversation (new messages get replied).
         self._processed_messages: set = set()
+
+        # Track the hash of the last response we sent per conversation to avoid
+        # replying to our own messages on the next poll cycle.
+        self._last_sent: Dict[str, str] = {}
+
+        # Trigger for "process unread now" (wake main loop)
+        self._process_unread_now_requested = False
+        self._sleep_event = threading.Event()
     
     def start(self):
         """Start the bot and begin monitoring Messenger."""
         if self.running:
             print("Bot is already running")
             return
-        
+
+        # Mark as running immediately so the API /start route can confirm startup
+        # within its 2-second window (Chrome launch + login detection takes longer).
+        with self._lock:
+            self.running = True
+            self.paused = False
+            self.start_time = datetime.now()
+
         print("\n" + "="*80)
         print("STARTING MESSENGER BOT")
         print("="*80)
@@ -72,33 +93,34 @@ class MessengerBot:
         print(f"Check interval: {self.config.CHECK_INTERVAL_MIN}-{self.config.CHECK_INTERVAL_MAX}s")
         print(f"Response delay: {self.config.RESPONSE_DELAY_MIN}-{self.config.RESPONSE_DELAY_MAX}s")
         print("="*80 + "\n")
-        
-        # Create stealth driver
-        print("Initializing Chrome driver with stealth configuration...")
-        self.driver = create_stealth_driver(self.config.CHROME_PROFILE_PATH)
-        
-        # Navigate to Messenger
-        print("Navigating to Messenger...")
-        self.driver.get("https://www.messenger.com")
-        
-        # Wait for login if needed
-        if not self._wait_for_login():
-            print("ERROR: Failed to detect login. Please log in manually and restart the bot.")
-            self.stop()
-            return
-        
-        print("✓ Logged in successfully")
-        
-        # Set running state
-        with self._lock:
-            self.running = True
-            self.paused = False
-            self.start_time = datetime.now()
-        
-        print("✓ Bot started. Monitoring for messages...\n")
-        
-        # Start main loop
-        self._main_loop()
+
+        try:
+            # Create stealth driver
+            print("Initializing Chrome driver with stealth configuration...")
+            self.driver = create_stealth_driver(self.config.CHROME_PROFILE_PATH)
+
+            # Navigate to Messenger
+            print("Navigating to Messenger...")
+            self.driver.get("https://www.messenger.com")
+
+            # Wait for login if needed
+            if not self._wait_for_login():
+                print("ERROR: Failed to detect login. Please log in manually and restart the bot.")
+                self.stop()
+                return
+
+            print("✓ Logged in successfully")
+
+            self._write_status_file()
+            print("✓ Bot started. Monitoring for messages...\n")
+
+            # Start main loop
+            self._main_loop()
+        except Exception as e:
+            print(f"ERROR in bot startup: {e}")
+            with self._lock:
+                self.running = False
+            raise
     
     def _wait_for_login(self, timeout: int = 300) -> bool:
         """
@@ -148,8 +170,15 @@ class MessengerBot:
                     time.sleep(1)
                     continue
                 
+                # Check for "process unread now" trigger (from API)
+                with self._lock:
+                    if self._process_unread_now_requested:
+                        self._process_unread_now_requested = False
+                
                 # Poll for unread messages
                 unread_messages = self._get_unread_messages()
+                if unread_messages:
+                    print(f"[{datetime.now().strftime('%H:%M:%S')}] Found {len(unread_messages)} unread message(s) to process")
                 
                 # Process each unread message
                 for message in unread_messages:
@@ -158,12 +187,13 @@ class MessengerBot:
                     
                     self._process_message(message)
                 
-                # Random delay before next check
+                # Interruptible delay so "process unread now" can wake us
                 delay = random.uniform(
                     self.config.CHECK_INTERVAL_MIN,
                     self.config.CHECK_INTERVAL_MAX
                 )
-                time.sleep(delay)
+                self._sleep_event.clear()
+                self._sleep_event.wait(timeout=delay)
                 
             except KeyboardInterrupt:
                 print("\n\nKeyboard interrupt received. Stopping bot...")
@@ -177,58 +207,78 @@ class MessengerBot:
     def _get_unread_messages(self) -> List[Dict]:
         """
         Get all unread messages from Messenger.
-        
+
         Returns:
             List of message dictionaries with 'sender', 'text', and 'element' keys
         """
         unread_messages = []
-        
+
         try:
-            # Multiple selector strategies for unread conversations
+            # Selector strategies for unread conversations on modern Messenger (2025-2026).
+            # Ordered from most specific to least specific.
+            # Note: leading space in " unread" avoids partial-word false matches on
+            # elements whose aria-label merely starts with "unread".
             unread_selectors = [
-                '[aria-label*="unread"]',
+                '[aria-label*=" unread"]',           # e.g. "John Doe, 2 unread messages"
+                '[aria-label*="unread message"]',    # e.g. "1 unread message"
+                '[aria-label*=" Unread"]',
+                '[aria-label*="Unread message"]',
+                '[aria-label*="unread"]',             # broader fallback
                 '[aria-label*="Unread"]',
-                'div[role="button"][aria-label*="message"]',
             ]
-            
+
             for selector in unread_selectors:
                 try:
                     conversations = self.driver.find_elements(By.CSS_SELECTOR, selector)
-                    
+                    print(f"[DEBUG] Selector '{selector}' → {len(conversations)} element(s)")
+
                     for conv in conversations:
                         try:
-                            # Get conversation identifier
-                            conv_id = conv.get_attribute("id") or conv.text[:50]
-                            
-                            # Skip if already processed
-                            if conv_id in self._processed_messages:
-                                continue
-                            
                             # Click to open conversation
                             conv.click()
-                            time.sleep(1)
-                            
+                            time.sleep(1.2)
+
+                            # Use the URL after navigation as a stable conversation ID.
+                            # It contains Facebook's thread ID, unlike element id/text which are
+                            # unstable across DOM re-renders.
+                            conv_id = self.driver.current_url
+
                             # Extract latest message
                             message = self._extract_latest_message()
-                            
+
                             if message:
+                                msg_hash = hashlib.sha256(message['text'].encode(errors='replace')).hexdigest()[:16]
+                                message_key = (conv_id, msg_hash)
+
+                                # Skip if already processed
+                                if message_key in self._processed_messages:
+                                    continue
+
+                                # Skip if this is the last message we ourselves sent
+                                # (prevents replying to our own replies on the next cycle)
+                                if self._last_sent.get(conv_id) == msg_hash:
+                                    continue
+
                                 message['conversation_id'] = conv_id
+                                message['_msg_hash'] = msg_hash
                                 unread_messages.append(message)
-                                self._processed_messages.add(conv_id)
-                        
+
                         except (StaleElementReferenceException, NoSuchElementException) as e:
                             print(f"Warning: Could not process conversation: {e}")
                             continue
-                    
+
                     if unread_messages:
-                        break  # Found messages, no need to try other selectors
-                
+                        break  # Found new messages, no need to try other selectors
+
                 except NoSuchElementException:
                     continue
-        
+
+            if not unread_messages:
+                print("[DEBUG] No new unread messages found")
+
         except Exception as e:
             print(f"ERROR getting unread messages: {e}")
-        
+
         return unread_messages
     
     def _extract_latest_message(self) -> Optional[Dict]:
@@ -339,10 +389,21 @@ class MessengerBot:
             if self._send_message(response):
                 print("  ✓ Response sent successfully")
                 
+                # Mark this message as processed only after successful send (so we retry if send failed)
+                msg_hash = message.get('_msg_hash')
+                conv_id = message.get('conversation_id')
+                if conv_id and msg_hash:
+                    self._processed_messages.add((conv_id, msg_hash))
+                    # Record the hash of the response we just sent so the next poll cycle
+                    # can skip it and avoid the bot replying to its own messages.
+                    resp_hash = hashlib.sha256(response.encode(errors='replace')).hexdigest()[:16]
+                    self._last_sent[conv_id] = resp_hash
+
                 # Update stats
                 with self._lock:
                     self.message_count += 1
                     self.last_message_timestamp = datetime.now()
+                self._write_status_file()
             else:
                 print("  ✗ Failed to send response")
         
@@ -370,7 +431,11 @@ class MessengerBot:
                 )
                 
                 if response.status_code == 200:
-                    return response.json().get("response")
+                    data = response.json()
+                    result = data.get("response") if isinstance(data, dict) else None
+                    if result:
+                        return result
+                    print("  Warning: API returned 200 but no 'response' key in JSON")
                 else:
                     print(f"  Warning: API returned status {response.status_code}")
             
@@ -417,11 +482,27 @@ class MessengerBot:
                 print("  ERROR: Could not find message input box")
                 return False
             
-            # Paste text (no typing simulation)
+            # Focus and clear any existing content
             input_box.click()
-            input_box.send_keys(text)
-            
-            # Wait a moment for text to be entered
+            time.sleep(0.3)
+
+            # Clear with Ctrl+A → Delete, then type with send_keys.
+            # JS textContent mutation is silently ignored by React's synthetic event
+            # system, so send_keys is the only reliable method for Messenger's
+            # contenteditable input.
+            try:
+                ActionChains(self.driver) \
+                    .key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL) \
+                    .send_keys(Keys.DELETE) \
+                    .perform()
+                time.sleep(0.1)
+                input_box.send_keys(text)
+            except Exception:
+                try:
+                    input_box.send_keys(text)
+                except Exception:
+                    pass
+
             time.sleep(0.5)
             
             # Find and click send button
@@ -429,17 +510,26 @@ class MessengerBot:
                 '[aria-label*="Send"]',
                 '[aria-label*="Press enter"]',
                 'div[aria-label="Send"]',
+                '[data-icon="send"]',
             ]
             
             for selector in send_selectors:
                 try:
                     send_button = self.driver.find_element(By.CSS_SELECTOR, selector)
                     send_button.click()
+                    time.sleep(0.3)
                     return True
                 except NoSuchElementException:
                     continue
             
-            print("  ERROR: Could not find send button")
+            # Fallback: press Enter (Messenger often sends on Enter)
+            try:
+                input_box.send_keys(Keys.ENTER)
+                return True
+            except Exception:
+                pass
+            
+            print("  ERROR: Could not find send button or send via Enter")
             return False
         
         except Exception as e:
@@ -450,13 +540,26 @@ class MessengerBot:
         """Pause message processing (but keep bot running)."""
         with self._lock:
             self.paused = True
+        self._write_status_file()
         print("Bot paused")
     
     def resume(self):
         """Resume message processing."""
         with self._lock:
             self.paused = False
+        self._write_status_file()
         print("Bot resumed")
+    
+    def request_process_unread_now(self):
+        """
+        Request one immediate cycle of unread message processing.
+        Wakes the main loop so it runs get unread + process without waiting for the next interval.
+        Safe to call from another thread (e.g. API).
+        """
+        with self._lock:
+            self._process_unread_now_requested = True
+        self._sleep_event.set()
+        print("Process unread now requested")
     
     def stop(self):
         """Stop the bot and cleanup resources."""
@@ -471,6 +574,7 @@ class MessengerBot:
             except Exception as e:
                 print(f"Warning: Error closing driver: {e}")
         
+        self._write_status_file()
         print("Bot stopped")
     
     def get_status(self) -> Dict:
@@ -492,3 +596,14 @@ class MessengerBot:
                 'last_message_timestamp': self.last_message_timestamp.isoformat() if self.last_message_timestamp else None,
                 'uptime_seconds': uptime_seconds
             }
+    
+    def _write_status_file(self) -> None:
+        """Write current status to shared file so API can report status when bot runs in another process."""
+        try:
+            data = self.get_status()
+            data['pid'] = os.getpid()
+            path = self.config.STATUS_FILE
+            with open(path, 'w') as f:
+                json.dump(data, f, indent=0)
+        except Exception as e:
+            print(f"Warning: Could not write status file: {e}")
