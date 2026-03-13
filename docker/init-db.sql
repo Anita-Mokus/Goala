@@ -24,13 +24,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
     chunk_max_characters INTEGER NOT NULL DEFAULT 1000,
     chunk_new_after_n_chars INTEGER NOT NULL DEFAULT 800,
     chunk_overlap INTEGER NOT NULL DEFAULT 200,
-    rag_prompt_template TEXT NOT NULL DEFAULT 'You are a helpful assistant.
-
-CONTEXT: {context}
-
-QUESTION: {question}
-
-ANSWER:',
+    rag_prompt_template TEXT DEFAULT NULL,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT single_row_constraint CHECK (id = 1)
 );
@@ -48,16 +42,11 @@ CREATE TABLE IF NOT EXISTS chat_history (
     answer TEXT NOT NULL,
     model_used VARCHAR(100),
     response_time_ms INTEGER,
-    source VARCHAR(50) NOT NULL DEFAULT 'api',
-    message_metadata JSONB,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create index on created_at for efficient pagination
 CREATE INDEX IF NOT EXISTS idx_chat_history_created_at ON chat_history(created_at DESC);
-
--- Create index on source for efficient filtering
-CREATE INDEX IF NOT EXISTS idx_chat_history_source ON chat_history(source);
 
 -- Log successful initialization
 DO $$
