@@ -16,11 +16,186 @@ from src.core.config import (
     CORS_METHODS,
     CORS_HEADERS,
     DATABASE_URL,
+    RAG_PROMPT_TEMPLATE,
 )
 from src.api.routes import settings, history, messenger
 
 # Global service instance (lazy initialization to prevent startup crashes)
 _rag_service = None
+
+
+def ensure_database_schema() -> None:
+    """Ensure required database tables/columns/indexes exist for API routes."""
+    try:
+        from sqlalchemy import create_engine, text
+
+        engine = create_engine(DATABASE_URL)
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    CREATE TABLE IF NOT EXISTS app_settings (
+                        id INTEGER PRIMARY KEY DEFAULT 1,
+                        llm_provider VARCHAR(50) NOT NULL DEFAULT 'openrouter',
+                        llm_model VARCHAR(100) NOT NULL DEFAULT 'openai/gpt-oss-120b:exacto',
+                        llm_temperature REAL NOT NULL DEFAULT 0.3,
+                        retriever_k INTEGER NOT NULL DEFAULT 8,
+                        pdf_language VARCHAR(10) NOT NULL DEFAULT 'hun',
+                        pdf_strategy VARCHAR(20) NOT NULL DEFAULT 'auto',
+                        chunk_max_characters INTEGER NOT NULL DEFAULT 1000,
+                        chunk_new_after_n_chars INTEGER NOT NULL DEFAULT 800,
+                        chunk_overlap INTEGER NOT NULL DEFAULT 200,
+                        rag_prompt_template TEXT,
+                        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    )
+                    """
+                )
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE app_settings "
+                    "ADD COLUMN IF NOT EXISTS llm_provider VARCHAR(50) NOT NULL DEFAULT 'openrouter'"
+                )
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE app_settings "
+                    "ADD COLUMN IF NOT EXISTS llm_model VARCHAR(100) NOT NULL DEFAULT 'openai/gpt-oss-120b:exacto'"
+                )
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE app_settings "
+                    "ADD COLUMN IF NOT EXISTS llm_temperature REAL NOT NULL DEFAULT 0.3"
+                )
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE app_settings "
+                    "ADD COLUMN IF NOT EXISTS retriever_k INTEGER NOT NULL DEFAULT 8"
+                )
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE app_settings "
+                    "ADD COLUMN IF NOT EXISTS pdf_language VARCHAR(10) NOT NULL DEFAULT 'hun'"
+                )
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE app_settings "
+                    "ADD COLUMN IF NOT EXISTS pdf_strategy VARCHAR(20) NOT NULL DEFAULT 'auto'"
+                )
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE app_settings "
+                    "ADD COLUMN IF NOT EXISTS chunk_max_characters INTEGER NOT NULL DEFAULT 1000"
+                )
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE app_settings "
+                    "ADD COLUMN IF NOT EXISTS chunk_new_after_n_chars INTEGER NOT NULL DEFAULT 800"
+                )
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE app_settings "
+                    "ADD COLUMN IF NOT EXISTS chunk_overlap INTEGER NOT NULL DEFAULT 200"
+                )
+            )
+            conn.execute(
+                text("ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS rag_prompt_template TEXT")
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE app_settings "
+                    "ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
+                )
+            )
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO app_settings (
+                        id,
+                        llm_provider,
+                        llm_model,
+                        llm_temperature,
+                        retriever_k,
+                        pdf_language,
+                        pdf_strategy,
+                        chunk_max_characters,
+                        chunk_new_after_n_chars,
+                        chunk_overlap,
+                        rag_prompt_template
+                    )
+                    VALUES (
+                        1,
+                        'openrouter',
+                        'openai/gpt-oss-120b:exacto',
+                        0.3,
+                        8,
+                        'hun',
+                        'auto',
+                        1000,
+                        800,
+                        200,
+                        :rag_prompt_template
+                    )
+                    ON CONFLICT (id) DO NOTHING
+                    """
+                ),
+                {"rag_prompt_template": RAG_PROMPT_TEMPLATE},
+            )
+            conn.execute(
+                text(
+                    "UPDATE app_settings "
+                    "SET rag_prompt_template = :rag_prompt_template "
+                    "WHERE rag_prompt_template IS NULL"
+                ),
+                {"rag_prompt_template": RAG_PROMPT_TEMPLATE},
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE app_settings "
+                    "ALTER COLUMN rag_prompt_template SET NOT NULL"
+                )
+            )
+
+            conn.execute(
+                text(
+                    """
+                    CREATE TABLE IF NOT EXISTS chat_history (
+                        id SERIAL PRIMARY KEY,
+                        question TEXT NOT NULL,
+                        answer TEXT NOT NULL,
+                        model_used VARCHAR(100),
+                        response_time_ms INTEGER,
+                        source VARCHAR(50) NOT NULL DEFAULT 'api',
+                        message_metadata JSONB,
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    )
+                    """
+                )
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE chat_history "
+                    "ADD COLUMN IF NOT EXISTS source VARCHAR(50) NOT NULL DEFAULT 'api'"
+                )
+            )
+            conn.execute(
+                text("ALTER TABLE chat_history ADD COLUMN IF NOT EXISTS message_metadata JSONB")
+            )
+            conn.execute(
+                text("CREATE INDEX IF NOT EXISTS idx_chat_history_source ON chat_history(source)")
+            )
+
+        engine.dispose()
+        print("Database schema check completed.")
+    except Exception as e:
+        print(f"Warning: Failed to run schema check: {e}")
 
 def get_rag_service():
     """Get or create RAG service instance with error handling."""
@@ -63,6 +238,8 @@ app.include_router(messenger.router)
 @app.on_event("startup")
 def startup_event():
     """Run ingestion on startup if vector database doesn't have documents."""
+    ensure_database_schema()
+
     # Clear stale Messenger bot status file from previous container runs
     try:
         from src.integrations.messenger.config import MessengerConfig
