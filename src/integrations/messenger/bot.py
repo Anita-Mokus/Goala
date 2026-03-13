@@ -237,6 +237,17 @@ class MessengerBot:
                 print(f"[DEBUG]   [{i}] {label[:70]}  →  {href}")
 
             unread_hrefs: List[str] = []
+
+            def _sanitize_href(raw_href: str) -> str:
+                """
+                Remove invisible/control characters that can appear in copied URLs
+                (e.g. U+2060 word-joiner) and strip whitespace.
+                """
+                if not raw_href:
+                    return ""
+                cleaned = "".join(ch for ch in raw_href if ch.isprintable() and ord(ch) not in {0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF})
+                return cleaned.strip()
+
             for link in conversation_links:
                 try:
                     is_unread = self.driver.execute_script("""
@@ -250,7 +261,7 @@ class MessengerBot:
                     """, link)
 
                     if is_unread:
-                        href = link.get_attribute("href")
+                        href = _sanitize_href(link.get_attribute("href") or "")
                         if href and href not in unread_hrefs:
                             unread_hrefs.append(href)
                             label = link.get_attribute("aria-label") or href
@@ -262,6 +273,7 @@ class MessengerBot:
 
             for href in unread_hrefs:
                 try:
+                    print(f"[DEBUG] Opening unread conversation: {href}")
                     self.driver.get(href)
                     time.sleep(1.5)
 
@@ -280,9 +292,12 @@ class MessengerBot:
                         message['conversation_id'] = conv_id
                         message['_msg_hash'] = msg_hash
                         unread_messages.append(message)
+                        print(f"[DEBUG] Queued message from conversation: {conv_id}")
+                    else:
+                        print(f"[DEBUG] No extractable message in conversation: {conv_id}")
 
-                except (StaleElementReferenceException, NoSuchElementException) as e:
-                    print(f"Warning: Could not process conversation {href}: {e}")
+                except Exception as e:
+                    print(f"Warning: Could not process conversation {href}: {type(e).__name__}: {e}")
                     continue
 
             if not unread_messages:
@@ -346,6 +361,11 @@ class MessengerBot:
             Sender name or 'Unknown'
         """
         try:
+            # Most reliable in Messenger: "Contact Name | Messenger"
+            title = (self.driver.title or "").strip()
+            if " | " in title:
+                return title.split(" | ")[0].strip()
+
             # Try to find conversation header with name
             header_selectors = [
                 'h1[dir="auto"]',
@@ -377,9 +397,18 @@ class MessengerBot:
         try:
             sender = message['sender']
             text = message['text']
+            conv_id = message.get('conversation_id')
             
             print(f"\n[{datetime.now().strftime('%H:%M:%S')}] New message from {sender}:")
             print(f"  > {text[:100]}{'...' if len(text) > 100 else ''}")
+
+            # IMPORTANT: ensure we are in the target conversation before sending.
+            # Without this, multiple queued messages can all be sent to whichever
+            # chat is currently open (typically the last one scanned).
+            if conv_id and self.driver.current_url != conv_id:
+                print(f"  [DEBUG] Switching to target conversation: {conv_id}")
+                self.driver.get(conv_id)
+                time.sleep(1.2)
             
             # Get response from RAG API
             response = self._get_rag_response(text, sender)
@@ -403,7 +432,6 @@ class MessengerBot:
                 
                 # Mark this message as processed only after successful send (so we retry if send failed)
                 msg_hash = message.get('_msg_hash')
-                conv_id = message.get('conversation_id')
                 if conv_id and msg_hash:
                     self._processed_messages.add((conv_id, msg_hash))
                     # Record the hash of the response we just sent so the next poll cycle
