@@ -1,0 +1,21 @@
+---
+description: Code structure and file size rules — keep files small and separated by responsibility
+alwaysApply: true
+---
+
+# Code structure rules
+
+Apply these rules whenever adding or modifying code in this project.
+
+## File size and responsibility
+
+- **Max ~150 lines per file.** If a file grows beyond that, split it into separate modules by responsibility.
+- **Single responsibility per file.** Each file should have one clear purpose (e.g. one module for ownership detection, one for extraction, one for unread list).
+- **Clear separation by feature/domain.** Prefer feature-based organisation (e.g. `message_ownership.py`, `message_extraction.py`) over one large "utils" or "helpers" file.
+
+## Naming and layout
+
+- **Filenames:** kebab-case (e.g. `message_ownership.py`, `run_migrations.py`). For Python, `.py` modules are often snake_case; keep names short and descriptive.
+- **Public API:** Prefer a single entry-point module that re-exports from smaller modules (e.g. `bot_messages.py` re-exporting from `message_ownership`, `message_sender`, etc.) so existing imports keep working.
+
+When refactoring, split large files into focused modules under the same package and re-export from the original module so callers do not need to change imports.
