@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.dialects.postgresql import JSONB
 from contextlib import contextmanager
 
-from src.core.config import DATABASE_URL
+from src.config import DATABASE_URL
 
 # Create SQLAlchemy engine
 engine = create_engine(DATABASE_URL)

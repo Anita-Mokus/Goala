@@ -7,51 +7,13 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 import threading
+import subprocess
 import os
-import json
+
+from src.integrations.messenger.registry import set_bot, get_bot, get_bot_thread, clear_bot
+from src.integrations.messenger.status_file import read_status_file
 
 router = APIRouter(prefix="/api/messenger", tags=["messenger"])
-
-# Global bot instance (initialized when bot is started)
-_bot_instance = None
-_bot_thread = None
-
-
-def set_bot_instance(bot):
-    """Set the global bot instance."""
-    global _bot_instance
-    _bot_instance = bot
-
-
-def get_bot_instance():
-    """Get the global bot instance."""
-    return _bot_instance
-
-
-def _read_status_file():
-    """
-    Read bot status from shared file (used when bot runs in another process, e.g. standalone).
-    Returns dict with running, paused, message_count, last_message_timestamp, uptime_seconds,
-    or None if file missing/invalid or process no longer alive.
-    """
-    from src.integrations.messenger.config import MessengerConfig
-    path = MessengerConfig.STATUS_FILE
-    if not path or not os.path.isfile(path):
-        return None
-    try:
-        with open(path) as f:
-            data = json.load(f)
-    except (json.JSONDecodeError, OSError):
-        return None
-    if not data.get("running"):
-        return data
-    pid = data.get("pid")
-    if pid is not None:
-        try:
-            os.kill(pid, 0)
-        except (OSError, TypeError):
-            return {**data, "running": False}
-    return data
 
 
 class MessengerStatusResponse(BaseModel):
@@ -80,12 +42,12 @@ def get_messenger_status():
     """
     from src.integrations.messenger.config import MessengerConfig
     
-    bot = get_bot_instance()
+    bot = get_bot()
     config_valid = MessengerConfig.validate()
     
     if not bot:
         # Bot may be running in another process (e.g. standalone); check status file
-        file_status = _read_status_file()
+        file_status = read_status_file()
         if file_status is not None and file_status.get("running"):
             return MessengerStatusResponse(
                 running=True,
@@ -117,13 +79,11 @@ def start_messenger_bot():
     Returns:
         Status confirmation
     """
-    global _bot_instance, _bot_thread
-    
     from src.integrations.messenger.config import MessengerConfig
     from src.integrations.messenger.bot import MessengerBot
     
     # Check if already running
-    if _bot_instance and _bot_instance.running:
+    if get_bot() and get_bot().running:
         return MessengerActionResponse(
             status="already_running",
             message="Messenger bot is already running"
@@ -144,19 +104,20 @@ def start_messenger_bot():
     
     try:
         # Create bot instance
-        _bot_instance = MessengerBot()
+        bot_instance = MessengerBot()
         
         # Start bot in background thread
-        _bot_thread = threading.Thread(target=_bot_instance.start, daemon=True)
-        _bot_thread.start()
+        bot_thread = threading.Thread(target=bot_instance.start, daemon=True)
+        bot_thread.start()
         
-        # Give the thread a moment to confirm it has started.
-        # running is now set at the very start of bot.start(), so is_alive() is
-        # the right signal here (Chrome launch takes longer than 2 s).
+        # Register bot
+        set_bot(bot_instance, bot_thread)
+        
+        # Give the thread a moment to confirm it has started
         import time
         time.sleep(2)
-
-        if _bot_thread.is_alive():
+        
+        if bot_thread.is_alive():
             return MessengerActionResponse(
                 status="started",
                 message="Messenger bot has been started successfully"
@@ -165,8 +126,7 @@ def start_messenger_bot():
             raise Exception("Bot thread exited immediately — check server logs for errors")
     
     except Exception as e:
-        _bot_instance = None
-        _bot_thread = None
+        clear_bot()
         raise HTTPException(status_code=500, detail=f"Failed to start bot: {str(e)}")
 
 
@@ -178,9 +138,7 @@ def stop_messenger_bot():
     Returns:
         Status confirmation
     """
-    global _bot_instance, _bot_thread
-    
-    bot = get_bot_instance()
+    bot = get_bot()
     
     if not bot:
         return MessengerActionResponse(
@@ -196,8 +154,7 @@ def stop_messenger_bot():
     
     try:
         bot.stop()
-        _bot_instance = None
-        _bot_thread = None
+        clear_bot()
         
         return MessengerActionResponse(
             status="stopped",
@@ -217,7 +174,7 @@ def pause_messenger_bot():
     Returns:
         Status confirmation
     """
-    bot = get_bot_instance()
+    bot = get_bot()
     
     if not bot:
         raise HTTPException(status_code=404, detail="Messenger bot is not running")
@@ -249,7 +206,7 @@ def resume_messenger_bot():
     Returns:
         Status confirmation
     """
-    bot = get_bot_instance()
+    bot = get_bot()
     
     if not bot:
         raise HTTPException(status_code=404, detail="Messenger bot is not running")
@@ -289,7 +246,7 @@ def debug_messenger_bot():
     """
     from selenium.webdriver.common.by import By
 
-    bot = get_bot_instance()
+    bot = get_bot()
     if not bot:
         return {"error": "Bot is not running"}
     if not bot.driver:

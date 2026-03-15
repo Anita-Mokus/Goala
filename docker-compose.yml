@@ -47,7 +47,8 @@ services:
       - "${API_PORT:-8000}:8000"
       - "6080:6080"  # noVNC WebSocket port
     volumes:
-      - ./src:/app/src  
+      - ./src:/app/src
+      - ./docker/migrations:/app/migrations:ro
       - ./data:/app/data:ro
       - ./shared:/app/shared
       - huggingface_cache:/app/huggingface_cache

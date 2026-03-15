@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 
 from src.models.database import AppSettings, get_db_session
+from src.config.settings import clear_settings_cache
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -118,6 +119,9 @@ def update_settings(settings_update: SettingsUpdate):
             
             session.commit()
             session.refresh(settings)
+            
+            # Clear the settings cache so next request gets fresh values
+            clear_settings_cache()
             
             # Convert to dict while session is still active
             return SettingsResponse(
