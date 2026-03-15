@@ -243,6 +243,8 @@ def debug_messenger_bot():
     """
     Debug endpoint: inspects the live Messenger page and reports conversation links
     found in the sidebar along with their bold (unread) detection result.
+    
+    Also analyzes message ownership detection in the currently open conversation.
     """
     from selenium.webdriver.common.by import By
 
@@ -257,6 +259,7 @@ def debug_messenger_bot():
         "current_url": bot.driver.current_url,
         "conversation_links": [],
         "selectors": {},
+        "message_analysis": {},
     }
 
     # Check all conversation links in the sidebar
@@ -303,6 +306,54 @@ def debug_messenger_bot():
             }
         except Exception as exc:
             result["selectors"][selector] = {"error": str(exc)}
+    
+    # Analyze messages in the current conversation to help tune ownership detection
+    try:
+        message_elements = bot.driver.find_elements(By.CSS_SELECTOR, 'div[dir="auto"]')
+        messages_info = []
+        
+        for i, elem in enumerate(message_elements[:20]):  # Cap at 20 to avoid huge response
+            try:
+                text = elem.text.strip()[:100]
+                if not text:
+                    continue
+                
+                # Get computed styles
+                style_info = bot.driver.execute_script("""
+                    var elem = arguments[0];
+                    var style = window.getComputedStyle(elem);
+                    var parentStyle = elem.parentElement ? window.getComputedStyle(elem.parentElement) : null;
+                    
+                    return {
+                        marginLeft: style.marginLeft,
+                        marginInlineStart: style.getPropertyValue('margin-inline-start'),
+                        justifyContent: style.justifyContent,
+                        alignSelf: style.alignSelf,
+                        parentJustifyContent: parentStyle ? parentStyle.justifyContent : null,
+                        parentAlignItems: parentStyle ? parentStyle.alignItems : null,
+                        textAlign: style.textAlign
+                    };
+                """, elem)
+                
+                # Check if detected as "ours"
+                from src.integrations.messenger.bot_messages import is_message_from_us
+                detected_as_ours = is_message_from_us(bot, elem)
+                
+                messages_info.append({
+                    "index": i,
+                    "text": text,
+                    "detected_as_ours": detected_as_ours,
+                    "styles": style_info
+                })
+            except Exception as exc:
+                messages_info.append({"index": i, "error": str(exc)})
+        
+        result["message_analysis"] = {
+            "total_messages": len(message_elements),
+            "analyzed_messages": messages_info
+        }
+    except Exception as exc:
+        result["message_analysis"] = {"error": str(exc)}
 
     return result
 

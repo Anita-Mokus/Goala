@@ -18,6 +18,8 @@ def process_message(bot, message: Dict):
     """
     Process a single message: get RAG response and send reply.
     
+    Note: message['text'] may contain multiple client messages combined with newlines.
+    
     Args:
         bot: MessengerBot instance
         message: Message dictionary with 'sender', 'text', and 'conversation_id'
@@ -27,7 +29,13 @@ def process_message(bot, message: Dict):
         text = message['text']
         conv_id = message.get('conversation_id')
         
-        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] New message from {sender}:")
+        # Check if this is a combined message (contains newlines indicating multiple bubbles)
+        message_count = text.count('\n') + 1
+        if message_count > 1:
+            print(f"\n[{datetime.now().strftime('%H:%M:%S')}] New combined message ({message_count} parts) from {sender}:")
+        else:
+            print(f"\n[{datetime.now().strftime('%H:%M:%S')}] New message from {sender}:")
+        
         print(f"  > {text[:100]}{'...' if len(text) > 100 else ''}")
         
         # Ensure we are in the target conversation before sending
