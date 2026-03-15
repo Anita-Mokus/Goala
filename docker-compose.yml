@@ -1,5 +1,5 @@
-# Docker Compose for Goala Development Environment
-# Services: PostgreSQL (pgvector), FastAPI Backend, Frontend (placeholder)
+# Docker Compose for Goala
+# Services: PostgreSQL (pgvector), FastAPI Backend, React Frontend
 
 services:
   # =============================================================================
@@ -9,6 +9,7 @@ services:
     image: pgvector/pgvector:pg16
     container_name: goala-db
     restart: unless-stopped
+    env_file: .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -18,6 +19,7 @@ services:
     volumes:
       - pgvector_data:/var/lib/postgresql/data
       - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - ./docker/migrations:/migrations:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-goala}"]
       interval: 10s
@@ -36,21 +38,22 @@ services:
       dockerfile: Dockerfile
     container_name: goala-api
     restart: unless-stopped
+    env_file: .env
     environment:
       - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-goala}
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - LLM_PROVIDER=${LLM_PROVIDER:-groq}
-      - GROQ_LLM_MODEL=${GROQ_LLM_MODEL:-openai/gpt-oss-120b}
-      - DEEPSEEK_LLM_MODEL=${DEEPSEEK_LLM_MODEL:-deepseek-chat}
-      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.3}
-      - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN:-}
+      - HF_HOME=/app/huggingface_cache
+      - MESSENGER_CHROME_PROFILE_PATH=/app/chrome_profile
     ports:
       - "${API_PORT:-8000}:8000"
+      - "6080:6080"  # noVNC WebSocket port
     volumes:
-      - ./src:/app/src  
+      - ./src:/app/src
+      - ./docker/migrations:/app/migrations:ro
       - ./data:/app/data:ro
       - ./shared:/app/shared
+      - huggingface_cache:/app/huggingface_cache
+      - chrome_profile:/app/chrome_profile
+    shm_size: '2gb'  # Required for Chrome to run properly in Docker
     depends_on:
       db:
         condition: service_healthy
@@ -64,22 +67,19 @@ services:
       - goala-network
 
   # =============================================================================
-  # Frontend (Placeholder - to be implemented)
+  # Frontend (React Admin Panel)
   # =============================================================================
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   container_name: goala-frontend
-  #   restart: unless-stopped
-  #   ports:
-  #     - "${FRONTEND_PORT:-3000}:3000"
-  #   environment:
-  #     - API_URL=http://api:8000
-  #   depends_on:
-  #     - api
-  #   networks:
-  #     - goala-network
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: goala-frontend
+    env_file: .env
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    networks:
+      - goala-network
 
 # =============================================================================
 # Networks
@@ -94,3 +94,7 @@ networks:
 volumes:
   pgvector_data:
     name: goala-pgvector-data
+  huggingface_cache:
+    name: goala-huggingface-cache
+  chrome_profile:
+    name: goala-chrome-profile

@@ -1,0 +1,102 @@
+---
+description: Docker and environment configuration conventions for Goala
+globs: Dockerfile,docker-compose.yml,.env*,docker/**
+alwaysApply: false
+---
+
+# Docker & Environment Configuration
+
+## Docker Architecture
+
+Two services defined in `docker-compose.yml`:
+
+| Service | Image | Container name | Port |
+|---------|-------|----------------|------|
+| `db` | `pgvector/pgvector:pg16` | `goala-db` | `${DB_PORT:-5432}` |
+| `api` | Built from `Dockerfile` | `goala-api` | `${API_PORT:-8000}` |
+
+Both are on the `goala-network` bridge network. The `api` service depends on `db` with `condition: service_healthy`.
+
+## Dockerfile Notes
+
+- **Base image**: `python:3.11-slim`
+- **Multi-stage build**: stage 1 (`base`) installs all build tools + pip deps; stage 2 copies only runtime artefacts — keeps final image lean
+- **System packages required**: `libpq5`, `libmagic1`, `poppler-utils`, `tesseract-ocr`, `tesseract-ocr-hun`, `libgl1`, `libglib2.0-0`
+- **`HF_HOME`** is set to `/tmp/huggingface_cache` so the embedding model downloads inside the container without permission issues
+- Do NOT pin system package versions — use `apt-get install -y --no-install-recommends`
+
+## Environment Variables
+
+Copy `.env.example` to `.env` before running. Never commit `.env`.
+
+### Required (at least one LLM provider key)
+
+```ini
+GROQ_API_KEY=           # if using groq provider
+OPENAI_API_KEY=         # if using openrouter or deepseek provider
+```
+
+### LLM Configuration
+
+```ini
+LLM_PROVIDER=openrouter          # groq | deepseek | openrouter | ollama
+LLM_TEMPERATURE=0.3
+GROQ_LLM_MODEL=llama-3.3-70b-versatile
+DEEPSEEK_LLM_MODEL=deepseek-chat
+OPENROUTER_LLM_MODEL=openai/gpt-oss-120b:exacto
+OLLAMA_LLM_MODEL=qwen2.5
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+### Database
+
+```ini
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=goala
+DB_PORT=5432
+# In Docker, DATABASE_URL is auto-set by compose; for local dev set manually:
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/goala
+```
+
+### Ingestion / RAG tuning
+
+```ini
+PDF_LANGUAGE=hun
+PDF_STRATEGY=auto
+CHUNK_MAX_CHARACTERS=1000
+CHUNK_NEW_AFTER_N_CHARS=800
+CHUNK_OVERLAP=200
+CHUNK_MULTIPAGE_SECTIONS=true
+RETRIEVER_K=8
+```
+
+## Common Commands
+
+```bash
+# Start all services
+docker compose up -d
+
+# Rebuild API image (after requirements.txt changes)
+docker compose up -d --build api
+
+# View API logs
+docker compose logs -f api
+
+# Manual document ingestion inside container
+docker compose exec api python -m src.utils.ingest_cli
+
+# Interactive query CLI
+docker compose exec api python -m src.utils.query_cli
+
+# Run evaluation
+docker compose exec api python -m src.utils.evaluate_rag
+```
+
+## Database Init
+
+`docker/init-db.sql` runs once on first DB container start:
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+Persistent data is stored in the named volume `goala-pgvector-data`.

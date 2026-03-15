@@ -1,0 +1,84 @@
+.history-page {
+  max-width: 1400px;
+}
+
+.history-header {
+  margin-bottom: 2rem;
+}
+
+.history-header h1 {
+  margin-bottom: 0.5rem;
+}
+
+.history-description {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-form {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-input {
+  flex: 1;
+}
+
+.history-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.1rem;
+}
+
+.loading {
+  padding: 2rem;
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+.error-message {
+  background-color: #ff4444;
+  color: white;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+@media (prefers-color-scheme: light) {
+  .history-description {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  .history-stats {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+  }
+
+  .empty-state {
+    color: rgba(0, 0, 0, 0.6);
+  }
+}
