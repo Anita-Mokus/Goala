@@ -10,8 +10,8 @@ project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from src.services import get_rag_service
-from src.core.config import LLM_MODEL
+from src.chat import RAGService
+from src.config import LLM_MODEL
 
 
 def main():
@@ -23,7 +23,7 @@ def main():
     print("\nSuccess! Chatbot is ready. Type 'exit' to quit.\n")
     
     # Initialize RAG service
-    rag_service = get_rag_service()
+    rag_service = RAGService()
     
     while True:
         query = input("Ask a question about your hotel: ")

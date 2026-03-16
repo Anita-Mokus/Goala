@@ -1,0 +1,89 @@
+.history-table-container {
+  overflow-x: auto;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table thead {
+  background-color: rgba(100, 108, 255, 0.1);
+}
+
+.history-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+.history-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: top;
+}
+
+.history-table tbody tr:hover {
+  background-color: rgba(100, 108, 255, 0.05);
+}
+
+.date-cell {
+  white-space: nowrap;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.question-cell,
+.answer-cell {
+  max-width: 400px;
+}
+
+.text-preview {
+  max-height: 100px;
+  overflow-y: auto;
+  line-height: 1.4;
+  font-size: 0.95rem;
+}
+
+.model-cell {
+  font-family: monospace;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.time-cell {
+  text-align: right;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+@media (prefers-color-scheme: light) {
+  .history-table-container {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+  }
+
+  .history-table thead {
+    background-color: #f5f5f5;
+  }
+
+  .history-table th {
+    border-bottom-color: #e0e0e0;
+  }
+
+  .history-table td {
+    border-bottom-color: #f0f0f0;
+  }
+
+  .history-table tbody tr:hover {
+    background-color: #f9f9f9;
+  }
+
+  .date-cell {
+    color: rgba(0, 0, 0, 0.7);
+  }
+}
