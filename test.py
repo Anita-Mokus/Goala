@@ -1,4 +1,4 @@
-from src.services.ingest_liverag import IngestLiveRAG
+from src.services.liverag import IngestLiveRAG
 from datasets import load_dataset
 from src.core.config import HUGGINGFACE_TOKEN
 

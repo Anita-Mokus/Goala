@@ -16,7 +16,7 @@ from src.core.config import (
     RETRIEVER_K,
     LIVERAG_RAG_PROMPT_TEMPLATE,
 )
-from src.services.llm_provider import get_llm_provider
+from src.services.llm_providers import get_llm_provider
 from src.services.embeddings import get_embeddings
 
 

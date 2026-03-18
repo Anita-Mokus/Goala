@@ -15,7 +15,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 #from src.services import IngestService
-from src.services.ingest_liverag import IngestLiveRAG
+from src.services.liverag import IngestLiveRAG
 
 
 def main():
