@@ -41,7 +41,6 @@ from .metrics import (
 from .judge import JUDGE_PROMPT_TEMPLATE, parse_judge_response
 from .io import (
     load_mrr_labels,
-    get_chunk_config,
     load_eval_data,
     load_question_docids_map,
     save_results,
@@ -106,10 +105,7 @@ def evaluate_rag():
     judge_provider = get_llm_provider(JUDGE_LLM_PROVIDER, JUDGE_LLM_MODEL, JUDGE_LLM_TEMPERATURE)
     judge_llm = judge_provider.get_llm()
     print(f"  Judge: {JUDGE_LLM_PROVIDER} / {JUDGE_LLM_MODEL}")
-    
-    # Get chunking configuration
-    chunk_config = get_chunk_config()
-    
+        
     # Prepare metadata
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     metadata = {

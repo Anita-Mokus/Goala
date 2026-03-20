@@ -45,16 +45,6 @@ def load_mrr_labels(labels_path: Path) -> dict[int, list[int]]:
     return labels
 
 
-def get_chunk_config() -> dict:
-    """Get chunking and RAG configuration from config module."""
-    return {
-        "chunking_strategy": "chunk_by_title",
-        "chunk_max_characters": CHUNK_MAX_CHARACTERS,
-        "chunk_new_after_n_chars": CHUNK_NEW_AFTER_N_CHARS,
-        "chunk_overlap": CHUNK_OVERLAP,
-        "chunk_multipage_sections": CHUNK_MULTIPAGE_SECTIONS,
-    }
-
 
 def load_eval_data(eval_file: Path) -> dict:
     """Load evaluation dataset from JSON file."""
