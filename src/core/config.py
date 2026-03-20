@@ -74,7 +74,7 @@ elif LLM_PROVIDER.lower() == "ollama":
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))  # Slightly higher for friendlier responses
 
 # Retriever settings
-RETRIEVER_K = 5  # Number of documents to retrieve
+RETRIEVER_K = int(os.getenv("RETRIEVER_K", "5"))  # Number of documents to retrieve
 
 # API settings
 API_TITLE = "AI Chat Flow API"

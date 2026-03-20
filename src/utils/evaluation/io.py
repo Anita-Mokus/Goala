@@ -7,12 +7,6 @@ import csv
 import json
 from pathlib import Path
 
-from src.core.config import (
-    CHUNK_MAX_CHARACTERS,
-    CHUNK_NEW_AFTER_N_CHARS,
-    CHUNK_OVERLAP,
-    CHUNK_MULTIPAGE_SECTIONS,
-)
 
 
 def load_mrr_labels(labels_path: Path) -> dict[int, list[int]]:

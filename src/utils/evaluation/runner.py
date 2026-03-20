@@ -14,7 +14,7 @@ from src.services import RAGService
 from src.services.llm_providers import get_llm_provider
 from src.core.config import (
     EMBEDDING_MODEL,
-    LLM_MODEL,
+    OLLAMA_LLM_MODEL,
     LLM_TEMPERATURE,
     LLM_PROVIDER,
     RETRIEVER_K,
@@ -23,7 +23,7 @@ from src.core.config import (
     LIVERAG_RAG_PROMPT_TEMPLATE,
 )
 
-from .config import (
+from src.utils.evaluation.config import (
     EVAL_FILE_NAME,
     MRR_LABELS_FILE,
     QUESTION_DOCIDS_FILE,
@@ -31,15 +31,16 @@ from .config import (
     OUTPUT_FILE_PREFIX,
     JUDGE_LLM_TEMPERATURE,
 )
-from .metrics import (
+from src.utils.evaluation.metrics import (
     compute_reciprocal_rank_from_labels,
     compute_reciprocal_rank_from_docids,
     compute_recall_at_k,
     compute_score_stats,
     print_stats,
 )
-from .judge import JUDGE_PROMPT_TEMPLATE, parse_judge_response
-from .io import (
+from src.utils.evaluation.judge import JUDGE_PROMPT_TEMPLATE, parse_judge_response
+from src.utils.retrieval_analysis import build_retrieved_context_ids
+from src.utils.evaluation.io import (
     load_mrr_labels,
     load_eval_data,
     load_question_docids_map,
@@ -111,7 +112,7 @@ def evaluate_rag():
     metadata = {
         "timestamp": timestamp,
         "llm_provider": LLM_PROVIDER,
-        "llm_model": LLM_MODEL,
+        "llm_model": OLLAMA_LLM_MODEL,
         "llm_temperature": LLM_TEMPERATURE,
         "judge_llm_provider": JUDGE_LLM_PROVIDER,
         "judge_llm_model": JUDGE_LLM_MODEL,
@@ -216,10 +217,14 @@ def evaluate_rag():
             # Tag with number of supporting docs (for split statistics)
             supporting_doc_count = len(question_docids_map.get(question, []))
 
+            retrieved_context_fields = build_retrieved_context_ids(retrieved_docs, RETRIEVER_K)
+
             # Store result
             results.append({
                 "question": question,
                 "question_index": question_idx,
+                "question_id": question_idx,
+                "context_id": doc_ids[0] if doc_ids else "",
                 "expected_output": expected_output,
                 "llm_answer": llm_answer,
                 "score": score,
@@ -231,6 +236,7 @@ def evaluate_rag():
                 "retrieved_doc_ids": [
                     doc.metadata.get("doc_id", "") for doc in retrieved_docs
                 ],
+                **retrieved_context_fields,
             })
             
             # Clear memory every N questions to prevent slowdown; !!! this caused issues
@@ -289,3 +295,6 @@ def evaluate_rag():
     print(f"Finished at: {finish_time}")
     print(f"Duration: {datetime.strptime(finish_time, '%Y-%m-%d %H:%M:%S') - datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')}")
     print("=" * 60 + "\n")
+
+if __name__ == "__main__":
+    evaluate_rag()

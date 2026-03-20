@@ -12,7 +12,7 @@ from .metrics import (
     print_stats,
 )
 from .judge import JUDGE_PROMPT_TEMPLATE, parse_judge_response
-from .io import load_mrr_labels, get_chunk_config
+from .io import load_mrr_labels
 from .config import (
     EVAL_FILE_NAME,
     MRR_LABELS_FILE,
@@ -33,7 +33,6 @@ __all__ = [
     "JUDGE_PROMPT_TEMPLATE",
     "parse_judge_response",
     "load_mrr_labels",
-    "get_chunk_config",
     "EVAL_FILE_NAME",
     "MRR_LABELS_FILE",
     "QUESTION_DOCIDS_FILE",

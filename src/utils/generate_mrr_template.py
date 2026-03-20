@@ -2,7 +2,7 @@
 MRR Template Generator.
 
 Runs the retriever for every question in the evaluation dataset and
-produces two output files in ``shared/``:
+produces three output files in ``shared/``:
 
   liverag_mrr_contexts.txt  — human-readable review: each question followed
                                by its retrieved contexts numbered by rank.
@@ -15,6 +15,11 @@ produces two output files in ``shared/``:
                                contains the answer-giving context, 0 otherwise.
                                Example for 5 retrieved docs where rank-2 is correct:
                                  3,0,1,0,0,0
+
+  liverag_retrieval_analysis.csv — retrieval analysis for debugging.
+                               Format: question_id,context_id,retrieved_context_id_1,...,retrieved_context_id_K
+                               Shows ground truth context_id alongside retrieved IDs.
+                               The closer context_id is to retrieved_context_id_1, the better.
 
 Run with:
     python -m src.utils.generate_mrr_template
@@ -30,12 +35,14 @@ if str(project_root) not in sys.path:
 
 from src.services.rag_service import RAGService
 from src.core.config import RETRIEVER_K
+from src.utils.retrieval_analysis import build_retrieved_context_ids
 
 # ── configurable ────────────────────────────────────────────────────────────
 EVAL_FILE_NAME   = "liverag_eval.json"
 CONTEXTS_FILE    = "liverag_mrr_contexts.txt"
 LABELS_CSV_FILE  = "liverag_mrr_labels.csv"
 QUESTION_DOCIDS_FILE = "liverag_question_docids.json"
+RETRIEVAL_ANALYSIS_FILE = "liverag_retrieval_analysis.csv"  # question_id, context_id, retrieved_context_id_1..K
 SEPARATOR        = "=" * 72
 # ────────────────────────────────────────────────────────────────────────────
 
@@ -78,15 +85,22 @@ def main() -> None:
 
     contexts_path = project_root / "shared" / CONTEXTS_FILE
     labels_path   = project_root / "shared" / LABELS_CSV_FILE
+    analysis_path = project_root / "shared" / RETRIEVAL_ANALYSIS_FILE
 
     # Column headers for the CSV: c1 … cK  (rank 1 = c1)
     col_headers = [f"c{r}" for r in range(1, RETRIEVER_K + 1)]
+    # Column headers for retrieval analysis: retrieved_context_id_1 … retrieved_context_id_K
+    analysis_headers = [f"retrieved_context_id_{r}" for r in range(1, RETRIEVER_K + 1)]
 
     with open(contexts_path, "w", encoding="utf-8") as ctx_fh, \
-         open(labels_path,   "w", encoding="utf-8", newline="") as csv_fh:
+         open(labels_path,   "w", encoding="utf-8", newline="") as csv_fh, \
+         open(analysis_path, "w", encoding="utf-8", newline="") as analysis_fh:
 
         writer = csv.writer(csv_fh)
         writer.writerow(["question_index"] + col_headers)
+        
+        analysis_writer = csv.writer(analysis_fh)
+        analysis_writer.writerow(["question_id", "context_id"] + analysis_headers)
 
         for idx, question in all_questions:
             print(f"  [{idx + 1}/{len(all_questions)}] Retrieving: {question[:70]}...")
@@ -99,6 +113,7 @@ def main() -> None:
 
             # ── human-readable review file ───────────────────────────────
             gt_ids = set(question_docids_map.get(question, []))
+            gt_ids_list = question_docids_map.get(question, [])
 
             ctx_fh.write(f"{SEPARATOR}\n")
             ctx_fh.write(f"QUESTION INDEX: {idx}\n")
@@ -127,8 +142,18 @@ def main() -> None:
 
             writer.writerow([idx] + labels)
 
+            # ── Retrieval analysis CSV: question_id, context_id, retrieved_context_id_1..K
+            # context_id = ground truth doc_id (first one if multiple, empty if none)
+            context_id = gt_ids_list[0] if gt_ids_list else ""
+            retrieved_context_fields = build_retrieved_context_ids(retrieved_docs, RETRIEVER_K)
+            analysis_writer.writerow(
+                [idx, context_id]
+                + [retrieved_context_fields[f"retrieved_context_id_{r}"] for r in range(1, RETRIEVER_K + 1)]
+            )
+
     print(f"\n✓ Context review saved to:  {contexts_path}")
     print(f"✓ Auto-labeled CSV saved to: {labels_path}")
+    print(f"✓ Retrieval analysis saved to: {analysis_path}")
     print(f"  (Labels set to 1 where retrieved doc_id matches ground truth;")
     print(f"   edit the CSV manually to override any labels.)")
     print()
