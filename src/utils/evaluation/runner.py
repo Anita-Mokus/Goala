@@ -14,11 +14,10 @@ from src.services import RAGService
 from src.services.llm_providers import get_llm_provider
 from src.core.config import (
     EMBEDDING_MODEL,
-    OLLAMA_LLM_MODEL,
+    LLM_MODEL,
     LLM_TEMPERATURE,
     LLM_PROVIDER,
     RETRIEVER_K,
-    JUDGE_LLM_PROVIDER,
     JUDGE_LLM_MODEL,
     LIVERAG_RAG_PROMPT_TEMPLATE,
 )
@@ -39,7 +38,11 @@ from src.utils.evaluation.metrics import (
     print_stats,
 )
 from src.utils.evaluation.judge import JUDGE_PROMPT_TEMPLATE, parse_judge_response
-from src.utils.retrieval_analysis import build_retrieved_context_ids
+from src.utils.retrieval_analysis import (
+    build_retrieved_context_ids,
+    build_doc_id_numbering,
+    to_numeric_doc_id,
+)
 from src.utils.evaluation.io import (
     load_mrr_labels,
     load_eval_data,
@@ -76,6 +79,7 @@ def evaluate_rag():
         print(f"  Loaded question→doc_ids map: {len(question_docids_map)} entries")
     else:
         print(f"  INFO: {QUESTION_DOCIDS_FILE} not found — single/multi-doc split will be skipped.")    
+    doc_id_numbering = build_doc_id_numbering(question_docids_map)
     
     labels_file = project_root / 'shared' / MRR_LABELS_FILE
     mrr_labels: dict[int, list[int]] = {}
@@ -103,18 +107,18 @@ def evaluate_rag():
     
     # Initialize judge LLM using configured provider
     print("Initializing judge LLM...")
-    judge_provider = get_llm_provider(JUDGE_LLM_PROVIDER, JUDGE_LLM_MODEL, JUDGE_LLM_TEMPERATURE)
+    judge_provider = get_llm_provider(LLM_PROVIDER, JUDGE_LLM_MODEL, JUDGE_LLM_TEMPERATURE)
     judge_llm = judge_provider.get_llm()
-    print(f"  Judge: {JUDGE_LLM_PROVIDER} / {JUDGE_LLM_MODEL}")
+    print(f"  Judge: {LLM_PROVIDER} / {JUDGE_LLM_MODEL}")
         
     # Prepare metadata
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     metadata = {
         "timestamp": timestamp,
         "llm_provider": LLM_PROVIDER,
-        "llm_model": OLLAMA_LLM_MODEL,
+        "llm_model": LLM_MODEL,
         "llm_temperature": LLM_TEMPERATURE,
-        "judge_llm_provider": JUDGE_LLM_PROVIDER,
+        "judge_llm_provider": LLM_PROVIDER,
         "judge_llm_model": JUDGE_LLM_MODEL,
         "rag_prompt_template": "LIVERAG_RAG_PROMPT_TEMPLATE",
         "embedding_model": EMBEDDING_MODEL,
@@ -217,14 +221,16 @@ def evaluate_rag():
             # Tag with number of supporting docs (for split statistics)
             supporting_doc_count = len(question_docids_map.get(question, []))
 
-            retrieved_context_fields = build_retrieved_context_ids(retrieved_docs, RETRIEVER_K)
+            retrieved_context_fields = build_retrieved_context_ids(
+                retrieved_docs, RETRIEVER_K, doc_id_numbering
+            )
 
             # Store result
             results.append({
                 "question": question,
                 "question_index": question_idx,
                 "question_id": question_idx,
-                "context_id": doc_ids[0] if doc_ids else "",
+                "context_id": to_numeric_doc_id(doc_ids[0], doc_id_numbering) if doc_ids else "",
                 "expected_output": expected_output,
                 "llm_answer": llm_answer,
                 "score": score,

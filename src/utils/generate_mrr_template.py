@@ -18,8 +18,13 @@ produces three output files in ``shared/``:
 
   liverag_retrieval_analysis.csv — retrieval analysis for debugging.
                                Format: question_id,context_id,retrieved_context_id_1,...,retrieved_context_id_K
+                               Uses numeric context IDs for readability.
                                Shows ground truth context_id alongside retrieved IDs.
                                The closer context_id is to retrieved_context_id_1, the better.
+
+  liverag_context_id_map.csv  — lookup table for numeric IDs.
+                               Format: context_id,raw_doc_id
+                               Use this to map numeric IDs back to original doc_id values.
 
 Run with:
     python -m src.utils.generate_mrr_template
@@ -35,7 +40,11 @@ if str(project_root) not in sys.path:
 
 from src.services.rag_service import RAGService
 from src.core.config import RETRIEVER_K
-from src.utils.retrieval_analysis import build_retrieved_context_ids
+from src.utils.retrieval_analysis import (
+    build_retrieved_context_ids,
+    build_doc_id_numbering,
+    to_numeric_doc_id,
+)
 
 # ── configurable ────────────────────────────────────────────────────────────
 EVAL_FILE_NAME   = "liverag_eval.json"
@@ -43,6 +52,7 @@ CONTEXTS_FILE    = "liverag_mrr_contexts.txt"
 LABELS_CSV_FILE  = "liverag_mrr_labels.csv"
 QUESTION_DOCIDS_FILE = "liverag_question_docids.json"
 RETRIEVAL_ANALYSIS_FILE = "liverag_retrieval_analysis.csv"  # question_id, context_id, retrieved_context_id_1..K
+CONTEXT_ID_MAP_FILE = "liverag_context_id_map.csv"  # context_id, raw_doc_id
 SEPARATOR        = "=" * 72
 # ────────────────────────────────────────────────────────────────────────────
 
@@ -82,10 +92,12 @@ def main() -> None:
 
     print("Initializing RAG service...")
     rag_service = RAGService()
+    doc_id_numbering = build_doc_id_numbering(question_docids_map)
 
     contexts_path = project_root / "shared" / CONTEXTS_FILE
     labels_path   = project_root / "shared" / LABELS_CSV_FILE
     analysis_path = project_root / "shared" / RETRIEVAL_ANALYSIS_FILE
+    context_map_path = project_root / "shared" / CONTEXT_ID_MAP_FILE
 
     # Column headers for the CSV: c1 … cK  (rank 1 = c1)
     col_headers = [f"c{r}" for r in range(1, RETRIEVER_K + 1)]
@@ -144,8 +156,10 @@ def main() -> None:
 
             # ── Retrieval analysis CSV: question_id, context_id, retrieved_context_id_1..K
             # context_id = ground truth doc_id (first one if multiple, empty if none)
-            context_id = gt_ids_list[0] if gt_ids_list else ""
-            retrieved_context_fields = build_retrieved_context_ids(retrieved_docs, RETRIEVER_K)
+            context_id = to_numeric_doc_id(gt_ids_list[0], doc_id_numbering) if gt_ids_list else ""
+            retrieved_context_fields = build_retrieved_context_ids(
+                retrieved_docs, RETRIEVER_K, doc_id_numbering
+            )
             analysis_writer.writerow(
                 [idx, context_id]
                 + [retrieved_context_fields[f"retrieved_context_id_{r}"] for r in range(1, RETRIEVER_K + 1)]
@@ -154,6 +168,12 @@ def main() -> None:
     print(f"\n✓ Context review saved to:  {contexts_path}")
     print(f"✓ Auto-labeled CSV saved to: {labels_path}")
     print(f"✓ Retrieval analysis saved to: {analysis_path}")
+    with open(context_map_path, "w", encoding="utf-8", newline="") as map_fh:
+        map_writer = csv.writer(map_fh)
+        map_writer.writerow(["context_id", "raw_doc_id"])
+        for raw_doc_id, numeric_id in sorted(doc_id_numbering.items(), key=lambda item: item[1]):
+            map_writer.writerow([numeric_id, raw_doc_id])
+    print(f"✓ Context ID map saved to:    {context_map_path}")
     print(f"  (Labels set to 1 where retrieved doc_id matches ground truth;")
     print(f"   edit the CSV manually to override any labels.)")
     print()

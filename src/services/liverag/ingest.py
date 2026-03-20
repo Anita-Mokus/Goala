@@ -11,7 +11,6 @@ to its list of ground-truth doc_ids; this file is consumed by the MRR
 computation in the evaluation script.
 """
 import gc
-import json
 from pathlib import Path
 from typing import List, Optional, Set
 
