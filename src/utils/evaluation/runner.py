@@ -19,6 +19,7 @@ from src.core.config import (
     LLM_PROVIDER,
     RETRIEVER_K,
     JUDGE_LLM_MODEL,
+    JUDGE_LLM_PROVIDER,
     LIVERAG_RAG_PROMPT_TEMPLATE,
 )
 
@@ -107,9 +108,9 @@ def evaluate_rag():
     
     # Initialize judge LLM using configured provider
     print("Initializing judge LLM...")
-    judge_provider = get_llm_provider(LLM_PROVIDER, JUDGE_LLM_MODEL, JUDGE_LLM_TEMPERATURE)
+    judge_provider = get_llm_provider(JUDGE_LLM_PROVIDER, JUDGE_LLM_MODEL, JUDGE_LLM_TEMPERATURE)
     judge_llm = judge_provider.get_llm()
-    print(f"  Judge: {LLM_PROVIDER} / {JUDGE_LLM_MODEL}")
+    print(f"  Judge: {JUDGE_LLM_PROVIDER} / {JUDGE_LLM_MODEL}")
         
     # Prepare metadata
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -118,7 +119,7 @@ def evaluate_rag():
         "llm_provider": LLM_PROVIDER,
         "llm_model": LLM_MODEL,
         "llm_temperature": LLM_TEMPERATURE,
-        "judge_llm_provider": LLM_PROVIDER,
+        "judge_llm_provider": JUDGE_LLM_PROVIDER,
         "judge_llm_model": JUDGE_LLM_MODEL,
         "rag_prompt_template": "LIVERAG_RAG_PROMPT_TEMPLATE",
         "embedding_model": EMBEDDING_MODEL,
