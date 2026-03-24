@@ -37,6 +37,7 @@ CHUNK_MULTIPAGE_SECTIONS = os.getenv("CHUNK_MULTIPAGE_SECTIONS", "true").lower()
 # LLM Provider Selection
 # Options: 'groq' or 'deepseek' or 'openrouter' or 'ollama
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
+JUDGE_LLM_PROVIDER = os.getenv("JUDGE_LLM_PROVIDER", "ollama")
 
 # Groq Model Options (when using Groq provider)
 # "llama-3.3-70b-versatile"  # Faster with good accuracy
