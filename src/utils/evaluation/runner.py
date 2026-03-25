@@ -55,6 +55,153 @@ from src.utils.evaluation.io import (
 # Project root for file paths
 project_root = Path(__file__).parent.parent.parent.parent
 
+def _get_rag_answer_and_score(
+    question: str,
+    expected_output: str,
+    rag_service: RAGService,
+    judge_llm,
+) -> tuple[list, str, int, str]:
+    """Call the RAG pipeline and judge LLM for one question.
+
+    Returns:
+        (retrieved_docs, llm_answer, score, explanation)
+    """
+    retrieved_docs: list = []
+    try:
+        llm_answer, retrieved_docs = rag_service.query_with_sources(question)
+        print(f"  RAG Answer: {llm_answer[:200]}...")
+    except Exception as e:
+        print(f"  ERROR getting RAG answer: {e}")
+        llm_answer = f"ERROR: {str(e)}"
+
+    try:
+        judge_prompt = JUDGE_PROMPT_TEMPLATE.format(
+            question=question,
+            answer=expected_output,
+            llm_answer=llm_answer,
+        )
+        judge_response = judge_llm.invoke(judge_prompt)
+        judge_text = (
+            judge_response.content
+            if hasattr(judge_response, "content")
+            else str(judge_response)
+        )
+        score, explanation = parse_judge_response(judge_text)
+        print(f"  Score: {score}/5")
+        print(f"  Explanation: {explanation[:60]}...")
+    except Exception as e:
+        print(f"  ERROR getting judge evaluation: {e}")
+        score = 0
+        explanation = f"ERROR: {str(e)}"
+
+    return retrieved_docs, llm_answer, score, explanation
+
+
+def _compute_retrieval_metrics(
+    retrieved_docs: list,
+    doc_ids: list[str],
+    csv_labels: list[int],
+) -> tuple[float | None, float | None, list[int]]:
+    """Compute reciprocal rank and Recall@K for one question.
+
+    Uses ground-truth doc_ids when available; falls back to manual CSV labels.
+
+    Returns:
+        (rr, recall, labels)  — rr and recall are None when neither source is available.
+    """
+    if doc_ids:
+        rr = compute_reciprocal_rank_from_docids(retrieved_docs, doc_ids)
+        recall = compute_recall_at_k(retrieved_docs, doc_ids)
+        labels = csv_labels
+        first_relevant = next(
+            (
+                rank
+                for rank, doc in enumerate(retrieved_docs, start=1)
+                if doc.metadata.get("doc_id", "") in set(doc_ids)
+            ),
+            None,
+        )
+        retrieved_doc_ids = [doc.metadata.get("doc_id", "") for doc in retrieved_docs]
+        print(f"  Reciprocal Rank: {rr:.4f}  (first relevant at rank {first_relevant})")
+        print(f"  GT doc_ids:      {doc_ids}")
+        print(f"  Retrieved IDs:   {retrieved_doc_ids}")
+        print(f"  Recall@K:        {recall:.4f}")
+    elif csv_labels and any(csv_labels):
+        labels = csv_labels
+        rr = compute_reciprocal_rank_from_labels(labels)
+        recall = None
+        first_relevant = next((r + 1 for r, v in enumerate(labels) if v), None)
+        print(
+            f"  Reciprocal Rank: {rr:.4f}  "
+            f"(CSV labels — first relevant at rank {first_relevant})"
+        )
+    else:
+        labels = csv_labels
+        rr = None
+        recall = None
+
+    return rr, recall, labels
+
+
+def _evaluate_question(
+    question_idx: int,
+    item: dict,
+    rag_service: RAGService,
+    judge_llm,
+    question_docids_map: dict,
+    mrr_labels: dict,
+    doc_id_numbering: dict,
+    total: int,
+    position: int,
+) -> dict | None:
+    """Evaluate a single question end-to-end.
+
+    Returns a result dict ready to be appended to the results list,
+    or None if the question has no ground-truth doc_ids and should be skipped.
+    """
+    question = item.get("input", "")
+    expected_output = item.get("expected_output", "")
+    doc_ids = question_docids_map.get(question, [])
+    csv_labels = mrr_labels.get(question_idx, [])
+
+    if not doc_ids:
+        print(f"  WARNING: No supporting doc_ids found for question: {question[:60]}...")
+        return None
+
+    print(f"[{position}/{total}] Question: {question[:60]}...")
+
+    retrieved_docs, llm_answer, score, explanation = _get_rag_answer_and_score(
+        question, expected_output, rag_service, judge_llm
+    )
+
+    rr, recall, labels = _compute_retrieval_metrics(retrieved_docs, doc_ids, csv_labels)
+
+    retrieved_context_fields = build_retrieved_context_ids(
+        retrieved_docs, RETRIEVER_K, doc_id_numbering
+    )
+
+    print()
+    return {
+        "question": question,
+        "question_index": question_idx,
+        "question_id": question_idx,
+        "context_id": to_numeric_doc_id(doc_ids[0], doc_id_numbering) if doc_ids else "",
+        "context_ids": [to_numeric_doc_id(d, doc_id_numbering) for d in doc_ids],
+        "expected_output": expected_output,
+        "llm_answer": llm_answer,
+        "score": score,
+        "explanation": explanation,
+        "reciprocal_rank": rr,
+        "recall_at_k": recall,
+        "mrr_labels": labels,
+        "supporting_doc_count": len(doc_ids),
+        "retrieved_doc_ids": [doc.metadata.get("doc_id", "") for doc in retrieved_docs],
+        **retrieved_context_fields,
+    }
+
+
+
+
 
 def evaluate_rag():
     """Run the RAG evaluation."""
@@ -143,116 +290,41 @@ def evaluate_rag():
         print(f"\nEvaluating dataset: {dataset_name}")
         print(f"Total questions: {len(questions)}\n")
 
-        # Print size of single_doc_questions
-        single_doc_questions = [q for q in questions if len(question_docids_map.get(q.get("input", ""), [])) == 1]
-        print(f"Questions with single supporting document: {len(single_doc_questions)} \n")
+        # Partition questions into single-doc and multi-doc, preserving original 0-based index
+        # so MRR CSV label look-up stays aligned with generate_mrr_template output.
+        single_doc_items: list[tuple[int, dict]] = []
+        multi_doc_items: list[tuple[int, dict]] = []
+        for orig_idx, item in enumerate(questions):
+            n = len(question_docids_map.get(item.get("input", ""), []))
+            if n == 1:
+                single_doc_items.append((orig_idx, item))
+            elif n > 1:
+                multi_doc_items.append((orig_idx, item))
 
-        for i, item in enumerate(questions, 1):
-            question = item.get("input", "")
+        print(f"Questions with single supporting document:   {len(single_doc_items)}")
+        print(f"Questions with multiple supporting documents: {len(multi_doc_items)}\n")
 
-            doc_ids = question_docids_map.get(question, [])
-            if len(doc_ids) == 0:
-                print(f"  WARNING: No supporting doc_ids found for question: {question[:60]}...")
-            elif len(doc_ids) > 1:
-                continue   # skip multi-doc questions for the moment
-            expected_output = item.get("expected_output", "")
-            question_idx = i - 1  # 0-based index used in the MRR CSV
-            
-            print(f"[{i}/{len(questions)}] Question: {question[:60]}...")
-
-            # Get RAG answer + retrieved docs in one call (avoids double retrieval)
-            retrieved_docs = []
-            try:
-                llm_answer, retrieved_docs = rag_service.query_with_sources(question)
-                print(f"  RAG Answer: {llm_answer[:200]}...")
-            except Exception as e:
-                print(f"  ERROR getting RAG answer: {e}")
-                llm_answer = f"ERROR: {str(e)}"
-            
-            # Get judge evaluation
-            try:
-                judge_prompt = JUDGE_PROMPT_TEMPLATE.format(
-                    question=question,
-                    answer=expected_output,
-                    llm_answer=llm_answer
-                )
-                judge_response = judge_llm.invoke(judge_prompt)
-                judge_text = judge_response.content if hasattr(judge_response, 'content') else str(judge_response)
-                score, explanation = parse_judge_response(judge_text)
-                print(f"  Score: {score}/5")
-                print(f"  Explanation: {explanation[:60]}...")
-            except Exception as e:
-                print(f"  ERROR getting judge evaluation: {e}")
-                score = 0
-                explanation = f"ERROR: {str(e)}"
-            
-            # Compute reciprocal rank and Recall@K
-            # Primary: auto-compute from ground-truth doc_ids if available
-            # Fallback: use manually-labelled CSV if it has any 1s
-            doc_ids = question_docids_map.get(question, [])
-            csv_labels = mrr_labels.get(question_idx, [])
-
-            if doc_ids:
-                rr = compute_reciprocal_rank_from_docids(retrieved_docs, doc_ids)
-                recall = compute_recall_at_k(retrieved_docs, doc_ids)
-                labels = csv_labels
-                first_relevant = next(
-                    (rank for rank, doc in enumerate(retrieved_docs, start=1)
-                        if doc.metadata.get("doc_id", "") in set(doc_ids)),
-                    None,
-                )
-                retrieved_doc_ids = [doc.metadata.get("doc_id", "") for doc in retrieved_docs]
-                print(f"  Reciprocal Rank: {rr:.4f}  (first relevant at rank {first_relevant})")
-                print(f"  GT doc_ids:      {doc_ids}")
-                print(f"  Retrieved IDs:   {retrieved_doc_ids}")
-                print(f"  Recall@K:        {recall:.4f}")
-            elif csv_labels and any(csv_labels):
-                # Fallback: CSV was manually filled
-                labels = csv_labels
-                rr = compute_reciprocal_rank_from_labels(labels)
-                recall = None
-                first_relevant = next((r + 1 for r, v in enumerate(labels) if v), None)
-                print(f"  Reciprocal Rank: {rr:.4f}  "
-                        f"(CSV labels — first relevant at rank {first_relevant})")
-            else:
-                labels = csv_labels
-                rr = None
-                recall = None
-
-            # Tag with number of supporting docs (for split statistics)
-            supporting_doc_count = len(question_docids_map.get(question, []))
-
-            retrieved_context_fields = build_retrieved_context_ids(
-                retrieved_docs, RETRIEVER_K, doc_id_numbering
+        # Phase 1: single-doc questions
+        print(f"[Phase 1] Single-document questions ({len(single_doc_items)})\n")
+        for position, (question_idx, item) in enumerate(single_doc_items, 1):
+            result = _evaluate_question(
+                question_idx, item, rag_service, judge_llm,
+                question_docids_map, mrr_labels, doc_id_numbering,
+                total=len(single_doc_items), position=position,
             )
+            if result is not None:
+                results.append(result)
 
-            # Store result
-            results.append({
-                "question": question,
-                "question_index": question_idx,
-                "question_id": question_idx,
-                "context_id": to_numeric_doc_id(doc_ids[0], doc_id_numbering) if doc_ids else "",
-                "expected_output": expected_output,
-                "llm_answer": llm_answer,
-                "score": score,
-                "explanation": explanation,
-                "reciprocal_rank": rr,
-                "recall_at_k": recall,
-                "mrr_labels": labels,
-                "supporting_doc_count": supporting_doc_count,
-                "retrieved_doc_ids": [
-                    doc.metadata.get("doc_id", "") for doc in retrieved_docs
-                ],
-                **retrieved_context_fields,
-            })
-            
-            # Clear memory every N questions to prevent slowdown; !!! this caused issues
-            # if i % MEMORY_CLEAR_INTERVAL == 0:
-            #     gc.collect()
-            #     if torch.cuda.is_available():
-            #         torch.cuda.empty_cache()
-
-            print()
+        # Phase 2: multi-doc questions
+        print(f"[Phase 2] Multi-document questions ({len(multi_doc_items)})\n")
+        for position, (question_idx, item) in enumerate(multi_doc_items, 1):
+            result = _evaluate_question(
+                question_idx, item, rag_service, judge_llm,
+                question_docids_map, mrr_labels, doc_id_numbering,
+                total=len(multi_doc_items), position=position,
+            )
+            if result is not None:
+                results.append(result)
     
     # Calculate statistics — overall + split by single vs multi supporting doc
     single_doc = [r for r in results if r.get("supporting_doc_count") == 1]
