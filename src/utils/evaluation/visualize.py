@@ -20,9 +20,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-# ---------------------------------------------------------------------------
-# Paths
-# ---------------------------------------------------------------------------
+
 
 def _project_root() -> Path:
     return Path(__file__).resolve().parents[3]
@@ -34,9 +32,6 @@ def _out_dir() -> Path:
     return d
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 def _save(fig: plt.Figure, name: str, out_dir: Path) -> None:
     path = out_dir / name
@@ -50,9 +45,6 @@ def _apply_style() -> None:
     plt.rcParams.update({"figure.dpi": 150, "font.size": 11})
 
 
-# ---------------------------------------------------------------------------
-# Source 1: shared/liverag_retrieval_analysis.csv
-# ---------------------------------------------------------------------------
 
 def _compute_retrieval_metrics(df: pd.DataFrame) -> pd.DataFrame:
     """Add 'first_hit_rank' and 'rr' columns to the retrieval analysis frame."""
@@ -175,13 +167,18 @@ def generate_retrieval_charts(out_dir: Path) -> None:
     plot_retrieval_rr_distribution(df, out_dir, k)
 
 
-# ---------------------------------------------------------------------------
-# Source 2: evaluation_results/eval_results_liveRAG*.json
-# ---------------------------------------------------------------------------
 
-def _load_eval_jsons() -> list[dict]:
+_SUBSETS: list[tuple[str, str]] = [
+    ("single_doc", "Single-Doc"),
+    ("multi_doc",  "Multi-Doc"),
+    ("all_docs",   "All Questions"),
+]
+
+
+def _load_eval_jsons(subset: str) -> list[dict]:
+    """Load all eval JSONs whose filename matches the given subset key."""
     results_dir = _project_root() / "evaluation_results"
-    files = sorted(results_dir.glob("eval_results_liveRAG*.json"))
+    files = sorted(results_dir.glob(f"eval_results_liveRAG_{subset}_*.json"))
     loaded = []
     for f in files:
         with open(f, encoding="utf-8") as fh:
@@ -190,15 +187,17 @@ def _load_eval_jsons() -> list[dict]:
     return loaded
 
 
-def plot_judge_score_distribution(all_data: list[dict], out_dir: Path) -> None:
-    """Bar chart of judge score (1–5) distribution, combined across all runs."""
+def plot_judge_score_distribution(
+    all_data: list[dict], out_dir: Path, *, suffix: str, label: str
+) -> None:
+    """Bar chart of judge score (1–5) distribution for a single subset."""
     all_results = []
     for run in all_data:
         all_results.extend(run.get("results", []))
 
     scores = [r["score"] for r in all_results if isinstance(r.get("score"), int)]
     if not scores:
-        print("  [skip] No valid judge scores found.")
+        print(f"  [skip] No valid judge scores found for '{suffix}'.")
         return
 
     counts = {s: scores.count(s) for s in range(1, 6)}
@@ -214,7 +213,7 @@ def plot_judge_score_distribution(all_data: list[dict], out_dir: Path) -> None:
     ax.set_xlabel("Judge Score")
     ax.set_ylabel("Number of questions")
     avg = sum(scores) / total
-    ax.set_title(f"Judge Score Distribution  (avg = {avg:.2f}/5,  n = {total})")
+    ax.set_title(f"Judge Score Distribution — {label}  (avg = {avg:.2f}/5,  n = {total})")
     for bar, cnt in zip(bars, counts.values()):
         pct = 100.0 * cnt / total
         ax.text(
@@ -226,7 +225,7 @@ def plot_judge_score_distribution(all_data: list[dict], out_dir: Path) -> None:
             fontsize=9,
         )
     fig.tight_layout()
-    _save(fig, "judge_score_distribution.png", out_dir)
+    _save(fig, f"judge_score_distribution_{suffix}.png", out_dir)
 
 
 def plot_metrics_by_group(all_data: list[dict], out_dir: Path) -> None:
@@ -236,7 +235,6 @@ def plot_metrics_by_group(all_data: list[dict], out_dir: Path) -> None:
     metric_keys = ["average_score", "mrr.mean_reciprocal_rank", "recall_at_k.mean_recall"]
     metric_labels = ["Avg Score / 5", "MRR", "Recall@K"]
 
-    # Merge statistics across runs (simple average if multiple runs)
     merged: dict[str, dict] = {g: {} for g in group_keys}
     run_count = 0
     for run in all_data:
@@ -261,7 +259,6 @@ def plot_metrics_by_group(all_data: list[dict], out_dir: Path) -> None:
             for mk in merged[g]:
                 merged[g][mk] /= run_count
 
-    # Normalise avg_score to 0-1 scale for a fair comparison with MRR/Recall
     for g in merged:
         if "average_score" in merged[g]:
             merged[g]["average_score"] /= 5.0
@@ -296,8 +293,10 @@ def plot_metrics_by_group(all_data: list[dict], out_dir: Path) -> None:
     _save(fig, "metrics_by_group.png", out_dir)
 
 
-def plot_score_vs_rr(all_data: list[dict], out_dir: Path) -> None:
-    """Scatter plot of judge score vs reciprocal rank."""
+def plot_score_vs_rr(
+    all_data: list[dict], out_dir: Path, *, suffix: str, label: str
+) -> None:
+    """Scatter plot of judge score vs reciprocal rank for a single subset."""
     rows = []
     for run in all_data:
         for r in run.get("results", []):
@@ -306,7 +305,7 @@ def plot_score_vs_rr(all_data: list[dict], out_dir: Path) -> None:
             if isinstance(score, int) and rr is not None:
                 rows.append({"score": score, "rr": float(rr)})
     if not rows:
-        print("  [skip] No score/rr pairs found.")
+        print(f"  [skip] No score/rr pairs found for '{suffix}'.")
         return
 
     df = pd.DataFrame(rows)
@@ -323,7 +322,6 @@ def plot_score_vs_rr(all_data: list[dict], out_dir: Path) -> None:
         edgecolors="none",
     )
 
-    # Overlay mean score per RR bucket
     rr_vals = sorted(df["rr"].unique())
     mean_scores = [df.loc[df["rr"] == rv, "score"].mean() for rv in rr_vals]
     ax.plot(rr_vals, mean_scores, "o-", color="crimson", lw=2, ms=7, label="Mean score per RR")
@@ -331,10 +329,10 @@ def plot_score_vs_rr(all_data: list[dict], out_dir: Path) -> None:
     ax.set_xlabel("Reciprocal Rank")
     ax.set_ylabel("Judge Score (jittered)")
     ax.set_yticks(range(1, 6))
-    ax.set_title("Judge Score vs Retrieval Reciprocal Rank")
+    ax.set_title(f"Judge Score vs Retrieval Reciprocal Rank — {label}")
     ax.legend()
     fig.tight_layout()
-    _save(fig, "score_vs_rr_scatter.png", out_dir)
+    _save(fig, f"score_vs_rr_scatter_{suffix}.png", out_dir)
 
 
 def plot_multi_run_mrr(all_data: list[dict], out_dir: Path) -> None:
@@ -369,20 +367,25 @@ def plot_multi_run_mrr(all_data: list[dict], out_dir: Path) -> None:
 
 def generate_eval_charts(out_dir: Path) -> None:
     results_dir = _project_root() / "evaluation_results"
-    if not results_dir.exists() or not any(results_dir.glob("eval_results_liveRAG*.json")):
+    if not results_dir.exists() or not any(results_dir.glob("eval_results_liveRAG_*.json")):
         print("  [skip] No evaluation result JSONs found in evaluation_results/.")
         return
 
-    all_data = _load_eval_jsons()
-    plot_judge_score_distribution(all_data, out_dir)
-    plot_metrics_by_group(all_data, out_dir)
-    plot_score_vs_rr(all_data, out_dir)
-    plot_multi_run_mrr(all_data, out_dir)
+    for subset_key, subset_label in _SUBSETS:
+        data = _load_eval_jsons(subset_key)
+        if not data:
+            print(f"  [skip] No files found for subset '{subset_key}'.")
+            continue
+        print(f"  -- {subset_label} ({subset_key}) --")
+        plot_judge_score_distribution(data, out_dir, suffix=subset_key, label=subset_label)
+        plot_score_vs_rr(data, out_dir, suffix=subset_key, label=subset_label)
+
+    all_docs_data = _load_eval_jsons("all_docs")
+    if all_docs_data:
+        plot_metrics_by_group(all_docs_data, out_dir)
+        plot_multi_run_mrr(all_docs_data, out_dir)
 
 
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
 
 def main() -> None:
     _apply_style()
