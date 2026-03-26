@@ -28,7 +28,9 @@ from src.utils.evaluation.config import (
     MRR_LABELS_FILE,
     QUESTION_DOCIDS_FILE,
     OUTPUT_DIR_NAME,
-    OUTPUT_FILE_PREFIX,
+    OUTPUT_FILE_PREFIX_SINGLE_DOC,
+    OUTPUT_FILE_PREFIX_MULTI_DOC,
+    OUTPUT_FILE_PREFIX_ALL_DOCS,
     JUDGE_LLM_TEMPERATURE,
 )
 from src.utils.evaluation.metrics import (
@@ -279,9 +281,9 @@ def evaluate_rag():
     print()
     
     # Prepare results
-    results = []
+    single_doc_results: list[dict] = []
+    multi_doc_results: list[dict] = []
 
-    
     # Process each dataset
     for dataset in eval_data.get("datasets", []):
         dataset_name = dataset.get("name", "unknown")
@@ -313,7 +315,7 @@ def evaluate_rag():
                 total=len(single_doc_items), position=position,
             )
             if result is not None:
-                results.append(result)
+                single_doc_results.append(result)
 
         # Phase 2: multi-doc questions
         print(f"[Phase 2] Multi-document questions ({len(multi_doc_items)})\n")
@@ -324,48 +326,60 @@ def evaluate_rag():
                 total=len(multi_doc_items), position=position,
             )
             if result is not None:
-                results.append(result)
+                multi_doc_results.append(result)
     
-    # Calculate statistics — overall + split by single vs multi supporting doc
-    single_doc = [r for r in results if r.get("supporting_doc_count") == 1]
-    multi_doc  = [r for r in results if r.get("supporting_doc_count", 0) > 1]
-    unknown    = [r for r in results if r.get("supporting_doc_count", 0) == 0]
+    # Calculate statistics
+    all_results = single_doc_results + multi_doc_results
+    stats_overall = compute_score_stats(all_results,       "Overall")
+    stats_single  = compute_score_stats(single_doc_results, "Single supporting document")
+    stats_multi   = compute_score_stats(multi_doc_results,  "Multiple supporting documents")
 
-    stats_overall = compute_score_stats(results, "Overall")
-    stats_single  = compute_score_stats(single_doc, "Single supporting document")
-    stats_multi   = compute_score_stats(multi_doc,  "Multiple supporting documents")
-
-    statistics = {
-        "overall": stats_overall,
-        "single_supporting_doc": stats_single,
-        "multi_supporting_doc": stats_multi,
-        "unknown_doc_count": len(unknown),
-    }
-    
-    # Prepare final output
-    output_data = {
+    # Build per-file output payloads
+    output_single = {
         "metadata": metadata,
-        "results": results,
-        "statistics": statistics
+        "results": single_doc_results,
+        "statistics": {"single_supporting_doc": stats_single},
     }
-    
+    output_multi = {
+        "metadata": metadata,
+        "results": multi_doc_results,
+        "statistics": {"multi_supporting_doc": stats_multi},
+    }
+    output_all = {
+        "metadata": metadata,
+        "results": all_results,
+        "statistics": {
+            "overall": stats_overall,
+            "single_supporting_doc": stats_single,
+            "multi_supporting_doc": stats_multi,
+            "unknown_doc_count": len(all_results) - len(single_doc_results) - len(multi_doc_results),
+        },
+    }
+
     # Save results to JSON
     timestamp_file = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = project_root / OUTPUT_DIR_NAME
     output_dir.mkdir(exist_ok=True)
-    output_file = output_dir / f"{OUTPUT_FILE_PREFIX}{timestamp_file}.json"
-    
+
+    output_file_single_doc = output_dir / f"{OUTPUT_FILE_PREFIX_SINGLE_DOC}_{timestamp_file}.json"
+    output_file_multi_doc  = output_dir / f"{OUTPUT_FILE_PREFIX_MULTI_DOC}_{timestamp_file}.json"
+    output_file_all_docs   = output_dir / f"{OUTPUT_FILE_PREFIX_ALL_DOCS}_{timestamp_file}.json"
+
     print("\n" + "=" * 60)
     print("Saving results...")
-    
-    save_results(output_data, output_file)
-    
+
+    save_results(output_single, output_file_single_doc)
+    save_results(output_multi,  output_file_multi_doc)
+    save_results(output_all,    output_file_all_docs)
+
     # Print statistics
-    print(f"\nResults saved to: {output_file}")
-    for stats_key in ("overall", "single_supporting_doc", "multi_supporting_doc"):
-        s = statistics.get(stats_key)
-        if s:
-            print_stats(s)
+    print(f"\nResults saved to:")
+    print(f"  {output_file_single_doc.name}  ({len(single_doc_results)} questions)")
+    print(f"  {output_file_multi_doc.name}   ({len(multi_doc_results)} questions)")
+    print(f"  {output_file_all_docs.name}    ({len(all_results)} questions)")
+    for stats in (stats_overall, stats_single, stats_multi):
+        if stats:
+            print_stats(stats)
     
     print("\n" + "=" * 60)
     print("Evaluation completed!")
