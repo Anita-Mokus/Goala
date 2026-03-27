@@ -25,7 +25,6 @@ from src.core.config import (
 
 from src.utils.evaluation.config import (
     EVAL_FILE_NAME,
-    MRR_LABELS_FILE,
     QUESTION_DOCIDS_FILE,
     OUTPUT_DIR_NAME,
     OUTPUT_FILE_PREFIX_SINGLE_DOC,
@@ -34,7 +33,6 @@ from src.utils.evaluation.config import (
     JUDGE_LLM_TEMPERATURE,
 )
 from src.utils.evaluation.metrics import (
-    compute_reciprocal_rank_from_labels,
     compute_reciprocal_rank_from_docids,
     compute_recall_at_k,
     compute_score_stats,
@@ -47,7 +45,6 @@ from src.utils.retrieval_analysis import (
     to_numeric_doc_id,
 )
 from src.utils.evaluation.io import (
-    load_mrr_labels,
     load_eval_data,
     load_question_docids_map,
     save_results,
@@ -102,47 +99,24 @@ def _get_rag_answer_and_score(
 def _compute_retrieval_metrics(
     retrieved_docs: list,
     doc_ids: list[str],
-    csv_labels: list[int],
-) -> tuple[float | None, float | None, list[int]]:
-    """Compute reciprocal rank and Recall@K for one question.
-
-    Uses ground-truth doc_ids when available; falls back to manual CSV labels.
-
-    Returns:
-        (rr, recall, labels)  — rr and recall are None when neither source is available.
-    """
-    if doc_ids:
-        rr = compute_reciprocal_rank_from_docids(retrieved_docs, doc_ids)
-        recall = compute_recall_at_k(retrieved_docs, doc_ids)
-        labels = csv_labels
-        first_relevant = next(
-            (
-                rank
-                for rank, doc in enumerate(retrieved_docs, start=1)
-                if doc.metadata.get("doc_id", "") in set(doc_ids)
-            ),
-            None,
-        )
-        retrieved_doc_ids = [doc.metadata.get("doc_id", "") for doc in retrieved_docs]
-        print(f"  Reciprocal Rank: {rr:.4f}  (first relevant at rank {first_relevant})")
-        print(f"  GT doc_ids:      {doc_ids}")
-        print(f"  Retrieved IDs:   {retrieved_doc_ids}")
-        print(f"  Recall@K:        {recall:.4f}")
-    elif csv_labels and any(csv_labels):
-        labels = csv_labels
-        rr = compute_reciprocal_rank_from_labels(labels)
-        recall = None
-        first_relevant = next((r + 1 for r, v in enumerate(labels) if v), None)
-        print(
-            f"  Reciprocal Rank: {rr:.4f}  "
-            f"(CSV labels — first relevant at rank {first_relevant})"
-        )
-    else:
-        labels = csv_labels
-        rr = None
-        recall = None
-
-    return rr, recall, labels
+) -> tuple[float, float]:
+    """Compute reciprocal rank and Recall@K for one question using ground-truth doc_ids."""
+    rr = compute_reciprocal_rank_from_docids(retrieved_docs, doc_ids)
+    recall = compute_recall_at_k(retrieved_docs, doc_ids)
+    first_relevant = next(
+        (
+            rank
+            for rank, doc in enumerate(retrieved_docs, start=1)
+            if doc.metadata.get("doc_id", "") in set(doc_ids)
+        ),
+        None,
+    )
+    retrieved_doc_ids = [doc.metadata.get("doc_id", "") for doc in retrieved_docs]
+    print(f"  Reciprocal Rank: {rr:.4f}  (first relevant at rank {first_relevant})")
+    print(f"  GT doc_ids:      {doc_ids}")
+    print(f"  Retrieved IDs:   {retrieved_doc_ids}")
+    print(f"  Recall@K:        {recall:.4f}")
+    return rr, recall
 
 
 def _evaluate_question(
@@ -151,7 +125,6 @@ def _evaluate_question(
     rag_service: RAGService,
     judge_llm,
     question_docids_map: dict,
-    mrr_labels: dict,
     doc_id_numbering: dict,
     total: int,
     position: int,
@@ -164,7 +137,6 @@ def _evaluate_question(
     question = item.get("input", "")
     expected_output = item.get("expected_output", "")
     doc_ids = question_docids_map.get(question, [])
-    csv_labels = mrr_labels.get(question_idx, [])
 
     if not doc_ids:
         print(f"  WARNING: No supporting doc_ids found for question: {question[:60]}...")
@@ -176,7 +148,7 @@ def _evaluate_question(
         question, expected_output, rag_service, judge_llm
     )
 
-    rr, recall, labels = _compute_retrieval_metrics(retrieved_docs, doc_ids, csv_labels)
+    rr, recall = _compute_retrieval_metrics(retrieved_docs, doc_ids)
 
     retrieved_context_fields = build_retrieved_context_ids(
         retrieved_docs, RETRIEVER_K, doc_id_numbering
@@ -195,7 +167,6 @@ def _evaluate_question(
         "explanation": explanation,
         "reciprocal_rank": rr,
         "recall_at_k": recall,
-        "mrr_labels": labels,
         "supporting_doc_count": len(doc_ids),
         "retrieved_doc_ids": [doc.metadata.get("doc_id", "") for doc in retrieved_docs],
         **retrieved_context_fields,
@@ -230,18 +201,6 @@ def evaluate_rag():
     else:
         print(f"  INFO: {QUESTION_DOCIDS_FILE} not found — single/multi-doc split will be skipped.")    
     doc_id_numbering = build_doc_id_numbering(question_docids_map)
-    
-    labels_file = project_root / 'shared' / MRR_LABELS_FILE
-    mrr_labels: dict[int, list[int]] = {}
-    if labels_file.exists():
-        mrr_labels = load_mrr_labels(labels_file)
-        labelled = sum(1 for v in mrr_labels.values() if any(v))
-        print(f"  Loaded MRR labels: {len(mrr_labels)} questions "
-              f"({labelled} with at least one relevant context marked)")
-    else:
-        print(f"  INFO: {MRR_LABELS_FILE} not found — MRR will be skipped.")
-        print(f"        Run 'python -m src.utils.generate_mrr_template' to create it,")
-        print(f"        then fill in the relevance labels and re-run evaluation.")
     
     # Initialize RAG service
     print("Initializing RAG service...")
@@ -292,8 +251,7 @@ def evaluate_rag():
         print(f"\nEvaluating dataset: {dataset_name}")
         print(f"Total questions: {len(questions)}\n")
 
-        # Partition questions into single-doc and multi-doc, preserving original 0-based index
-        # so MRR CSV label look-up stays aligned with generate_mrr_template output.
+        # Partition questions into single-doc and multi-doc, preserving original 0-based index.
         single_doc_items: list[tuple[int, dict]] = []
         multi_doc_items: list[tuple[int, dict]] = []
         for orig_idx, item in enumerate(questions):
@@ -311,7 +269,7 @@ def evaluate_rag():
         for position, (question_idx, item) in enumerate(single_doc_items, 1):
             result = _evaluate_question(
                 question_idx, item, rag_service, judge_llm,
-                question_docids_map, mrr_labels, doc_id_numbering,
+                question_docids_map, doc_id_numbering,
                 total=len(single_doc_items), position=position,
             )
             if result is not None:
@@ -322,7 +280,7 @@ def evaluate_rag():
         for position, (question_idx, item) in enumerate(multi_doc_items, 1):
             result = _evaluate_question(
                 question_idx, item, rag_service, judge_llm,
-                question_docids_map, mrr_labels, doc_id_numbering,
+                question_docids_map, doc_id_numbering,
                 total=len(multi_doc_items), position=position,
             )
             if result is not None:

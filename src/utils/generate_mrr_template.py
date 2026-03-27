@@ -6,25 +6,14 @@ produces three output files in ``shared/``:
 
   liverag_mrr_contexts.txt  — human-readable review: each question followed
                                by its retrieved contexts numbered by rank.
-                               Use this file to decide which context(s) give
-                               the correct answer.
 
-  liverag_mrr_labels.csv    — blank template to fill in.
-                               Format: question_index,c1,c2,...,cK
-                               Set the column to 1 for the rank position that
-                               contains the answer-giving context, 0 otherwise.
-                               Example for 5 retrieved docs where rank-2 is correct:
-                                 3,0,1,0,0,0
+  liverag_retrieval_analysis_single_doc.csv — retrieval analysis for single-doc questions.
+                               Format: question_id,context_id,retrieved_context_id_1,...,K
 
-  liverag_retrieval_analysis.csv — retrieval analysis for debugging.
-                               Format: question_id,context_id,retrieved_context_id_1,...,retrieved_context_id_K
-                               Uses numeric context IDs for readability.
-                               Shows ground truth context_id alongside retrieved IDs.
-                               The closer context_id is to retrieved_context_id_1, the better.
+  liverag_retrieval_analysis_multi_doc.csv  — retrieval analysis for multi-doc questions.
+                               Format: question_id,context_ids (pipe-separated),retrieved_context_id_1,...,K
 
-  liverag_context_id_map.csv  — lookup table for numeric IDs.
-                               Format: context_id,raw_doc_id
-                               Use this to map numeric IDs back to original doc_id values.
+  liverag_context_id_map.csv  — lookup table: context_id → raw_doc_id.
 
 Run with:
     python -m src.utils.generate_mrr_template
@@ -46,10 +35,8 @@ from src.utils.retrieval_analysis import (
     to_numeric_doc_id,
 )
 
-# ── configurable ────────────────────────────────────────────────────────────
 EVAL_FILE_NAME   = "liverag_eval.json"
 CONTEXTS_FILE    = "liverag_mrr_contexts.txt"
-LABELS_CSV_FILE  = "liverag_mrr_labels.csv"
 QUESTION_DOCIDS_FILE = "liverag_question_docids.json"
 # Single-doc: question_id, context_id, retrieved_context_id_1..K
 RETRIEVAL_ANALYSIS_SINGLE_DOC_FILE = "liverag_retrieval_analysis_single_doc.csv"
@@ -57,7 +44,6 @@ RETRIEVAL_ANALYSIS_SINGLE_DOC_FILE = "liverag_retrieval_analysis_single_doc.csv"
 RETRIEVAL_ANALYSIS_MULTI_DOC_FILE  = "liverag_retrieval_analysis_multi_doc.csv"
 CONTEXT_ID_MAP_FILE = "liverag_context_id_map.csv"  # context_id, raw_doc_id
 SEPARATOR        = "=" * 72
-# ────────────────────────────────────────────────────────────────────────────
 
 
 def main() -> None:
@@ -69,7 +55,6 @@ def main() -> None:
     with open(eval_file, "r", encoding="utf-8") as fh:
         eval_data = json.load(fh)
 
-    # Flatten all questions across datasets while keeping a global index
     all_questions: list[tuple[int, str]] = []
     for dataset in eval_data.get("datasets", []):
         for item in dataset.get("questions", []):
@@ -83,7 +68,6 @@ def main() -> None:
 
     print(f"Loaded {len(all_questions)} questions from {EVAL_FILE_NAME}")
 
-    # Load ground-truth doc_ids for auto-labeling the CSV
     docids_path = project_root / "shared" / QUESTION_DOCIDS_FILE
     question_docids_map: dict = {}
     if docids_path.exists():
@@ -97,28 +81,19 @@ def main() -> None:
     rag_service = RAGService()
     doc_id_numbering = build_doc_id_numbering(question_docids_map)
 
-    contexts_path      = project_root / "shared" / CONTEXTS_FILE
-    labels_path        = project_root / "shared" / LABELS_CSV_FILE
     analysis_single_path = project_root / "shared" / RETRIEVAL_ANALYSIS_SINGLE_DOC_FILE
     analysis_multi_path  = project_root / "shared" / RETRIEVAL_ANALYSIS_MULTI_DOC_FILE
-    context_map_path   = project_root / "shared" / CONTEXT_ID_MAP_FILE
+    context_map_path     = project_root / "shared" / CONTEXT_ID_MAP_FILE
 
-    col_headers     = [f"c{r}" for r in range(1, RETRIEVER_K + 1)]
     analysis_headers = [f"retrieved_context_id_{r}" for r in range(1, RETRIEVER_K + 1)]
 
-    with open(contexts_path, "w", encoding="utf-8") as ctx_fh, \
-         open(labels_path,   "w", encoding="utf-8", newline="") as csv_fh, \
-         open(analysis_single_path, "w", encoding="utf-8", newline="") as single_fh, \
+    with open(analysis_single_path, "w", encoding="utf-8", newline="") as single_fh, \
          open(analysis_multi_path,  "w", encoding="utf-8", newline="") as multi_fh:
-
-        writer = csv.writer(csv_fh)
-        writer.writerow(["question_index"] + col_headers)
 
         single_writer = csv.writer(single_fh)
         single_writer.writerow(["question_id", "context_id"] + analysis_headers)
 
-        # Multi-doc uses "context_ids" (pipe-separated) instead of a single context_id
-        # so that all ground-truth documents are represented.
+        
         multi_writer = csv.writer(multi_fh)
         multi_writer.writerow(["question_id", "context_ids"] + analysis_headers)
 
@@ -137,14 +112,6 @@ def main() -> None:
             gt_ids_list = question_docids_map.get(question, [])
             gt_ids = set(gt_ids_list)
 
-            # ── human-readable review file ───────────────────────────────
-            ctx_fh.write(f"{SEPARATOR}\n")
-            ctx_fh.write(f"QUESTION INDEX: {idx}\n")
-            ctx_fh.write(f"QUESTION: {question}\n")
-            if gt_ids:
-                ctx_fh.write(f"GROUND TRUTH DOC_IDs: {', '.join(gt_ids)}\n")
-            ctx_fh.write(f"{SEPARATOR}\n\n")
-
             for rank, doc in enumerate(retrieved_docs, start=1):
                 doc_id  = doc.metadata.get("doc_id", "n/a")
                 snippet = doc.page_content.strip().replace("\n", " ")
@@ -152,17 +119,7 @@ def main() -> None:
                 ctx_fh.write(f"  Rank {rank}  [doc_id: {doc_id}]{match_marker}\n")
                 ctx_fh.write(f"  {snippet}\n\n")
 
-            if not retrieved_docs:
-                ctx_fh.write("  (no documents retrieved)\n\n")
 
-            # ── MRR labels CSV ────────────────────────────────────────────
-            labels = [0] * RETRIEVER_K
-            for rank_i, doc in enumerate(retrieved_docs[:RETRIEVER_K]):
-                if doc.metadata.get("doc_id", "") in gt_ids:
-                    labels[rank_i] = 1
-            writer.writerow([idx] + labels)
-
-            # ── Retrieval analysis CSVs ───────────────────────────────────
             retrieved_context_fields = build_retrieved_context_ids(
                 retrieved_docs, RETRIEVER_K, doc_id_numbering
             )
@@ -172,20 +129,17 @@ def main() -> None:
             ]
 
             if len(gt_ids_list) > 1:
-                # Multi-doc: store all GT context IDs as a pipe-separated string
                 context_ids_str = "|".join(
                     str(to_numeric_doc_id(d, doc_id_numbering)) for d in gt_ids_list
                 )
                 multi_writer.writerow([idx, context_ids_str] + retrieved_row_suffix)
                 multi_count += 1
             else:
-                # Single-doc (or unknown): store the one context_id (empty if none)
                 context_id = to_numeric_doc_id(gt_ids_list[0], doc_id_numbering) if gt_ids_list else ""
                 single_writer.writerow([idx, context_id] + retrieved_row_suffix)
                 single_count += 1
 
     print(f"\n✓ Context review saved to:       {contexts_path}")
-    print(f"✓ Auto-labeled CSV saved to:      {labels_path}")
     print(f"✓ Retrieval analysis (single-doc) saved to: {analysis_single_path}  ({single_count} questions)")
     print(f"✓ Retrieval analysis (multi-doc)  saved to: {analysis_multi_path}  ({multi_count} questions)")
     with open(context_map_path, "w", encoding="utf-8", newline="") as map_fh:

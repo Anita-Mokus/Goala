@@ -1,43 +1,10 @@
 """
 File I/O operations for RAG evaluation.
 
-Loading labels, evaluation data, and saving results.
+Loading evaluation data and saving results.
 """
-import csv
 import json
 from pathlib import Path
-
-
-
-def load_mrr_labels(labels_path: Path) -> dict[int, list[int]]:
-    """
-    Load the manually-filled MRR labels CSV.
-
-    Expected CSV format (produced by generate_mrr_template.py)::
-
-        question_index,c1,c2,c3,...,cK
-        0,1,0,0,0,0,0,0,0
-        1,0,0,1,0,0,0,0,0
-
-    Returns a dict mapping ``question_index`` (int) → list of binary ints
-    (one element per retrieved rank position, 1 = relevant).
-    """
-    labels: dict[int, list[int]] = {}
-    with open(labels_path, "r", encoding="utf-8", newline="") as fh:
-        reader = csv.DictReader(fh)
-        for row in reader:
-            try:
-                idx = int(row["question_index"])
-            except (KeyError, ValueError):
-                continue
-            # collect all cN columns in order
-            rank_cols = sorted(
-                (k for k in row if k.startswith("c")),
-                key=lambda k: int(k[1:]),
-            )
-            labels[idx] = [int(row[col] or 0) for col in rank_cols]
-    return labels
-
 
 
 def load_eval_data(eval_file: Path) -> dict:

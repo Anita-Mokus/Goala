@@ -5,23 +5,6 @@ Includes MRR, Recall@K, and score statistics.
 """
 
 
-def compute_reciprocal_rank_from_labels(labels: list[int]) -> float:
-    """
-    Compute the reciprocal rank from a binary relevance label list.
-
-    Args:
-        labels: List of 0/1 values aligned with retrieval rank order.
-                ``labels[0]`` corresponds to rank 1 (highest-ranked doc).
-
-    Returns:
-        ``1 / rank`` of the first relevant position, or ``0.0`` if none.
-    """
-    for rank, relevant in enumerate(labels, start=1):
-        if relevant:
-            return 1.0 / rank
-    return 0.0
-
-
 def compute_reciprocal_rank_from_docids(
     retrieved_docs: list, ground_truth_doc_ids: list
 ) -> float:
