@@ -51,7 +51,10 @@ EVAL_FILE_NAME   = "liverag_eval.json"
 CONTEXTS_FILE    = "liverag_mrr_contexts.txt"
 LABELS_CSV_FILE  = "liverag_mrr_labels.csv"
 QUESTION_DOCIDS_FILE = "liverag_question_docids.json"
-RETRIEVAL_ANALYSIS_FILE = "liverag_retrieval_analysis.csv"  # question_id, context_id, retrieved_context_id_1..K
+# Single-doc: question_id, context_id, retrieved_context_id_1..K
+RETRIEVAL_ANALYSIS_SINGLE_DOC_FILE = "liverag_retrieval_analysis_single_doc.csv"
+# Multi-doc:  question_id, context_ids (pipe-separated), retrieved_context_id_1..K
+RETRIEVAL_ANALYSIS_MULTI_DOC_FILE  = "liverag_retrieval_analysis_multi_doc.csv"
 CONTEXT_ID_MAP_FILE = "liverag_context_id_map.csv"  # context_id, raw_doc_id
 SEPARATOR        = "=" * 72
 # ────────────────────────────────────────────────────────────────────────────
@@ -94,25 +97,33 @@ def main() -> None:
     rag_service = RAGService()
     doc_id_numbering = build_doc_id_numbering(question_docids_map)
 
-    contexts_path = project_root / "shared" / CONTEXTS_FILE
-    labels_path   = project_root / "shared" / LABELS_CSV_FILE
-    analysis_path = project_root / "shared" / RETRIEVAL_ANALYSIS_FILE
-    context_map_path = project_root / "shared" / CONTEXT_ID_MAP_FILE
+    contexts_path      = project_root / "shared" / CONTEXTS_FILE
+    labels_path        = project_root / "shared" / LABELS_CSV_FILE
+    analysis_single_path = project_root / "shared" / RETRIEVAL_ANALYSIS_SINGLE_DOC_FILE
+    analysis_multi_path  = project_root / "shared" / RETRIEVAL_ANALYSIS_MULTI_DOC_FILE
+    context_map_path   = project_root / "shared" / CONTEXT_ID_MAP_FILE
 
-    # Column headers for the CSV: c1 … cK  (rank 1 = c1)
-    col_headers = [f"c{r}" for r in range(1, RETRIEVER_K + 1)]
-    # Column headers for retrieval analysis: retrieved_context_id_1 … retrieved_context_id_K
+    col_headers     = [f"c{r}" for r in range(1, RETRIEVER_K + 1)]
     analysis_headers = [f"retrieved_context_id_{r}" for r in range(1, RETRIEVER_K + 1)]
 
     with open(contexts_path, "w", encoding="utf-8") as ctx_fh, \
          open(labels_path,   "w", encoding="utf-8", newline="") as csv_fh, \
-         open(analysis_path, "w", encoding="utf-8", newline="") as analysis_fh:
+         open(analysis_single_path, "w", encoding="utf-8", newline="") as single_fh, \
+         open(analysis_multi_path,  "w", encoding="utf-8", newline="") as multi_fh:
 
         writer = csv.writer(csv_fh)
         writer.writerow(["question_index"] + col_headers)
-        
-        analysis_writer = csv.writer(analysis_fh)
-        analysis_writer.writerow(["question_id", "context_id"] + analysis_headers)
+
+        single_writer = csv.writer(single_fh)
+        single_writer.writerow(["question_id", "context_id"] + analysis_headers)
+
+        # Multi-doc uses "context_ids" (pipe-separated) instead of a single context_id
+        # so that all ground-truth documents are represented.
+        multi_writer = csv.writer(multi_fh)
+        multi_writer.writerow(["question_id", "context_ids"] + analysis_headers)
+
+        single_count = 0
+        multi_count  = 0
 
         for idx, question in all_questions:
             print(f"  [{idx + 1}/{len(all_questions)}] Retrieving: {question[:70]}...")
@@ -123,10 +134,10 @@ def main() -> None:
                 print(f"    ERROR: {exc}")
                 retrieved_docs = []
 
-            # ── human-readable review file ───────────────────────────────
-            gt_ids = set(question_docids_map.get(question, []))
             gt_ids_list = question_docids_map.get(question, [])
+            gt_ids = set(gt_ids_list)
 
+            # ── human-readable review file ───────────────────────────────
             ctx_fh.write(f"{SEPARATOR}\n")
             ctx_fh.write(f"QUESTION INDEX: {idx}\n")
             ctx_fh.write(f"QUESTION: {question}\n")
@@ -144,30 +155,39 @@ def main() -> None:
             if not retrieved_docs:
                 ctx_fh.write("  (no documents retrieved)\n\n")
 
-            # ── CSV row: auto-label using doc_id matching ─────────────────
-            # 1 at the rank position(s) where a GT doc was retrieved, 0 elsewhere.
-            # If liverag_question_docids.json is missing, defaults to all-zeros.
+            # ── MRR labels CSV ────────────────────────────────────────────
             labels = [0] * RETRIEVER_K
             for rank_i, doc in enumerate(retrieved_docs[:RETRIEVER_K]):
                 if doc.metadata.get("doc_id", "") in gt_ids:
                     labels[rank_i] = 1
-
             writer.writerow([idx] + labels)
 
-            # ── Retrieval analysis CSV: question_id, context_id, retrieved_context_id_1..K
-            # context_id = ground truth doc_id (first one if multiple, empty if none)
-            context_id = to_numeric_doc_id(gt_ids_list[0], doc_id_numbering) if gt_ids_list else ""
+            # ── Retrieval analysis CSVs ───────────────────────────────────
             retrieved_context_fields = build_retrieved_context_ids(
                 retrieved_docs, RETRIEVER_K, doc_id_numbering
             )
-            analysis_writer.writerow(
-                [idx, context_id]
-                + [retrieved_context_fields[f"retrieved_context_id_{r}"] for r in range(1, RETRIEVER_K + 1)]
-            )
+            retrieved_row_suffix = [
+                retrieved_context_fields[f"retrieved_context_id_{r}"]
+                for r in range(1, RETRIEVER_K + 1)
+            ]
 
-    print(f"\n✓ Context review saved to:  {contexts_path}")
-    print(f"✓ Auto-labeled CSV saved to: {labels_path}")
-    print(f"✓ Retrieval analysis saved to: {analysis_path}")
+            if len(gt_ids_list) > 1:
+                # Multi-doc: store all GT context IDs as a pipe-separated string
+                context_ids_str = "|".join(
+                    str(to_numeric_doc_id(d, doc_id_numbering)) for d in gt_ids_list
+                )
+                multi_writer.writerow([idx, context_ids_str] + retrieved_row_suffix)
+                multi_count += 1
+            else:
+                # Single-doc (or unknown): store the one context_id (empty if none)
+                context_id = to_numeric_doc_id(gt_ids_list[0], doc_id_numbering) if gt_ids_list else ""
+                single_writer.writerow([idx, context_id] + retrieved_row_suffix)
+                single_count += 1
+
+    print(f"\n✓ Context review saved to:       {contexts_path}")
+    print(f"✓ Auto-labeled CSV saved to:      {labels_path}")
+    print(f"✓ Retrieval analysis (single-doc) saved to: {analysis_single_path}  ({single_count} questions)")
+    print(f"✓ Retrieval analysis (multi-doc)  saved to: {analysis_multi_path}  ({multi_count} questions)")
     with open(context_map_path, "w", encoding="utf-8", newline="") as map_fh:
         map_writer = csv.writer(map_fh)
         map_writer.writerow(["context_id", "raw_doc_id"])

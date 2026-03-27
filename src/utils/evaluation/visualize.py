@@ -47,16 +47,31 @@ def _apply_style() -> None:
 
 
 def _compute_retrieval_metrics(df: pd.DataFrame) -> pd.DataFrame:
-    """Add 'first_hit_rank' and 'rr' columns to the retrieval analysis frame."""
+    """Add 'first_hit_rank' and 'rr' columns to the retrieval analysis frame.
+
+    Handles two CSV layouts:
+      - single-doc: 'context_id' column holds one numeric GT ID.
+      - multi-doc:  'context_ids' column holds pipe-separated numeric GT IDs.
+    """
     k_cols = [c for c in df.columns if c.startswith("retrieved_context_id_")]
     k_cols.sort(key=lambda c: int(c.split("_")[-1]))
 
+    is_multi = "context_ids" in df.columns
+
     first_hit_rank = []
     for _, row in df.iterrows():
-        gt = row["context_id"]
+        if is_multi:
+            gt_set = {
+                str(cid).strip()
+                for cid in str(row["context_ids"]).split("|")
+                if str(cid).strip()
+            }
+        else:
+            gt_set = {str(row["context_id"])}
+
         rank = 0
         for i, col in enumerate(k_cols, start=1):
-            if row[col] == gt:
+            if str(row[col]) in gt_set:
                 rank = i
                 break
         first_hit_rank.append(rank)
@@ -67,7 +82,9 @@ def _compute_retrieval_metrics(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def plot_retrieval_hit_at_k(df: pd.DataFrame, out_dir: Path, k: int = 5) -> None:
+def plot_retrieval_hit_at_k(
+    df: pd.DataFrame, out_dir: Path, k: int = 5, *, suffix: str, label: str
+) -> None:
     """Cumulative Hit@K bar chart (K = 1 … k)."""
     ks = list(range(1, k + 1))
     n = len(df)
@@ -80,7 +97,7 @@ def plot_retrieval_hit_at_k(df: pd.DataFrame, out_dir: Path, k: int = 5) -> None
     bars = ax.bar([f"Hit@{ki}" for ki in ks], hit_pct, color=sns.color_palette("muted", k))
     ax.set_ylim(0, 105)
     ax.set_ylabel("Questions (%)")
-    ax.set_title("Cumulative Hit@K — Retrieval")
+    ax.set_title(f"Cumulative Hit@K — Retrieval — {label}")
     ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=100))
     for bar, pct in zip(bars, hit_pct):
         ax.text(
@@ -92,22 +109,24 @@ def plot_retrieval_hit_at_k(df: pd.DataFrame, out_dir: Path, k: int = 5) -> None
             fontsize=10,
         )
     fig.tight_layout()
-    _save(fig, "retrieval_hit_at_k.png", out_dir)
+    _save(fig, f"retrieval_hit_at_k_{suffix}.png", out_dir)
 
 
-def plot_retrieval_rank_distribution(df: pd.DataFrame, out_dir: Path, k: int = 5) -> None:
+def plot_retrieval_rank_distribution(
+    df: pd.DataFrame, out_dir: Path, k: int = 5, *, suffix: str, label: str
+) -> None:
     """Bar chart of the rank at which the GT doc was first found."""
-    labels = [str(i) for i in range(1, k + 1)] + ["Not found"]
+    rank_labels = [str(i) for i in range(1, k + 1)] + ["Not found"]
     counts = [
         int((df["first_hit_rank"] == i).sum()) for i in range(1, k + 1)
     ] + [int((df["first_hit_rank"] == 0).sum())]
 
     palette = sns.color_palette("muted", k) + [(0.6, 0.6, 0.6)]
     fig, ax = plt.subplots(figsize=(7, 4))
-    bars = ax.bar(labels, counts, color=palette)
+    bars = ax.bar(rank_labels, counts, color=palette)
     ax.set_xlabel("Rank of first GT match")
     ax.set_ylabel("Number of questions")
-    ax.set_title("Distribution of First GT Hit Rank")
+    ax.set_title(f"Distribution of First GT Hit Rank — {label}")
     for bar, cnt in zip(bars, counts):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
@@ -118,23 +137,24 @@ def plot_retrieval_rank_distribution(df: pd.DataFrame, out_dir: Path, k: int = 5
             fontsize=10,
         )
     fig.tight_layout()
-    _save(fig, "retrieval_rank_distribution.png", out_dir)
+    _save(fig, f"retrieval_rank_distribution_{suffix}.png", out_dir)
 
 
-def plot_retrieval_rr_distribution(df: pd.DataFrame, out_dir: Path, k: int = 5) -> None:
+def plot_retrieval_rr_distribution(
+    df: pd.DataFrame, out_dir: Path, k: int = 5, *, suffix: str, label: str
+) -> None:
     """Histogram of per-question reciprocal rank values."""
     rr_buckets = {f"1/{i} ({1/i:.2f})" if i > 1 else "1.0": 1.0 / i for i in range(1, k + 1)}
     rr_buckets["0.0"] = 0.0
-    labels = list(rr_buckets.keys())
+    rr_labels = list(rr_buckets.keys())
     values = list(rr_buckets.values())
     counts = [int((df["rr"] == v).sum()) for v in values]
 
     fig, ax = plt.subplots(figsize=(8, 4))
-    palette = sns.color_palette("muted", len(labels))
-    bars = ax.bar(labels, counts, color=palette)
+    palette = sns.color_palette("muted", len(rr_labels))
+    bars = ax.bar(rr_labels, counts, color=palette)
     ax.set_xlabel("Reciprocal Rank")
     ax.set_ylabel("Number of questions")
-    ax.set_title("Per-question Reciprocal Rank Distribution")
     for bar, cnt in zip(bars, counts):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
@@ -145,26 +165,37 @@ def plot_retrieval_rr_distribution(df: pd.DataFrame, out_dir: Path, k: int = 5) 
             fontsize=10,
         )
     mrr = df["rr"].mean()
-    ax.axhline(0, color="none")
-    ax.set_title(f"Per-question Reciprocal Rank Distribution  (MRR = {mrr:.4f})")
+    ax.set_title(f"Per-question Reciprocal Rank Distribution — {label}  (MRR = {mrr:.4f})")
     fig.tight_layout()
-    _save(fig, "retrieval_rr_distribution.png", out_dir)
+    _save(fig, f"retrieval_rr_distribution_{suffix}.png", out_dir)
+
+
+_RETRIEVAL_SUBSETS: list[tuple[str, str, str]] = [
+    ("liverag_retrieval_analysis_single_doc.csv", "single_doc", "Single-Doc"),
+    ("liverag_retrieval_analysis_multi_doc.csv",  "multi_doc",  "Multi-Doc"),
+]
 
 
 def generate_retrieval_charts(out_dir: Path) -> None:
-    csv_path = _project_root() / "shared" / "liverag_retrieval_analysis.csv"
-    if not csv_path.exists():
-        print(f"  [skip] {csv_path.name} not found.")
-        return
+    any_found = False
+    for csv_name, suffix, label in _RETRIEVAL_SUBSETS:
+        csv_path = _project_root() / "shared" / csv_name
+        if not csv_path.exists():
+            print(f"  [skip] {csv_name} not found.")
+            continue
 
-    df = pd.read_csv(csv_path)
-    df = _compute_retrieval_metrics(df)
-    k = len([c for c in df.columns if c.startswith("retrieved_context_id_")])
+        any_found = True
+        df = pd.read_csv(csv_path)
+        df = _compute_retrieval_metrics(df)
+        k = len([c for c in df.columns if c.startswith("retrieved_context_id_")])
 
-    print(f"  Loaded {len(df)} rows from {csv_path.name}  (K={k})")
-    plot_retrieval_hit_at_k(df, out_dir, k)
-    plot_retrieval_rank_distribution(df, out_dir, k)
-    plot_retrieval_rr_distribution(df, out_dir, k)
+        print(f"  Loaded {len(df)} rows from {csv_name}  (K={k})")
+        plot_retrieval_hit_at_k(df, out_dir, k, suffix=suffix, label=label)
+        plot_retrieval_rank_distribution(df, out_dir, k, suffix=suffix, label=label)
+        plot_retrieval_rr_distribution(df, out_dir, k, suffix=suffix, label=label)
+
+    if not any_found:
+        print("  [skip] No retrieval analysis CSVs found in shared/.")
 
 
 
