@@ -233,9 +233,9 @@ def plot_judge_score_distribution(
 
     counts = {s: scores.count(s) for s in range(1, 6)}
     total = len(scores)
-    palette = sns.color_palette("RdYlGn", 5)
+    palette = ["#3A0CA3"] * 5
 
-    fig, ax = plt.subplots(figsize=(7, 4))
+    fig, ax = plt.subplots(figsize=(10, 6))
     bars = ax.bar(
         [str(k) for k in counts],
         list(counts.values()),
@@ -249,11 +249,12 @@ def plot_judge_score_distribution(
         pct = 100.0 * cnt / total
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + total * 0.005,
+            bar.get_height() + total * 0.001,
             f"{cnt}\n({pct:.1f}%)",
             ha="center",
             va="bottom",
-            fontsize=9,
+            fontsize=8,
+            fontweight="bold",
         )
     fig.tight_layout()
     _save(fig, f"judge_score_distribution_{suffix}.png", out_dir)

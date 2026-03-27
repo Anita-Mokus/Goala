@@ -116,9 +116,6 @@ def main() -> None:
                 doc_id  = doc.metadata.get("doc_id", "n/a")
                 snippet = doc.page_content.strip().replace("\n", " ")
                 match_marker = " ← GT MATCH" if doc_id in gt_ids else ""
-                ctx_fh.write(f"  Rank {rank}  [doc_id: {doc_id}]{match_marker}\n")
-                ctx_fh.write(f"  {snippet}\n\n")
-
 
             retrieved_context_fields = build_retrieved_context_ids(
                 retrieved_docs, RETRIEVER_K, doc_id_numbering
@@ -139,7 +136,6 @@ def main() -> None:
                 single_writer.writerow([idx, context_id] + retrieved_row_suffix)
                 single_count += 1
 
-    print(f"\n✓ Context review saved to:       {contexts_path}")
     print(f"✓ Retrieval analysis (single-doc) saved to: {analysis_single_path}  ({single_count} questions)")
     print(f"✓ Retrieval analysis (multi-doc)  saved to: {analysis_multi_path}  ({multi_count} questions)")
     with open(context_map_path, "w", encoding="utf-8", newline="") as map_fh:
