@@ -95,7 +95,7 @@ def main() -> None:
 
         
         multi_writer = csv.writer(multi_fh)
-        multi_writer.writerow(["question_id", "context_ids"] + analysis_headers)
+        multi_writer.writerow(["question_id", "context_id_1", "context_id_2"] + analysis_headers)
 
         single_count = 0
         multi_count  = 0
@@ -114,8 +114,6 @@ def main() -> None:
 
             for rank, doc in enumerate(retrieved_docs, start=1):
                 doc_id  = doc.metadata.get("doc_id", "n/a")
-                snippet = doc.page_content.strip().replace("\n", " ")
-                match_marker = " ← GT MATCH" if doc_id in gt_ids else ""
 
             retrieved_context_fields = build_retrieved_context_ids(
                 retrieved_docs, RETRIEVER_K, doc_id_numbering
@@ -126,10 +124,9 @@ def main() -> None:
             ]
 
             if len(gt_ids_list) > 1:
-                context_ids_str = "|".join(
-                    str(to_numeric_doc_id(d, doc_id_numbering)) for d in gt_ids_list
-                )
-                multi_writer.writerow([idx, context_ids_str] + retrieved_row_suffix)
+                context_id_1 = to_numeric_doc_id(gt_ids_list[0], doc_id_numbering)
+                context_id_2 = to_numeric_doc_id(gt_ids_list[1], doc_id_numbering)
+                multi_writer.writerow([idx, context_id_1, context_id_2] + retrieved_row_suffix)
                 multi_count += 1
             else:
                 context_id = to_numeric_doc_id(gt_ids_list[0], doc_id_numbering) if gt_ids_list else ""
