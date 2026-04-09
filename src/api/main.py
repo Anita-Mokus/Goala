@@ -1,10 +1,12 @@
 """
-FastAPI application for AI Chat Flow.
-Main API endpoints for the hotel chatbot.
+FastAPI application for the Goala LiveRAG question-answering service.
 """
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from sqlalchemy import create_engine, text
 
 from src.core.config import (
     API_TITLE,
@@ -17,11 +19,12 @@ from src.core.config import (
     DATABASE_URL,
 )
 
-# Global service instance (lazy initialization to prevent startup crashes)
+
 _rag_service = None
 
+
 def get_rag_service():
-    """Get or create RAG service instance with error handling."""
+    """Return the cached RAG service, initializing it on first call."""
     global _rag_service
     if _rag_service is None:
         try:
@@ -30,19 +33,32 @@ def get_rag_service():
         except Exception as e:
             raise HTTPException(
                 status_code=503,
-                detail=f"Service unavailable: {str(e)}. Vector database may not be initialized."
+                detail=f"Service unavailable: {str(e)}. "
+                       "Make sure the vector database is initialized via the ingest CLI.",
             )
     return _rag_service
 
 
-# Initialize FastAPI app
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting up Goala API...")
+    try:
+        get_rag_service()
+        print("RAG service initialized successfully.")
+    except HTTPException as e:
+        print(f"Warning: RAG service not ready at startup — {e.detail}")
+        print("The /chat endpoint will return 503 until the database is populated.")
+    yield
+    print("Shutting down Goala API.")
+
+
 app = FastAPI(
     title=API_TITLE,
     description=API_DESCRIPTION,
     version=API_VERSION,
+    lifespan=lifespan,
 )
 
-# Enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
@@ -52,99 +68,72 @@ app.add_middleware(
 )
 
 
-# Startup event: Initialize vector database on first run
-@app.on_event("startup")
-def startup_event():
-    """Run ingestion on startup if vector database doesn't have documents."""
-    try:
-        from src.services.ingest_service import IngestService
-        ingest_service = IngestService()
-        
-        # Check if collection already has documents
-        has_documents = ingest_service.check_collection_exists()
-        
-        if not has_documents:
-            print("\n" + "="*50)
-            print("Vector database empty. Starting document ingestion...")
-            print("="*50 + "\n")
-            
-            ingest_service.ingest_all_documents()
-            
-            print("\n" + "="*50)
-            print("Document ingestion completed successfully!")
-            print("="*50 + "\n")
-        else:
-            print("Vector database found with documents. Skipping ingestion.")
-    except Exception as e:
-        print(f"Warning: Failed to initialize vector database: {e}")
-        print("The service will start, but /chat endpoint may not work until database is initialized.")
 
-
-# Request/Response models
 class ChatRequest(BaseModel):
-    """Request model for chat endpoint."""
     message: str
 
 
 class ChatResponse(BaseModel):
-    """Response model for chat endpoint."""
     response: str
 
 
-# API Endpoints
 @app.get("/")
 def read_root():
-    """Root endpoint - API status check."""
+    """Root endpoint — API status check."""
     return {
         "status": "running",
         "title": API_TITLE,
-        "version": API_VERSION
+        "version": API_VERSION,
     }
 
 
 @app.get("/health")
 def health_check():
-    """Health check endpoint with service validation."""
+    """Health check: verifies DB connectivity and RAG service readiness."""
+    db_status = "disconnected"
+    service_status = "unavailable"
+
     try:
-        from sqlalchemy import create_engine, text
-        
-        # Test database connection
-        engine = create_engine(DATABASE_URL)
+        engine = create_engine(DATABASE_URL, pool_pre_ping=True)
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         engine.dispose()
-        
-        # Try to initialize service
-        service = get_rag_service()
-        
-        return {
-            "status": "healthy",
-            "database": "connected",
-            "service": "initialized"
-        }
+        db_status = "connected"
     except Exception as e:
         return {
             "status": "unhealthy",
+            "database": db_status,
+            "service": service_status,
             "error": str(e),
-            "database": "not connected"
         }
+
+    try:
+        get_rag_service()
+        service_status = "initialized"
+    except HTTPException as e:
+        return {
+            "status": "degraded",
+            "database": db_status,
+            "service": service_status,
+            "error": e.detail,
+        }
+
+    return {
+        "status": "healthy",
+        "database": db_status,
+        "service": service_status,
+    }
 
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
-    """
-    Main chat endpoint - send a message, get an AI response.
-    
-    Args:
-        request: ChatRequest containing the user's message
-        
-    Returns:
-        ChatResponse with the AI-generated response
-    """
+    """Answer a question using the RAG pipeline."""
     try:
         rag_service = get_rag_service()
         result = rag_service.query(request.message)
         return ChatResponse(response=result)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

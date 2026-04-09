@@ -15,7 +15,6 @@ import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -50,21 +49,26 @@ def _compute_retrieval_metrics(df: pd.DataFrame) -> pd.DataFrame:
     """Add 'first_hit_rank' and 'rr' columns to the retrieval analysis frame.
 
     Handles two CSV layouts:
-      - single-doc: 'context_id' column holds one numeric GT ID.
-      - multi-doc:  'context_ids' column holds pipe-separated numeric GT IDs.
+      - single-doc: single 'context_id' column holds the numeric GT ID.
+      - multi-doc:  'context_id_1', 'context_id_2', … columns each hold one GT ID.
     """
     k_cols = [c for c in df.columns if c.startswith("retrieved_context_id_")]
     k_cols.sort(key=lambda c: int(c.split("_")[-1]))
 
-    is_multi = "context_ids" in df.columns
+    # Detect all context_id_N columns for multi-doc, sorted by suffix number.
+    gt_cols = sorted(
+        [c for c in df.columns if c.startswith("context_id_")],
+        key=lambda c: int(c.split("_")[-1]),
+    )
+    is_multi = len(gt_cols) > 0
 
     first_hit_rank = []
     for _, row in df.iterrows():
         if is_multi:
             gt_set = {
-                str(cid).strip()
-                for cid in str(row["context_ids"]).split("|")
-                if str(cid).strip()
+                str(row[c]).strip()
+                for c in gt_cols
+                if str(row[c]).strip() and str(row[c]).strip() != "nan"
             }
         else:
             gt_set = {str(row["context_id"])}
@@ -80,36 +84,6 @@ def _compute_retrieval_metrics(df: pd.DataFrame) -> pd.DataFrame:
     df["first_hit_rank"] = first_hit_rank
     df["rr"] = df["first_hit_rank"].apply(lambda r: 1.0 / r if r > 0 else 0.0)
     return df
-
-
-def plot_retrieval_hit_at_k(
-    df: pd.DataFrame, out_dir: Path, k: int = 5, *, suffix: str, label: str
-) -> None:
-    """Cumulative Hit@K bar chart (K = 1 … k)."""
-    ks = list(range(1, k + 1))
-    n = len(df)
-    hit_pct = [
-        100.0 * ((df["first_hit_rank"] > 0) & (df["first_hit_rank"] <= ki)).sum() / n
-        for ki in ks
-    ]
-
-    fig, ax = plt.subplots(figsize=(7, 4))
-    bars = ax.bar([f"Hit@{ki}" for ki in ks], hit_pct, color=sns.color_palette("muted", k))
-    ax.set_ylim(0, 105)
-    ax.set_ylabel("Questions (%)")
-    ax.set_title(f"Cumulative Hit@K — Retrieval — {label}")
-    ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=100))
-    for bar, pct in zip(bars, hit_pct):
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + 1,
-            f"{pct:.1f}%",
-            ha="center",
-            va="bottom",
-            fontsize=10,
-        )
-    fig.tight_layout()
-    _save(fig, f"retrieval_hit_at_k_{suffix}.png", out_dir)
 
 
 def plot_retrieval_rank_distribution(
@@ -190,7 +164,6 @@ def generate_retrieval_charts(out_dir: Path) -> None:
         k = len([c for c in df.columns if c.startswith("retrieved_context_id_")])
 
         print(f"  Loaded {len(df)} rows from {csv_name}  (K={k})")
-        plot_retrieval_hit_at_k(df, out_dir, k, suffix=suffix, label=label)
         plot_retrieval_rank_distribution(df, out_dir, k, suffix=suffix, label=label)
         plot_retrieval_rr_distribution(df, out_dir, k, suffix=suffix, label=label)
 
@@ -258,6 +231,55 @@ def plot_judge_score_distribution(
         )
     fig.tight_layout()
     _save(fig, f"judge_score_distribution_{suffix}.png", out_dir)
+
+
+def plot_judge_score_boxplot(out_dir: Path) -> None:
+    """Side-by-side boxplot of judge scores for single-doc, multi-doc, and all questions."""
+    subset_records: list[tuple[str, list[int]]] = []
+    for subset_key, subset_label in _SUBSETS[:2]:
+        data = _load_eval_jsons(subset_key)
+        scores = [
+            r["score"]
+            for run in data
+            for r in run.get("results", [])
+            if isinstance(r.get("score"), int)
+        ]
+        if scores:
+            subset_records.append((subset_label, scores))
+
+    if not subset_records:
+        print("  [skip] No valid judge scores found for boxplot.")
+        return
+
+    labels = [rec[0] for rec in subset_records]
+    score_lists = [rec[1] for rec in subset_records]
+    colors = sns.color_palette("muted", len(labels))
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    bp = ax.boxplot(
+        score_lists,
+        labels=labels,
+        patch_artist=True,
+        medianprops={"color": "black", "linewidth": 2},
+        whiskerprops={"linewidth": 1.5},
+        capprops={"linewidth": 1.5},
+        flierprops={"marker": "o", "markersize": 4, "alpha": 0.5},
+    )
+    for patch, color in zip(bp["boxes"], colors):
+        patch.set_facecolor(color)
+        patch.set_alpha(0.75)
+
+    for i, scores in enumerate(score_lists, start=1):
+        mean_val = sum(scores) / len(scores)
+        ax.plot(i, mean_val, marker="D", color="crimson", markersize=7, zorder=5, label="Mean" if i == 1 else "")
+
+    ax.set_ylabel("Judge Score (1–5)")
+    ax.set_title("Judge Score Distribution by Question Group")
+    ax.set_ylim(0.5, 5.5)
+    ax.set_yticks(range(1, 6))
+    ax.legend(loc="lower right")
+    fig.tight_layout()
+    _save(fig, "judge_score_boxplot.png", out_dir)
 
 
 def plot_metrics_by_group(all_data: list[dict], out_dir: Path) -> None:
@@ -411,6 +433,8 @@ def generate_eval_charts(out_dir: Path) -> None:
         print(f"  -- {subset_label} ({subset_key}) --")
         plot_judge_score_distribution(data, out_dir, suffix=subset_key, label=subset_label)
         plot_score_vs_rr(data, out_dir, suffix=subset_key, label=subset_label)
+
+    plot_judge_score_boxplot(out_dir)
 
     all_docs_data = _load_eval_jsons("all_docs")
     if all_docs_data:

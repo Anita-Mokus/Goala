@@ -110,10 +110,6 @@ def main() -> None:
                 retrieved_docs = []
 
             gt_ids_list = question_docids_map.get(question, [])
-            gt_ids = set(gt_ids_list)
-
-            for rank, doc in enumerate(retrieved_docs, start=1):
-                doc_id  = doc.metadata.get("doc_id", "n/a")
 
             retrieved_context_fields = build_retrieved_context_ids(
                 retrieved_docs, RETRIEVER_K, doc_id_numbering
