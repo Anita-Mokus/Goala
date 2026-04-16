@@ -260,7 +260,7 @@ def plot_judge_score_boxplot(out_dir: Path) -> None:
         score_lists,
         labels=labels,
         patch_artist=True,
-        medianprops={"color": "black", "linewidth": 2},
+        medianprops={"color": "red", "linewidth": 2.5},
         whiskerprops={"linewidth": 1.5},
         capprops={"linewidth": 1.5},
         flierprops={"marker": "o", "markersize": 4, "alpha": 0.5},
@@ -286,8 +286,8 @@ def plot_metrics_by_group(all_data: list[dict], out_dir: Path) -> None:
     """Grouped bar chart comparing overall / single / multi across key metrics."""
     group_keys = ["overall", "single_supporting_doc", "multi_supporting_doc"]
     group_labels = ["Overall", "Single GT doc", "Multi GT docs"]
-    metric_keys = ["average_score", "mrr.mean_reciprocal_rank", "recall_at_k.mean_recall"]
-    metric_labels = ["Avg Score / 5", "MRR", "Recall@K"]
+    metric_keys = ["mrr.mean_reciprocal_rank", "recall_at_k.mean_recall"]
+    metric_labels = ["MRR", "Recall@K"]
 
     merged: dict[str, dict] = {g: {} for g in group_keys}
     run_count = 0
@@ -313,10 +313,6 @@ def plot_metrics_by_group(all_data: list[dict], out_dir: Path) -> None:
             for mk in merged[g]:
                 merged[g][mk] /= run_count
 
-    for g in merged:
-        if "average_score" in merged[g]:
-            merged[g]["average_score"] /= 5.0
-
     x = np.arange(len(metric_labels))
     width = 0.25
     colors = sns.color_palette("muted", len(group_keys))
@@ -338,7 +334,7 @@ def plot_metrics_by_group(all_data: list[dict], out_dir: Path) -> None:
                 )
 
     ax.set_xticks(x + width)
-    ax.set_xticklabels(["Avg Score\n(normalised)", "MRR", "Recall@K"])
+    ax.set_xticklabels(["MRR", "Recall@K"])
     ax.set_ylim(0, 1.1)
     ax.set_ylabel("Score (0–1)")
     ax.set_title("Key Metrics by Question Group")
@@ -381,7 +377,7 @@ def plot_score_vs_rr(
     ax.plot(rr_vals, mean_scores, "o-", color="crimson", lw=2, ms=7, label="Mean score per RR")
 
     ax.set_xlabel("Reciprocal Rank")
-    ax.set_ylabel("Judge Score (jittered)")
+    ax.set_ylabel("Judge Score")
     ax.set_yticks(range(1, 6))
     ax.set_title(f"Judge Score vs Retrieval Reciprocal Rank — {label}")
     ax.legend()
