@@ -96,13 +96,16 @@ def create_stealth_driver(profile_path: str, chrome_driver_path: Optional[str] =
     # Log configuration
     logger.info(f"Chrome profile path: {profile_path}")
     logger.info(f"DISPLAY: {os.getenv('DISPLAY')}")
+
+    if not chrome_driver_path and os.path.exists("/usr/bin/chromedriver"):
+        chrome_driver_path = "/usr/bin/chromedriver"
+        logger.info(f"Using ChromeDriver: {chrome_driver_path}")
     
     # Create service with verbose logging
     try:
         if chrome_driver_path:
             service = Service(chrome_driver_path, log_output="/tmp/chromedriver.log")
             service.service_args = ['--verbose']
-            logger.info(f"Using ChromeDriver: {chrome_driver_path}")
             driver = webdriver.Chrome(service=service, options=options)
         else:
             service = Service(log_output="/tmp/chromedriver.log")
