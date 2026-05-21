@@ -5,6 +5,7 @@ Yields (url, html) pairs for each page within the allowed scope.
 import time
 from collections import deque
 from urllib.parse import urljoin, urlparse
+from bs4 import BeautifulSoup
 
 import requests
 
@@ -32,7 +33,6 @@ def _is_allowed(url: str) -> bool:
 
 
 def _extract_links(html: str, base_url: str) -> list[str]:
-    from bs4 import BeautifulSoup
     soup = BeautifulSoup(html, "lxml")
     links = []
     for tag in soup.find_all("a", href=True):
