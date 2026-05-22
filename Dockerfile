@@ -5,7 +5,7 @@ FROM python:3.11-slim AS base
 
 WORKDIR /app
 
-# Install system dependencies for PDF processing + Chrome + X11/VNC
+# Install system dependencies for PDF processing + Chromium + X11/VNC
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
@@ -15,33 +15,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr-hun \
     libgl1 \
     libglib2.0-0 \
-    # Chrome dependencies
     wget \
-    gnupg \
     unzip \
     ca-certificates \
-    fonts-liberation \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libatspi2.0-0 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libgbm1 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libwayland-client0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxkbcommon0 \
-    libxrandr2 \
-    xdg-utils \
-    libu2f-udev \
-    libvulkan1 \
-    # X11 and VNC for visible Chrome
+    chromium \
+    chromium-driver \
+    # X11 and VNC for visible Chromium
     xvfb \
     x11vnc \
     x11-utils \
@@ -61,7 +40,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install only runtime system dependencies + Chrome + X11/VNC
+# Install only runtime system dependencies + Chromium + X11/VNC
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     libmagic1 \
@@ -70,32 +49,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr-hun \
     libgl1 \
     libglib2.0-0 \
-    # Chrome runtime dependencies
     wget \
-    gnupg \
     ca-certificates \
-    fonts-liberation \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libatspi2.0-0 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libgbm1 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libwayland-client0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxkbcommon0 \
-    libxrandr2 \
-    xdg-utils \
-    libu2f-udev \
-    libvulkan1 \
-    # X11 and VNC for visible Chrome
+    chromium \
+    chromium-driver \
+    # X11 and VNC for visible Chromium
     xvfb \
     x11vnc \
     x11-utils \
@@ -120,6 +78,9 @@ RUN wget -q -O /tmp/google-chrome-key.pub https://dl-ssl.google.com/linux/linux_
 # Copy Python packages from base stage
 COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=base /usr/local/bin /usr/local/bin
+
+# Keep existing Chrome paths working with Chromium
+RUN ln -sf /usr/bin/chromium /usr/bin/google-chrome
 
 # Copy application code
 COPY src/ ./src/
