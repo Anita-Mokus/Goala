@@ -1,5 +1,5 @@
 """
-BFS web crawler for ms.sapientia.ro — Felvételi section.
+BFS web crawler for ms.sapientia.ro.
 Yields (url, html) pairs for each page within the allowed scope.
 """
 import time
@@ -11,9 +11,14 @@ import requests
 
 START_URL = "https://ms.sapientia.ro/hu/felveteli"
 ALLOWED_DOMAIN = "ms.sapientia.ro"
-ALLOWED_PATH_PREFIXES = ("/hu/felveteli", "/hu/tartalom")
+ALLOWED_PATH_PREFIXES: tuple[str, ...] = (
+    "/hu/felveteli",
+    "/hu/tartalom",
+    "/hu/hallgatoknak/bentlakas_",
+)
 BINARY_EXTENSIONS = (".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".zip", ".png", ".jpg", ".jpeg")
 ASSET_PATH_MARKERS = ("/content/docs/", "/data/dokumentumok/", "/data/")
+BLOCKED_PATH_TOKENS = ("galeria", "munkatarsak", "tanszeke")
 
 DEFAULT_HEADERS = {
     "User-Agent": (
@@ -32,8 +37,13 @@ def _is_allowed(url: str) -> bool:
     parsed = urlparse(url)
     if parsed.netloc != ALLOWED_DOMAIN:
         return False
-    if any(parsed.path.lower().endswith(ext) for ext in BINARY_EXTENSIONS):
+    path_lower = parsed.path.lower()
+    if any(token in path_lower for token in BLOCKED_PATH_TOKENS):
         return False
+    if any(path_lower.endswith(ext) for ext in BINARY_EXTENSIONS):
+        return False
+    if not ALLOWED_PATH_PREFIXES:
+        return True
     return any(parsed.path.startswith(prefix) for prefix in ALLOWED_PATH_PREFIXES)
 
 
