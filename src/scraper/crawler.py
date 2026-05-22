@@ -12,7 +12,7 @@ import requests
 START_URL = "https://ms.sapientia.ro/hu/felveteli"
 ALLOWED_DOMAIN = "ms.sapientia.ro"
 ALLOWED_PATH_PREFIXES = ("/hu/felveteli", "/hu/tartalom")
-BINARY_EXTENSIONS = (".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".zip", ".png", ".jpg", ".jpeg")
+BINARY_EXTENSIONS = (".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".zip", ".png", ".jpg", ".jpeg")
 
 DEFAULT_HEADERS = {
     "User-Agent": (
@@ -21,6 +21,10 @@ DEFAULT_HEADERS = {
 }
 REQUEST_DELAY = 0.6
 REQUEST_TIMEOUT = 15
+
+
+def _is_pdf(url: str) -> bool:
+    return urlparse(url).path.lower().endswith(".pdf")
 
 
 def _is_allowed(url: str) -> bool:
@@ -38,17 +42,17 @@ def _extract_links(html: str, base_url: str) -> list[str]:
     for tag in soup.find_all("a", href=True):
         href = tag["href"].strip()
         absolute = urljoin(base_url, href)
-        # Strip fragment
         absolute = absolute.split("#")[0]
         if absolute:
             links.append(absolute)
     return links
 
 
-def crawl(max_pages: int = 100) -> list[tuple[str, str]]:
+def crawl() -> tuple[list[tuple[str, str]], list[str], requests.Session]:
     """
     BFS crawl starting from START_URL.
-    Returns a list of (url, html) tuples for all pages within scope.
+    Returns (html_pages, pdf_urls, session) — the session is passed to the
+    PDF downloader so it reuses the same cookies established during crawling.
     """
     session = requests.Session()
     session.headers.update(DEFAULT_HEADERS)
@@ -56,8 +60,9 @@ def crawl(max_pages: int = 100) -> list[tuple[str, str]]:
     visited: set[str] = set()
     queue: deque[str] = deque([START_URL])
     results: list[tuple[str, str]] = []
+    pdf_urls: set[str] = set()
 
-    while queue and len(results) < max_pages:
+    while queue:
         url = queue.popleft()
         if url in visited:
             continue
@@ -71,16 +76,18 @@ def crawl(max_pages: int = 100) -> list[tuple[str, str]]:
             response.raise_for_status()
             html = response.text
         except requests.RequestException as e:
-            print(f"[skip] {url} — {e}")
+            print(f"  [skip] {url} — {e}")
             continue
 
         results.append((url, html))
-        print(f"[ok] ({len(results)}/{max_pages}) {url}")
+        print(f"  [ok] ({len(results)}) {url}")
 
         for link in _extract_links(html, url):
-            if link not in visited and _is_allowed(link):
+            if _is_pdf(link):
+                pdf_urls.add(link)
+            elif link not in visited and _is_allowed(link):
                 queue.append(link)
 
         time.sleep(REQUEST_DELAY)
 
-    return results
+    return results, list(pdf_urls), session

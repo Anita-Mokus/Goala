@@ -18,10 +18,8 @@ def main():
     print("=" * 60 + "\n")
 
     output_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_OUTPUT_DIR
-    max_pages = int(sys.argv[2]) if len(sys.argv) > 2 else 100
-
     try:
-        run(output_dir=output_dir, max_pages=max_pages)
+        run(output_dir=output_dir)
         print("\n" + "=" * 60)
         print("Scraping completed. Run the ingest CLI to index the results.")
         print("=" * 60 + "\n")
