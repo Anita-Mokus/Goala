@@ -11,8 +11,84 @@ from typing import Optional
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.common.exceptions import NoSuchDriverException
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_chromedriver_path(chrome_driver_path: Optional[str]) -> Optional[str]:
+    """Resolve chromedriver path from input, env, or common locations."""
+    if chrome_driver_path:
+        return chrome_driver_path
+
+    env_path = os.getenv("CHROMEDRIVER_PATH")
+    if env_path and os.path.isfile(env_path):
+        return env_path
+
+    which_path = shutil.which("chromedriver")
+    if which_path:
+        return which_path
+
+    for candidate in ("/usr/local/bin/chromedriver", "/usr/bin/chromedriver"):
+        if os.path.isfile(candidate):
+            return candidate
+
+    return None
+
+
+def _clear_directory_contents(directory_path: str) -> None:
+    """Delete all files and folders inside directory_path without removing the directory itself."""
+    for entry in os.listdir(directory_path):
+        entry_path = os.path.join(directory_path, entry)
+        if os.path.isdir(entry_path) and not os.path.islink(entry_path):
+            shutil.rmtree(entry_path)
+        else:
+            os.remove(entry_path)
+
+
+def _resolve_chrome_binary_path() -> Optional[str]:
+    """Resolve Chrome binary path from env, OS defaults, or PATH."""
+    env_path = os.getenv("CHROME_BIN")
+    if env_path and os.path.isfile(env_path):
+        return env_path
+
+    system = platform.system()
+    candidates = []
+    if system == "Darwin":
+        candidates = [
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "/Applications/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+            "/Applications/Chromium.app/Contents/MacOS/Chromium",
+            os.path.expanduser("~/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
+            os.path.expanduser("~/Applications/Chromium.app/Contents/MacOS/Chromium"),
+        ]
+    elif system == "Windows":
+        candidates = [
+            os.path.expandvars(r"%PROGRAMFILES%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(r"%PROGRAMFILES(X86)%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(r"%PROGRAMFILES%\Google\Chrome for Testing\Application\chrome.exe"),
+            os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome for Testing\Application\chrome.exe"),
+            os.path.expandvars(r"%LOCALAPPDATA%\Chromium\Application\chrome.exe"),
+        ]
+    else:
+        candidates = [
+            "/usr/bin/google-chrome",
+            "/usr/bin/google-chrome-stable",
+            "/usr/bin/chromium",
+            "/usr/bin/chromium-browser",
+        ]
+
+    for candidate in candidates:
+        if candidate and os.path.isfile(candidate):
+            return candidate
+
+    for name in ("google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "chrome"):
+        which_path = shutil.which(name)
+        if which_path:
+            return which_path
+
+    return None
 
 
 def _build_chrome_options(profile_path: str) -> Options:
@@ -46,8 +122,9 @@ def _build_chrome_options(profile_path: str) -> Options:
         "profile.default_content_setting_values.notifications": 2
     })
 
-    if os.path.exists("/usr/bin/google-chrome"):
-        options.binary_location = "/usr/bin/google-chrome"
+    chrome_bin = _resolve_chrome_binary_path()
+    if chrome_bin:
+        options.binary_location = chrome_bin
 
     return options
 
@@ -75,8 +152,17 @@ def _reset_profile(profile_path: str) -> None:
     """Delete profile contents so Chrome starts fresh (Messenger login will be lost)."""
     logger.warning("Clearing Chrome profile at %s — login session will be lost", profile_path)
     if os.path.exists(profile_path):
-        shutil.rmtree(profile_path)
-    os.makedirs(profile_path, mode=0o777)
+        try:
+            if os.path.ismount(profile_path):
+                _clear_directory_contents(profile_path)
+            else:
+                shutil.rmtree(profile_path)
+        except OSError as exc:
+            logger.warning("Failed to delete profile directory (%s). Clearing contents instead.", exc)
+            if os.path.isdir(profile_path):
+                _clear_directory_contents(profile_path)
+
+    os.makedirs(profile_path, mode=0o777, exist_ok=True)
     open(os.path.join(profile_path, "First Run"), "w").close()
     logger.warning("Chrome profile cleared — please log in to Messenger again after the bot starts")
 
@@ -114,11 +200,15 @@ def create_stealth_driver(profile_path: str, chrome_driver_path: Optional[str] =
 
     logger.info("Initializing Chrome (profile=%s, DISPLAY=%s)", profile_path, os.getenv("DISPLAY"))
 
+    chrome_driver_path = _resolve_chromedriver_path(chrome_driver_path)
     options = _build_chrome_options(profile_path)
     try:
         driver = _launch_driver(options, chrome_driver_path)
         logger.info("Chrome WebDriver created successfully (visible mode)")
     except Exception as first_err:
+        if isinstance(first_err, NoSuchDriverException):
+            logger.error("Chrome or chromedriver not found. Check CHROME_BIN/CHROMEDRIVER_PATH.")
+            raise
         logger.warning("Chrome startup failed in visible mode: %s", first_err)
 
         # Retry 1: profile may be incompatible with an updated Chrome version
