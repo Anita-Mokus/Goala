@@ -8,7 +8,7 @@ from typing import List, Dict, Optional, Tuple
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
 
 from src.integrations.messenger.message_ownership import is_message_from_us
 from src.integrations.messenger.message_sender import extract_sender_name
@@ -51,7 +51,7 @@ def extract_latest_message(bot) -> Optional[Dict]:
                             'text': text,
                             'element': latest,
                         }
-            except NoSuchElementException:
+            except (NoSuchElementException, StaleElementReferenceException):
                 continue
     except Exception as e:
         print(f"ERROR extracting message: {e}")
@@ -91,7 +91,10 @@ def extract_unanswered_client_messages(bot, conv_id: str = "") -> Optional[Dict]
                     continue
                 print(f"  [DEBUG] Found {len(message_elements)} message elements with selector '{selector}'")
                 for elem in message_elements:
-                    text = elem.text.strip()
+                    try:
+                        text = elem.text.strip()
+                    except StaleElementReferenceException:
+                        continue
                     if not text:
                         continue
                     all_messages.append((elem, text, is_message_from_us(bot, elem)))

@@ -76,11 +76,11 @@ def crawl() -> tuple[list[tuple[str, str]], list[str], requests.Session]:
             response.raise_for_status()
             html = response.text
         except requests.RequestException as e:
-            print(f"  [skip] {url} — {e}")
+            print(f"[skip] {url} — {e}")
             continue
 
         results.append((url, html))
-        print(f"  [ok] ({len(results)}) {url}")
+        print(f"[ok] ({len(results)}) {url}")
 
         for link in _extract_links(html, url):
             if _is_pdf(link):

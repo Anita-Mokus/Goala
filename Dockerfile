@@ -81,7 +81,6 @@ COPY --from=base /usr/local/bin /usr/local/bin
 
 # Keep existing Chrome paths working with Chromium
 RUN ln -sf /usr/bin/chromium /usr/bin/google-chrome
-
 # Copy application code
 COPY src/ ./src/
 COPY data/ ./data/
