@@ -20,13 +20,17 @@ def _url_to_filename(url: str) -> str:
     return f"{FILE_PREFIX}{slug}.txt"
 
 
-def run(output_dir: Path = DEFAULT_OUTPUT_DIR) -> None:
+def run(
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+    max_pages: int | None = None,
+    max_pdfs: int | None = None,
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Output directory: {output_dir}")
 
-    html_pages, pdf_urls, session = crawl()
-    download_pdfs(pdf_urls, output_dir=output_dir, session=session)
+    html_pages, pdf_links, session = crawl(max_pages=max_pages, max_pdfs=max_pdfs)
+    download_pdfs(pdf_links, output_dir=output_dir, session=session, max_pdfs=max_pdfs)
 
 
     print(f"\nSaving {len(html_pages)} pages...")

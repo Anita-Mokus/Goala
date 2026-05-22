@@ -13,6 +13,7 @@ START_URL = "https://ms.sapientia.ro/hu/felveteli"
 ALLOWED_DOMAIN = "ms.sapientia.ro"
 ALLOWED_PATH_PREFIXES = ("/hu/felveteli", "/hu/tartalom")
 BINARY_EXTENSIONS = (".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".zip", ".png", ".jpg", ".jpeg")
+ASSET_PATH_MARKERS = ("/content/docs/", "/data/dokumentumok/", "/data/")
 
 DEFAULT_HEADERS = {
     "User-Agent": (
@@ -43,12 +44,30 @@ def _extract_links(html: str, base_url: str) -> list[str]:
         href = tag["href"].strip()
         absolute = urljoin(base_url, href)
         absolute = absolute.split("#")[0]
+        absolute = _normalize_asset_url(absolute)
         if absolute:
             links.append(absolute)
     return links
 
 
-def crawl() -> tuple[list[tuple[str, str]], list[str], requests.Session]:
+def _normalize_asset_url(url: str) -> str:
+    parsed = urlparse(url)
+    if parsed.netloc != ALLOWED_DOMAIN:
+        return url
+
+    for marker in ASSET_PATH_MARKERS:
+        index = parsed.path.find(marker)
+        if index > 0:
+            normalized = parsed._replace(path=parsed.path[index:])
+            return normalized.geturl()
+
+    return url
+
+
+def crawl(
+    max_pages: int | None = None,
+    max_pdfs: int | None = None,
+) -> tuple[list[tuple[str, str]], list[tuple[str, str]], requests.Session]:
     """
     BFS crawl starting from START_URL.
     Returns (html_pages, pdf_urls, session) — the session is passed to the
@@ -60,7 +79,7 @@ def crawl() -> tuple[list[tuple[str, str]], list[str], requests.Session]:
     visited: set[str] = set()
     queue: deque[str] = deque([START_URL])
     results: list[tuple[str, str]] = []
-    pdf_urls: set[str] = set()
+    pdf_links: dict[str, str] = {}
 
     while queue:
         url = queue.popleft()
@@ -82,12 +101,17 @@ def crawl() -> tuple[list[tuple[str, str]], list[str], requests.Session]:
         results.append((url, html))
         print(f"  [ok] ({len(results)}) {url}")
 
+        reached_page_limit = max_pages is not None and len(results) >= max_pages
         for link in _extract_links(html, url):
             if _is_pdf(link):
-                pdf_urls.add(link)
-            elif link not in visited and _is_allowed(link):
+                if max_pdfs is None or len(pdf_links) < max_pdfs:
+                    pdf_links.setdefault(link, url)
+            elif not reached_page_limit and link not in visited and _is_allowed(link):
                 queue.append(link)
 
         time.sleep(REQUEST_DELAY)
 
-    return results, list(pdf_urls), session
+        if reached_page_limit:
+            break
+
+    return results, list(pdf_links.items()), session
