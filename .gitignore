@@ -59,6 +59,12 @@ htmlcov/
 *.log
 logs/
 
+# Scraper output
+shared/sapientia/
+
+# Data output
+data/
+
 # Frontend
 frontend/node_modules/
 
