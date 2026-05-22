@@ -56,6 +56,9 @@ htmlcov/
 *.log
 logs/
 
+# Frontend
+frontend/node_modules/
+
 # OS
 Thumbs.db
 .DS_Store
