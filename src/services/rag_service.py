@@ -59,7 +59,7 @@ class RAGService:
         """
 
         self.retriever = self.db.as_retriever(
-            search_type="similarity",
+            search_type="mmr",
             search_kwargs={"k": RETRIEVER_K},
         )
         

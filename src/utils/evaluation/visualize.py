@@ -414,6 +414,70 @@ def plot_multi_run_mrr(all_data: list[dict], out_dir: Path) -> None:
     fig.tight_layout()
     _save(fig, "multi_run_mrr.png", out_dir)
 
+def judge_score_single_multi_comparison(all_data: list[dict], out_dir: Path) -> None:
+    """Grouped bar chart: for each judge score value (1–5) show count for single-doc vs multi-doc."""
+    def _collect_scores(subset_key: str) -> dict[int, int]:
+        data = _load_eval_jsons(subset_key)
+        scores = [
+            r["score"]
+            for run in data
+            for r in run.get("results", [])
+            if isinstance(r.get("score"), int)
+        ]
+        return {s: scores.count(s) for s in range(1, 6)}, len(scores)
+
+    single_counts, single_n = _collect_scores("single_doc")
+    multi_counts, multi_n = _collect_scores("multi_doc")
+
+    if single_n == 0 and multi_n == 0:
+        print("[skip] No valid judge scores found for single/multi comparison.")
+        return
+
+    score_vals = list(range(1, 6))
+    x = np.arange(len(score_vals))
+    width = 0.35
+
+    colors = sns.color_palette("muted", 2)
+    single_bars = [single_counts[s] for s in score_vals]
+    multi_bars = [multi_counts[s] for s in score_vals]
+
+    single_avg = sum(s * single_counts[s] for s in score_vals) / single_n if single_n else 0
+    multi_avg = sum(s * multi_counts[s] for s in score_vals) / multi_n if multi_n else 0
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    b1 = ax.bar(x - width / 2, single_bars, width, label=f"Single-Doc (avg={single_avg:.2f}, n={single_n})", color=colors[0])
+    b2 = ax.bar(x + width / 2, multi_bars, width, label=f"Multi-Doc  (avg={multi_avg:.2f}, n={multi_n})", color=colors[1])
+
+    max_cnt = max(max(single_bars, default=0), max(multi_bars, default=0))
+    for bar, cnt in zip(b1, single_bars):
+        if cnt:
+            pct = 100.0 * cnt / single_n if single_n else 0
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                bar.get_height() + max_cnt * 0.01,
+                f"{cnt}\n({pct:.1f}%)",
+                ha="center", va="bottom", fontsize=8, fontweight="bold",
+            )
+    for bar, cnt in zip(b2, multi_bars):
+        if cnt:
+            pct = 100.0 * cnt / multi_n if multi_n else 0
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                bar.get_height() + max_cnt * 0.01,
+                f"{cnt}\n({pct:.1f}%)",
+                ha="center", va="bottom", fontsize=8, fontweight="bold",
+            )
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([str(s) for s in score_vals])
+    ax.set_xlabel("Judge Score")
+    ax.set_ylabel("Number of questions")
+    ax.set_title("Judge Score Distribution — Single-Doc vs Multi-Doc")
+    ax.legend()
+    fig.tight_layout()
+    _save(fig, "judge_score_single_multi_comparison.png", out_dir)
+
 
 def generate_eval_charts(out_dir: Path) -> None:
     results_dir = _project_root() / "evaluation_results"
@@ -436,6 +500,7 @@ def generate_eval_charts(out_dir: Path) -> None:
     if all_docs_data:
         plot_metrics_by_group(all_docs_data, out_dir)
         plot_multi_run_mrr(all_docs_data, out_dir)
+        judge_score_single_multi_comparison(all_docs_data, out_dir)
 
 
 
