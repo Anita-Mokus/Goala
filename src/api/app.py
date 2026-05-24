@@ -2,8 +2,9 @@
 FastAPI application initialization.
 Configures app, CORS, routers, and startup event.
 """
+import asyncio
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import (
@@ -41,6 +42,75 @@ app.include_router(chat.router)
 app.include_router(settings.router)
 app.include_router(history.router)
 app.include_router(messenger.router)
+
+
+@app.websocket("/websockify")
+async def websocket_vnc_proxy(websocket: WebSocket):
+    """Proxy browser websocket frames to the local VNC TCP server."""
+    await websocket.accept()
+
+    try:
+        reader, writer = await asyncio.open_connection("127.0.0.1", 5900)
+    except Exception:
+        await websocket.close(code=1011)
+        return
+
+    async def websocket_to_vnc() -> None:
+        try:
+            while True:
+                message = await websocket.receive()
+                payload_bytes = message.get("bytes")
+                payload_text = message.get("text")
+
+                if payload_bytes is not None:
+                    writer.write(payload_bytes)
+                    await writer.drain()
+                elif payload_text is not None:
+                    writer.write(payload_text.encode("utf-8"))
+                    await writer.drain()
+                elif message.get("type") == "websocket.disconnect":
+                    break
+        except WebSocketDisconnect:
+            pass
+        except Exception:
+            pass
+
+    async def vnc_to_websocket() -> None:
+        try:
+            while True:
+                data = await reader.read(65536)
+                if not data:
+                    break
+                await websocket.send_bytes(data)
+        except Exception:
+            pass
+
+    tasks = [
+        asyncio.create_task(websocket_to_vnc()),
+        asyncio.create_task(vnc_to_websocket()),
+    ]
+
+    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+
+    for task in pending:
+        task.cancel()
+
+    for task in done:
+        try:
+            task.result()
+        except Exception:
+            pass
+
+    try:
+        writer.close()
+        await writer.wait_closed()
+    except Exception:
+        pass
+
+    try:
+        await websocket.close()
+    except Exception:
+        pass
 
 
 @app.on_event("startup")

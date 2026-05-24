@@ -5,11 +5,21 @@ import './MessengerPage.css';
 
 function resolveVncWsUrl(): string | undefined {
   const configuredBaseUrl = import.meta.env.VITE_NOVNC_URL?.trim();
+  const configuredApiBaseUrl = import.meta.env.VITE_API_URL?.trim();
   const defaultPath = '/websockify';
 
   if (!configuredBaseUrl) {
-    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    return `${proto}://${window.location.host}${defaultPath}`;
+    if (configuredApiBaseUrl) {
+      const absoluteApiUrl = /^https?:\/\//i.test(configuredApiBaseUrl)
+        ? configuredApiBaseUrl
+        : `https://${configuredApiBaseUrl}`;
+      const parsedApiUrl = new URL(absoluteApiUrl);
+      const wsProtocol = parsedApiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${wsProtocol}//${parsedApiUrl.host}${defaultPath}`;
+    }
+
+    const browserProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    return `${browserProto}://${window.location.host}${defaultPath}`;
   }
 
   if (/^wss?:\/\//i.test(configuredBaseUrl)) {
