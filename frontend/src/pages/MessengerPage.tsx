@@ -5,14 +5,19 @@ import './MessengerPage.css';
 
 function resolveVncWsUrl(): string | undefined {
   const configuredBaseUrl = import.meta.env.VITE_NOVNC_URL?.trim();
+  const defaultPath = '/websockify';
 
   if (!configuredBaseUrl) {
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    return `${proto}://${window.location.host}/websockify`;
+    return `${proto}://${window.location.host}${defaultPath}`;
   }
 
   if (/^wss?:\/\//i.test(configuredBaseUrl)) {
-    return configuredBaseUrl.replace(/\/$/, '');
+    const parsedWsUrl = new URL(configuredBaseUrl);
+    const explicitPath = parsedWsUrl.pathname && parsedWsUrl.pathname !== '/'
+      ? parsedWsUrl.pathname.replace(/\/$/, '')
+      : defaultPath;
+    return `${parsedWsUrl.protocol}//${parsedWsUrl.host}${explicitPath}`;
   }
 
   const absoluteBaseUrl = /^https?:\/\//i.test(configuredBaseUrl)
@@ -22,7 +27,7 @@ function resolveVncWsUrl(): string | undefined {
   const websocketBaseUrl = `${parsedUrl.protocol === 'https:' ? 'wss:' : 'ws:'}//${parsedUrl.host}`;
   const explicitPath = parsedUrl.pathname && parsedUrl.pathname !== '/'
     ? parsedUrl.pathname.replace(/\/$/, '')
-    : '';
+    : defaultPath;
 
   return `${websocketBaseUrl}${explicitPath}`;
 }

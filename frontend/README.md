@@ -77,7 +77,7 @@ All API calls go through `/api` prefix which is proxied to the backend container
 
 `VITE_API_URL` - Optional. Backend base URL for the deployed frontend. If omitted, the app falls back to `/api` for the Docker/nginx setup.
 
-`VITE_NOVNC_URL` - Optional. noVNC websocket endpoint for the live browser preview. For Railway, this can be the proxy host and port, for example `kodama.proxy.rlwy.net:11575`, or a full websocket URL such as `wss://kodama.proxy.rlwy.net:11575`.
+`VITE_NOVNC_URL` - Optional. noVNC websocket endpoint for the live browser preview. For Railway, this can be the proxy host and port (for example `kodama.proxy.rlwy.net:11575`) or a full websocket URL. If no path is provided, the frontend defaults to `/websockify`.
 
 For Railway deployment, also set `CORS_ORIGINS` on the backend to include your Vercel domain, for example:
 
