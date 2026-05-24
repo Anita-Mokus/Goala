@@ -10,6 +10,7 @@ interface SettingsFormProps {
 
 function SettingsForm({ settings, onSave, saving }: SettingsFormProps) {
   const [formData, setFormData] = useState<SettingsUpdate>({
+    dataset_name: settings.dataset_name,
     llm_provider: settings.llm_provider,
     llm_model: settings.llm_model,
     llm_temperature: settings.llm_temperature,
@@ -45,6 +46,22 @@ function SettingsForm({ settings, onSave, saving }: SettingsFormProps) {
 
   return (
     <form className="settings-form" onSubmit={handleSubmit}>
+      <div className="form-section">
+        <h2>Dataset Configuration</h2>
+        <div className="form-group">
+          <label htmlFor="dataset_name">Dataset Name</label>
+          <select
+            id="dataset_name"
+            name="dataset_name"
+            value={formData.dataset_name}
+            onChange={handleChange}
+            required
+          >
+            <option value="liverag">LiveRAG</option>
+            <option value="felveteli">Sapientia felveteli</option>
+          </select>
+        </div>
+      </div>
       <div className="form-section">
         <h2>LLM Configuration</h2>
 

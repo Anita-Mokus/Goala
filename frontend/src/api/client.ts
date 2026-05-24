@@ -15,6 +15,7 @@ const API_BASE_URL = resolveApiBaseUrl();
 
 export interface Settings {
   id: number;
+  dataset_name: 'liverag' | 'felveteli';
   llm_provider: string;
   llm_model: string;
   llm_temperature: number;
@@ -29,6 +30,7 @@ export interface Settings {
 }
 
 export interface SettingsUpdate {
+  dataset_name: 'liverag' | 'felveteli';
   llm_provider: string;
   llm_model: string;
   llm_temperature: number;
@@ -45,6 +47,7 @@ export interface ChatHistoryEntry {
   id: number;
   question: string;
   answer: string;
+  dataset_name: 'liverag' | 'felveteli';
   model_used: string | null;
   response_time_ms: number | null;
   created_at: string;
