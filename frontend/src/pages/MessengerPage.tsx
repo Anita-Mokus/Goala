@@ -7,7 +7,8 @@ function resolveVncWsUrl(): string | undefined {
   const configuredBaseUrl = import.meta.env.VITE_NOVNC_URL?.trim();
 
   if (!configuredBaseUrl) {
-    return undefined;
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    return `${proto}://${window.location.host}/websockify`;
   }
 
   if (/^wss?:\/\//i.test(configuredBaseUrl)) {
