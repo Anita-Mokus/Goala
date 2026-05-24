@@ -44,6 +44,13 @@ def run(
             skipped += 1
             continue
 
+        # Skip pages that explicitly state content is unavailable (some pages show this message)
+        text_lower = text.lower()
+        if "content not available" in text_lower:
+            print(f"[skip:content-unavailable] {url}")
+            skipped += 1
+            continue
+
         filename = _url_to_filename(url)
         filepath = output_dir / filename
 
