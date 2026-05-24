@@ -3,6 +3,30 @@ import { apiClient, MessengerStatus } from '../api/client';
 import VncViewer from '../components/VncViewer';
 import './MessengerPage.css';
 
+function resolveVncWsUrl(): string | undefined {
+  const configuredBaseUrl = import.meta.env.VITE_NOVNC_URL?.trim();
+
+  if (!configuredBaseUrl) {
+    return undefined;
+  }
+
+  if (/^wss?:\/\//i.test(configuredBaseUrl)) {
+    return configuredBaseUrl;
+  }
+
+  const absoluteBaseUrl = /^https?:\/\//i.test(configuredBaseUrl)
+    ? configuredBaseUrl
+    : `https://${configuredBaseUrl}`;
+  const websocketBaseUrl = absoluteBaseUrl
+    .replace(/^https:/i, 'wss:')
+    .replace(/^http:/i, 'ws:')
+    .replace(/\/$/, '');
+
+  return websocketBaseUrl.endsWith('/websockify')
+    ? websocketBaseUrl
+    : `${websocketBaseUrl}/websockify`;
+}
+
 const MessengerPage: React.FC = () => {
   const [status, setStatus] = useState<MessengerStatus>({
     running: false,
@@ -103,6 +127,8 @@ const MessengerPage: React.FC = () => {
     if (!timestamp) return 'Never';
     return new Date(timestamp).toLocaleString();
   };
+
+  const vncWsUrl = resolveVncWsUrl();
 
   return (
     <div className="messenger-page">
@@ -213,7 +239,7 @@ const MessengerPage: React.FC = () => {
 
       <div className="info-section">
         <h3>Chrome Browser — Live View</h3>
-        <VncViewer connected={status.running} />
+        <VncViewer connected={status.running} wsUrl={vncWsUrl} />
       </div>
 
       <div className="info-section">

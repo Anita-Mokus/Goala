@@ -4,7 +4,7 @@ import RFB from '@novnc/novnc';
 import './VncViewer.css';
 
 interface VncViewerProps {
-  /** WebSocket URL, e.g. ws://localhost:6080 or derived from window.location */
+  /** WebSocket URL, e.g. ws://localhost:6080/websockify or derived from the current page */
   wsUrl?: string;
   /** Whether to attempt connection (tie to bot running state) */
   connected?: boolean;
