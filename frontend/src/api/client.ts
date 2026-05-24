@@ -1,4 +1,17 @@
-const API_BASE_URL = '/api';
+const DEFAULT_API_BASE_URL = '/api';
+
+function resolveApiBaseUrl(): string {
+  const configuredBaseUrl = import.meta.env.VITE_API_URL?.trim();
+
+  if (!configuredBaseUrl) {
+    return DEFAULT_API_BASE_URL;
+  }
+
+  const normalizedBaseUrl = configuredBaseUrl.replace(/\/$/, '');
+  return normalizedBaseUrl.endsWith('/api') ? normalizedBaseUrl : `${normalizedBaseUrl}/api`;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 export interface Settings {
   id: number;

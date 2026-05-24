@@ -35,6 +35,18 @@ npm run dev
 
 The dev server runs on http://localhost:3000 and proxies API requests to the backend.
 
+If you want to run the frontend against a deployed Railway backend, set `VITE_API_URL` before starting Vite. You can use either the backend origin or the full API base path:
+
+```bash
+VITE_API_URL=https://your-backend.up.railway.app
+```
+
+or
+
+```bash
+VITE_API_URL=https://your-backend.up.railway.app/api
+```
+
 ## Production Build
 
 The frontend is containerized and runs in Docker:
@@ -63,4 +75,10 @@ All API calls go through `/api` prefix which is proxied to the backend container
 
 ## Environment Variables
 
-No frontend-specific environment variables required. API URL is handled via nginx proxy.
+`VITE_API_URL` - Optional. Backend base URL for the deployed frontend. If omitted, the app falls back to `/api` for the Docker/nginx setup.
+
+For Railway deployment, also set `CORS_ORIGINS` on the backend to include your Vercel domain, for example:
+
+```bash
+https://your-frontend.vercel.app,http://localhost:3000,http://127.0.0.1:3000
+```

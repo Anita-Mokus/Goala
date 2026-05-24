@@ -102,9 +102,14 @@ API_DESCRIPTION = "Hotel Chatbot API with RAG capabilities"
 API_VERSION = "1.0.0"
 
 # CORS settings
-CORS_ORIGINS = [
+DEFAULT_CORS_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+]
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", ",".join(DEFAULT_CORS_ORIGINS)).split(",")
+    if origin.strip()
 ]
 CORS_CREDENTIALS = True
 CORS_METHODS = ["*"]
