@@ -76,7 +76,7 @@ class IngestService:
         Ingest a single document file into the vector database.
         
         Args:
-            doc_path: Path to the document file. If None, uses first supported file in DATA_FOLDER.
+            doc_path: Path to the document file. If None, uses the first supported file in the dataset folder.
         """
         data_folder = str(self.data_folder)
         if not os.path.exists(data_folder):

@@ -50,7 +50,6 @@ services:
     volumes:
       - ./src:/app/src
       - ./docker/migrations:/app/migrations:ro
-      - ./data:/app/data:ro
       - ./shared:/app/shared
       - huggingface_cache:/app/huggingface_cache
       - chrome_profile:/app/chrome_profile

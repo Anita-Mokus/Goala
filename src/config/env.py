@@ -32,7 +32,7 @@ def get_dataset_collection_name(dataset_key: str | None = None) -> str:
     return f"{PGVECTOR_COLLECTION_PREFIX}_{dataset_suffix}"
 
 
-DATA_FOLDER = str(get_dataset_folder())
+DEFAULT_DATASET_FOLDER = str(get_dataset_folder())
 
 # PostgreSQL / pgvector configuration (using psycopg3 driver)
 DATABASE_URL = os.getenv(
