@@ -1,5 +1,5 @@
 """
-Orchestrates crawling and extraction, saves results as .txt files into data/.
+Orchestrates crawling and extraction, saves results into shared/sapientia/.
 """
 import re
 from pathlib import Path
@@ -9,8 +9,7 @@ from src.scraper.crawler import crawl
 from src.scraper.extractor import extract_page
 from src.scraper.pdf_downloader import download_pdfs
 
-
-DEFAULT_OUTPUT_DIR = Path(__file__).parents[2] / "data"
+DEFAULT_OUTPUT_DIR = Path(__file__).parents[2] / "shared" / "sapientia"
 FILE_PREFIX = "sapientia_"
 
 
@@ -42,6 +41,13 @@ def run(
 
         if not text.strip():
             print(f"[empty] {url}")
+            skipped += 1
+            continue
+
+        # Skip pages that explicitly state content is unavailable (some pages show this message)
+        text_lower = text.lower()
+        if "content not available" in text_lower:
+            print(f"[skip:content-unavailable] {url}")
             skipped += 1
             continue
 
