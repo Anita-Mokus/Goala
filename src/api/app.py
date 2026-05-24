@@ -17,6 +17,8 @@ from src.config import (
 )
 from src.api.routes import settings, history, messenger, chat
 
+RUN_STARTUP_INGEST = os.getenv("RUN_STARTUP_INGEST", "false").lower() == "true"
+
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -44,6 +46,9 @@ app.include_router(messenger.router)
 @app.on_event("startup")
 def startup_event():
     """Run ingestion on startup if vector database doesn't have documents."""
+    if not RUN_STARTUP_INGEST:
+        return
+
     # Clear stale Messenger bot status file from previous container runs
     try:
         from src.integrations.messenger.config import MessengerConfig
