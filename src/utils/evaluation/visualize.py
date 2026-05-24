@@ -415,7 +415,7 @@ def plot_multi_run_mrr(all_data: list[dict], out_dir: Path) -> None:
     _save(fig, "multi_run_mrr.png", out_dir)
 
 def judge_score_single_multi_comparison(all_data: list[dict], out_dir: Path) -> None:
-    """Grouped bar chart: for each judge score value (1–5) show count for single-doc vs multi-doc."""
+    """Grouped bar chart: for each judge score value (1-5) show count for single-doc vs multi-doc."""
     def _collect_scores(subset_key: str) -> dict[int, int]:
         data = _load_eval_jsons(subset_key)
         scores = [
