@@ -48,6 +48,7 @@ function SettingsForm({ settings, onSave, saving }: SettingsFormProps) {
     <form className="settings-form" onSubmit={handleSubmit}>
       <div className="form-section">
         <h2>Dataset Configuration</h2>
+        
         <div className="form-group">
           <label htmlFor="dataset_name">Dataset Name</label>
           <select
@@ -58,7 +59,7 @@ function SettingsForm({ settings, onSave, saving }: SettingsFormProps) {
             required
           >
             <option value="liverag">LiveRAG</option>
-            <option value="felveteli">Sapientia felveteli</option>
+            <option value="sapientia">Sapientia</option>
           </select>
         </div>
       </div>
