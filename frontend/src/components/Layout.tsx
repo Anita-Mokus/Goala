@@ -1,5 +1,7 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { apiClient } from '../api/client';
+import { siteAuthClient } from '../api/siteAuth';
 import './Layout.css';
 
 interface LayoutProps {
@@ -8,6 +10,14 @@ interface LayoutProps {
 
 function Layout({ children }: LayoutProps) {
   const location = useLocation();
+
+  const handleLogout = async () => {
+    await Promise.all([
+      siteAuthClient.logout().catch(() => undefined),
+      apiClient.logoutBackend().catch(() => undefined),
+    ]);
+    window.location.href = '/login';
+  };
 
   return (
     <div className="layout">
@@ -42,6 +52,9 @@ function Layout({ children }: LayoutProps) {
             </Link>
           </li>
         </ul>
+        <button type="button" className="sidebar-logout" onClick={handleLogout}>
+          Log out
+        </button>
       </nav>
       <main className="main-content">{children}</main>
     </div>

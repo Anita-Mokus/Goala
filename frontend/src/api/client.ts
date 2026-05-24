@@ -13,6 +13,16 @@ function resolveApiBaseUrl(): string {
 
 const API_BASE_URL = resolveApiBaseUrl();
 
+async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  return fetch(`${API_BASE_URL}${path}`, {
+    credentials: 'include',
+    ...init,
+    headers: {
+      ...(init.headers || {}),
+    },
+  });
+}
+
 export interface Settings {
   id: number;
   llm_provider: string;
@@ -72,9 +82,14 @@ export interface MessengerActionResponse {
   message: string;
 }
 
+export interface AuthStatusResponse {
+  authenticated: boolean;
+  expires_at: string | null;
+}
+
 export const apiClient = {
   async getSettings(): Promise<Settings> {
-    const response = await fetch(`${API_BASE_URL}/settings`);
+    const response = await apiFetch('/settings');
     if (!response.ok) {
       throw new Error(`Failed to fetch settings: ${response.statusText}`);
     }
@@ -82,7 +97,7 @@ export const apiClient = {
   },
 
   async updateSettings(settings: SettingsUpdate): Promise<Settings> {
-    const response = await fetch(`${API_BASE_URL}/settings`, {
+    const response = await apiFetch('/settings', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -104,7 +119,7 @@ export const apiClient = {
     if (search) {
       params.append('search', search);
     }
-    const response = await fetch(`${API_BASE_URL}/history?${params}`);
+    const response = await apiFetch(`/history?${params}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch chat history: ${response.statusText}`);
     }
@@ -113,7 +128,7 @@ export const apiClient = {
 
   // Messenger Bot API
   async getMessengerStatus(): Promise<MessengerStatus> {
-    const response = await fetch(`${API_BASE_URL}/messenger/status`);
+    const response = await apiFetch('/messenger/status');
     if (!response.ok) {
       throw new Error(`Failed to fetch messenger status: ${response.statusText}`);
     }
@@ -121,7 +136,7 @@ export const apiClient = {
   },
 
   async startMessenger(): Promise<MessengerActionResponse> {
-    const response = await fetch(`${API_BASE_URL}/messenger/start`, {
+    const response = await apiFetch('/messenger/start', {
       method: 'POST',
     });
     if (!response.ok) {
@@ -132,7 +147,7 @@ export const apiClient = {
   },
 
   async stopMessenger(): Promise<MessengerActionResponse> {
-    const response = await fetch(`${API_BASE_URL}/messenger/stop`, {
+    const response = await apiFetch('/messenger/stop', {
       method: 'POST',
     });
     if (!response.ok) {
@@ -143,7 +158,7 @@ export const apiClient = {
   },
 
   async pauseMessenger(): Promise<MessengerActionResponse> {
-    const response = await fetch(`${API_BASE_URL}/messenger/pause`, {
+    const response = await apiFetch('/messenger/pause', {
       method: 'POST',
     });
     if (!response.ok) {
@@ -154,7 +169,7 @@ export const apiClient = {
   },
 
   async resumeMessenger(): Promise<MessengerActionResponse> {
-    const response = await fetch(`${API_BASE_URL}/messenger/resume`, {
+    const response = await apiFetch('/messenger/resume', {
       method: 'POST',
     });
     if (!response.ok) {
@@ -166,5 +181,40 @@ export const apiClient = {
 
   getMessengerLoginUrl(): string {
     return `${API_BASE_URL}/messenger/login-redirect`;
+  },
+
+  async getBackendAuthStatus(): Promise<AuthStatusResponse> {
+    const response = await apiFetch('/auth/me');
+    if (!response.ok) {
+      return { authenticated: false, expires_at: null };
+    }
+    return response.json();
+  },
+
+  async loginBackend(token: string): Promise<AuthStatusResponse> {
+    const response = await apiFetch('/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.detail || `Failed to authenticate backend: ${response.statusText}`);
+    }
+
+    return response.json();
+  },
+
+  async logoutBackend(): Promise<AuthStatusResponse> {
+    const response = await apiFetch('/auth/logout', {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to log out backend: ${response.statusText}`);
+    }
+    return response.json();
   },
 };

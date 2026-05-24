@@ -4,7 +4,8 @@ Configures app, CORS, routers, and startup event.
 """
 import asyncio
 import os
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import (
@@ -16,7 +17,13 @@ from src.config import (
     CORS_METHODS,
     CORS_HEADERS,
 )
-from src.api.routes import settings, history, messenger, chat
+from src.api.auth import (
+    ACCESS_GATE_COOKIE_NAME,
+    is_auth_enabled,
+    is_public_http_path,
+    verify_access_cookie_value,
+)
+from src.api.routes import settings, history, messenger, chat, auth
 
 RUN_STARTUP_INGEST = os.getenv("RUN_STARTUP_INGEST", "false").lower() == "true"
 
@@ -37,7 +44,19 @@ app.add_middleware(
     allow_headers=CORS_HEADERS,
 )
 
+
+@app.middleware("http")
+async def access_gate_middleware(request: Request, call_next):
+    if request.method == "OPTIONS" or not is_auth_enabled() or is_public_http_path(request.url.path):
+        return await call_next(request)
+
+    if not verify_access_cookie_value(request.cookies.get(ACCESS_GATE_COOKIE_NAME)):
+        return JSONResponse({"detail": "Authentication required"}, status_code=401)
+
+    return await call_next(request)
+
 # Register API routers
+app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(settings.router)
 app.include_router(history.router)
@@ -47,6 +66,10 @@ app.include_router(messenger.router)
 @app.websocket("/websockify")
 async def websocket_vnc_proxy(websocket: WebSocket):
     """Proxy browser websocket frames to the local VNC TCP server."""
+    if is_auth_enabled() and not verify_access_cookie_value(websocket.cookies.get(ACCESS_GATE_COOKIE_NAME)):
+        await websocket.close(code=4401)
+        return
+
     await websocket.accept()
 
     try:

@@ -79,6 +79,15 @@ All API calls go through `/api` prefix which is proxied to the backend container
 
 `VITE_NOVNC_URL` - Optional. noVNC websocket endpoint for the live browser preview. For Railway, this can be the proxy host and port (for example `kodama.proxy.rlwy.net:11575`) or a full websocket URL. If no path is provided, the frontend defaults to `/websockify`.
 
+Access gate deployment variables:
+
+- `ACCESS_GATE_TOKEN_HASHES` - Comma-separated SHA-256 hashes of the private access tokens.
+- `ACCESS_GATE_SESSION_SECRET` - Shared signing secret used to mint and verify auth cookies.
+- `ACCESS_GATE_COOKIE_NAME` - Optional. Cookie name for the auth session; defaults to `goala_access`.
+- `ACCESS_GATE_SESSION_TTL_SECONDS` - Optional. Session lifetime in seconds; defaults to 7 days.
+
+Set the same `ACCESS_GATE_TOKEN_HASHES` and `ACCESS_GATE_SESSION_SECRET` values on both Vercel and Railway.
+
 For Railway deployment, also set `CORS_ORIGINS` on the backend to include your Vercel domain, for example:
 
 ```bash

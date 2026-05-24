@@ -3,6 +3,7 @@ Environment variables and static configuration constants.
 Single source of truth for all env-based settings.
 """
 import os
+import hashlib
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -114,6 +115,21 @@ CORS_ORIGINS = [
 CORS_CREDENTIALS = True
 CORS_METHODS = ["*"]
 CORS_HEADERS = ["*"]
+
+# Access gate settings
+ACCESS_GATE_COOKIE_NAME = os.getenv("ACCESS_GATE_COOKIE_NAME", "goala_access")
+ACCESS_GATE_SESSION_SECRET = os.getenv("ACCESS_GATE_SESSION_SECRET", "")
+ACCESS_GATE_SESSION_TTL_SECONDS = int(os.getenv("ACCESS_GATE_SESSION_TTL_SECONDS", "604800"))
+ACCESS_GATE_TOKEN_HASHES = [
+    token_hash.strip().lower()
+    for token_hash in os.getenv("ACCESS_GATE_TOKEN_HASHES", "").split(",")
+    if token_hash.strip()
+]
+
+
+def hash_access_token(token: str) -> str:
+    """Return the SHA-256 hash for an access token."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 # Default RAG Prompt Template
 RAG_PROMPT_TEMPLATE = """You are an expert assistant for MBH Bank (Magyar Bankholding Bank Nyrt.) customer support.

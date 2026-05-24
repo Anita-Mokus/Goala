@@ -54,6 +54,23 @@
   color: white;
 }
 
+.sidebar-logout {
+  margin-top: auto;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.sidebar-logout:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
 .main-content {
   flex: 1;
   padding: 2rem;
@@ -85,5 +102,14 @@
   .sidebar-menu a.active {
     background-color: #646cff;
     color: white;
+  }
+
+  .sidebar-logout {
+    border-color: #d0d0d0;
+  }
+
+  .sidebar-logout:hover {
+    background: rgba(100, 108, 255, 0.08);
+    border-color: #c1c1c1;
   }
 }
