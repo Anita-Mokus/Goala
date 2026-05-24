@@ -2,125 +2,230 @@
 Stealth Chrome WebDriver configuration for Messenger bot.
 Implements manual stealth techniques without external packages.
 """
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from typing import Optional
-import platform
+import logging
 import os
+import platform
+import shutil
+from typing import Optional
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.common.exceptions import NoSuchDriverException
+
+logger = logging.getLogger(__name__)
+
+
+def _resolve_chromedriver_path(chrome_driver_path: Optional[str]) -> Optional[str]:
+    """Resolve chromedriver path from input, env, or common locations."""
+    if chrome_driver_path:
+        return chrome_driver_path
+
+    env_path = os.getenv("CHROMEDRIVER_PATH")
+    if env_path and os.path.isfile(env_path):
+        return env_path
+
+    which_path = shutil.which("chromedriver")
+    if which_path:
+        return which_path
+
+    for candidate in ("/usr/local/bin/chromedriver", "/usr/bin/chromedriver"):
+        if os.path.isfile(candidate):
+            return candidate
+
+    return None
+
+
+def _clear_directory_contents(directory_path: str) -> None:
+    """Delete all files and folders inside directory_path without removing the directory itself."""
+    for entry in os.listdir(directory_path):
+        entry_path = os.path.join(directory_path, entry)
+        if os.path.isdir(entry_path) and not os.path.islink(entry_path):
+            shutil.rmtree(entry_path)
+        else:
+            os.remove(entry_path)
+
+
+def _resolve_chrome_binary_path() -> Optional[str]:
+    """Resolve Chrome binary path from env, OS defaults, or PATH."""
+    env_path = os.getenv("CHROME_BIN")
+    if env_path and os.path.isfile(env_path):
+        return env_path
+
+    system = platform.system()
+    candidates = []
+    if system == "Darwin":
+        candidates = [
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "/Applications/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+            "/Applications/Chromium.app/Contents/MacOS/Chromium",
+            os.path.expanduser("~/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
+            os.path.expanduser("~/Applications/Chromium.app/Contents/MacOS/Chromium"),
+        ]
+    elif system == "Windows":
+        candidates = [
+            os.path.expandvars(r"%PROGRAMFILES%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(r"%PROGRAMFILES(X86)%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(r"%PROGRAMFILES%\Google\Chrome for Testing\Application\chrome.exe"),
+            os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome for Testing\Application\chrome.exe"),
+            os.path.expandvars(r"%LOCALAPPDATA%\Chromium\Application\chrome.exe"),
+        ]
+    else:
+        candidates = [
+            "/usr/bin/google-chrome",
+            "/usr/bin/google-chrome-stable",
+            "/usr/bin/chromium",
+            "/usr/bin/chromium-browser",
+        ]
+
+    for candidate in candidates:
+        if candidate and os.path.isfile(candidate):
+            return candidate
+
+    for name in ("google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "chrome"):
+        which_path = shutil.which(name)
+        if which_path:
+            return which_path
+
+    return None
+
+
+def _build_chrome_options(profile_path: str) -> Options:
+    """Build Chrome options with stealth and Docker stability flags."""
+    options = Options()
+
+    options.add_argument(f"--user-data-dir={profile_path}")
+    options.add_argument("--profile-directory=Default")
+
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
+
+    options.add_argument("--window-size=1920,1080")
+
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--disable-setuid-sandbox")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-crash-reporter")
+    options.add_argument("--disable-in-process-stack-traces")
+    options.add_argument("--log-level=3")
+    options.add_argument("--no-first-run")
+    options.add_argument("--no-default-browser-check")
+
+    options.add_experimental_option("prefs", {
+        "credentials_enable_service": False,
+        "profile.password_manager_enabled": False,
+        "profile.default_content_setting_values.notifications": 2
+    })
+
+    chrome_bin = _resolve_chrome_binary_path()
+    if chrome_bin:
+        options.binary_location = chrome_bin
+
+    return options
+
+
+def _launch_driver(options: Options, chrome_driver_path: Optional[str]) -> webdriver.Chrome:
+    """Attempt a single Chrome WebDriver launch, logging the chromedriver output on failure."""
+    log_path = "/tmp/chromedriver.log"
+    kwargs = {"executable_path": chrome_driver_path} if chrome_driver_path else {}
+    service = Service(**kwargs)
+    # Pass log path directly to the chromedriver binary so the file is always created
+    service.service_args = [f"--log-path={log_path}", "--verbose"]
+
+    try:
+        return webdriver.Chrome(service=service, options=options)
+    except Exception:
+        try:
+            with open(log_path, "r") as f:
+                logger.error("ChromeDriver verbose log:\n%s", f.read()[-4000:])
+        except OSError:
+            logger.warning("ChromeDriver log not found at %s", log_path)
+        raise
+
+
+def _reset_profile(profile_path: str) -> None:
+    """Delete profile contents so Chrome starts fresh (Messenger login will be lost)."""
+    logger.warning("Clearing Chrome profile at %s — login session will be lost", profile_path)
+    if os.path.exists(profile_path):
+        try:
+            if os.path.ismount(profile_path):
+                _clear_directory_contents(profile_path)
+            else:
+                shutil.rmtree(profile_path)
+        except OSError as exc:
+            logger.warning("Failed to delete profile directory (%s). Clearing contents instead.", exc)
+            if os.path.isdir(profile_path):
+                _clear_directory_contents(profile_path)
+
+    os.makedirs(profile_path, mode=0o777, exist_ok=True)
+    open(os.path.join(profile_path, "First Run"), "w").close()
+    logger.warning("Chrome profile cleared — please log in to Messenger again after the bot starts")
 
 
 def create_stealth_driver(profile_path: str, chrome_driver_path: Optional[str] = None) -> webdriver.Chrome:
     """
     Create a Chrome WebDriver with stealth configuration.
-    
+
     Key stealth features:
     - Persistent Chrome profile (real browser history/cookies)
     - Remove navigator.webdriver flag via CDP
     - Disable automation flags
     - Visible mode (NOT headless)
     - Default user agent (no override)
-    
+
+    If Chrome fails to start with the existing profile (e.g. after a Chrome
+    version upgrade), the profile is automatically cleared and one retry is
+    attempted so the bot recovers without manual intervention.
+
     Args:
         profile_path: Path to Chrome user data directory
         chrome_driver_path: Optional path to chromedriver executable
-        
+
     Returns:
         Configured Chrome WebDriver instance
     """
-    import logging
-    logger = logging.getLogger(__name__)
-    
-    # Ensure profile directory exists and has a minimal structure
     if not os.path.exists(profile_path):
         os.makedirs(profile_path, mode=0o777)
-        logger.info(f"Created Chrome profile directory: {profile_path}")
-    
-    # Create First Run file to prevent Chrome first-run setup
-    first_run_file = os.path.join(profile_path, "First Run")
-    if not os.path.exists(first_run_file):
-        with open(first_run_file, 'w') as f:
-            f.write("")
-        logger.info("Created First Run file to skip Chrome setup")
-    
-    options = Options()
-    
-    # Use persistent Chrome profile (MOST IMPORTANT for stealth)
-    options.add_argument(f"--user-data-dir={profile_path}")
-    options.add_argument("--profile-directory=Default")
-    
-    # Disable automation flags
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option("useAutomationExtension", False)
-    
-    # Window configuration
-    options.add_argument("--window-size=1920,1080")
-    options.add_argument("--start-maximized")
-    
-    # Critical Docker/Linux flags
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
-    
-    # Additional stability flags
-    options.add_argument("--disable-software-rasterizer")
-    options.add_argument("--disable-setuid-sandbox")
-    
-    # Prevent crashes
-    options.add_argument("--disable-crash-reporter")
-    options.add_argument("--disable-in-process-stack-traces")
-    options.add_argument("--log-level=3")
-    
-    # Skip first-run prompts
-    options.add_argument("--no-first-run")
-    options.add_argument("--no-default-browser-check")
-    
-    # Disable infobars and notifications
-    options.add_experimental_option("prefs", {
-        "credentials_enable_service": False,
-        "profile.password_manager_enabled": False,
-        "profile.default_content_setting_values.notifications": 2
-    })
-    
-    # Ensure DISPLAY is set for X11
+    first_run = os.path.join(profile_path, "First Run")
+    if not os.path.exists(first_run):
+        open(first_run, "w").close()
+
     if not os.getenv("DISPLAY"):
         os.environ["DISPLAY"] = ":99"
-        logger.info("Set DISPLAY environment variable to :99")
-    
-    # Set binary location if in Docker
-    if os.path.exists("/usr/bin/google-chrome"):
-        options.binary_location = "/usr/bin/google-chrome"
-        logger.info(f"Using Chrome binary: {options.binary_location}")
-    
-    # Log configuration
-    logger.info(f"Chrome profile path: {profile_path}")
-    logger.info(f"DISPLAY: {os.getenv('DISPLAY')}")
-    
-    # Create service with verbose logging
+
+    logger.info("Initializing Chrome (profile=%s, DISPLAY=%s)", profile_path, os.getenv("DISPLAY"))
+
+    chrome_driver_path = _resolve_chromedriver_path(chrome_driver_path)
+    options = _build_chrome_options(profile_path)
     try:
-        if chrome_driver_path:
-            service = Service(chrome_driver_path, log_output="/tmp/chromedriver.log")
-            service.service_args = ['--verbose']
-            logger.info(f"Using ChromeDriver: {chrome_driver_path}")
-            driver = webdriver.Chrome(service=service, options=options)
-        else:
-            service = Service(log_output="/tmp/chromedriver.log")
-            service.service_args = ['--verbose']
-            driver = webdriver.Chrome(service=service, options=options)
-        
-        logger.info("Chrome WebDriver created successfully")
-        
-    except Exception as e:
-        logger.error(f"Failed to create Chrome WebDriver: {e}")
-        # Try to read chromedriver log for more details
+        driver = _launch_driver(options, chrome_driver_path)
+        logger.info("Chrome WebDriver created successfully (visible mode)")
+    except Exception as first_err:
+        if isinstance(first_err, NoSuchDriverException):
+            logger.error("Chrome or chromedriver not found. Check CHROME_BIN/CHROMEDRIVER_PATH.")
+            raise
+        logger.warning("Chrome startup failed in visible mode: %s", first_err)
+
+        # Retry 1: profile may be incompatible with an updated Chrome version
+        logger.warning("Retry 1: clearing profile and retrying in visible mode...")
+        _reset_profile(profile_path)
+        options = _build_chrome_options(profile_path)
         try:
-            with open("/tmp/chromedriver.log", "r") as f:
-                log_content = f.read()
-                logger.error(f"ChromeDriver log:\n{log_content}")
-        except:
-            pass
-        raise
+            driver = _launch_driver(options, chrome_driver_path)
+            logger.info("Chrome WebDriver created successfully (visible mode, fresh profile)")
+        except Exception as second_err:
+            # Retry 2: bypass X11/Xvfb entirely with headless=new
+            logger.warning("Retry 1 failed: %s", second_err)
+            logger.warning("Retry 2: switching to --headless=new to bypass display dependency...")
+            options = _build_chrome_options(profile_path)
+            options.add_argument("--headless=new")
+            driver = _launch_driver(options, chrome_driver_path)
+            logger.info("Chrome WebDriver created successfully (headless=new fallback)")
     
     # Remove navigator.webdriver flag using CDP (Chrome DevTools Protocol)
     driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {

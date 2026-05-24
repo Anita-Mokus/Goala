@@ -44,7 +44,11 @@ def chunk_elements(
         raise
 
 
-def elements_to_documents(chunks: List, source_file: str = None) -> List[Document]:
+def elements_to_documents(
+    chunks: List,
+    source_file: str = None,
+    dataset_key: str | None = None,
+) -> List[Document]:
     """
     Convert unstructured chunks to LangChain Document objects.
     
@@ -61,6 +65,7 @@ def elements_to_documents(chunks: List, source_file: str = None) -> List[Documen
         # Extract metadata from the chunk
         metadata = {
             'source': source_file or chunk.metadata.filename,
+            'dataset': dataset_key,
             'element_type': chunk.category if hasattr(chunk, 'category') else 'Unknown',
             'element_id': chunk.id if hasattr(chunk, 'id') else None,
         }

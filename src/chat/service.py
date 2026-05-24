@@ -5,7 +5,13 @@ Handles document retrieval and response generation.
 import time
 from langchain_postgres import PGVector
 
-from src.config import DATABASE_URL, PGVECTOR_COLLECTION_NAME, OLLAMA_BASE_URL
+from src.config import (
+    DATABASE_URL,
+    DEFAULT_DATASET_KEY,
+    OLLAMA_BASE_URL,
+    get_dataset_collection_name,
+    normalize_dataset_key,
+)
 from src.config.settings import (
     get_current_llm_provider,
     get_current_llm_model,
@@ -23,8 +29,9 @@ from src.chat.history_logger import log_chat_to_history
 class RAGService:
     """Service for handling RAG operations."""
     
-    def __init__(self):
+    def __init__(self, dataset_key: str = DEFAULT_DATASET_KEY):
         """Initialize RAG components."""
+        self.dataset_key = normalize_dataset_key(dataset_key)
         # Use shared embedding function (singleton)
         self.embedding_function = get_embeddings()
         
@@ -33,7 +40,7 @@ class RAGService:
             self.db = PGVector(
                 embeddings=self.embedding_function,
                 connection=DATABASE_URL,
-                collection_name=PGVECTOR_COLLECTION_NAME,
+                collection_name=get_dataset_collection_name(self.dataset_key),
                 use_jsonb=True,
             )
         except Exception as e:

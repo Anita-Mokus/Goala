@@ -31,6 +31,13 @@ class MessengerConfig:
     
     # Status file for cross-process status (API vs standalone bot)
     STATUS_FILE: str = os.getenv("MESSENGER_STATUS_FILE", "/tmp/goala_messenger_status.json")
+
+    # Conversation history window
+    HISTORY_WINDOW_TURNS: int = int(os.getenv("MESSENGER_HISTORY_WINDOW_TURNS", "15"))
+    HISTORY_MAX_CHARS: int = int(os.getenv("MESSENGER_HISTORY_MAX_CHARS", "12000"))
+
+    # Group chat policy (group chats are disabled by default)
+    ALLOW_GROUP_CHATS: bool = os.getenv("MESSENGER_ALLOW_GROUP_CHATS", "false").lower() == "true"
     
     @classmethod
     def validate(cls) -> bool:
@@ -60,6 +67,14 @@ class MessengerConfig:
         
         if cls.RESPONSE_DELAY_MIN > cls.RESPONSE_DELAY_MAX:
             print("ERROR: RESPONSE_DELAY_MIN must be <= RESPONSE_DELAY_MAX")
+            return False
+
+        if cls.HISTORY_WINDOW_TURNS <= 0:
+            print("ERROR: HISTORY_WINDOW_TURNS must be > 0")
+            return False
+
+        if cls.HISTORY_MAX_CHARS <= 0:
+            print("ERROR: HISTORY_MAX_CHARS must be > 0")
             return False
         
         return True

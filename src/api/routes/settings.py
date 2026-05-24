@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 
 from src.models.database import AppSettings, get_db_session
+from src.config.env import RAG_PROMPT_TEMPLATE
 from src.config.settings import clear_settings_cache
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
@@ -63,6 +64,8 @@ def get_settings():
                 )
             
             # Convert to dict while session is still active
+            rag_prompt_template = settings.rag_prompt_template or RAG_PROMPT_TEMPLATE
+
             return SettingsResponse(
                 id=settings.id,
                 llm_provider=settings.llm_provider,
@@ -74,7 +77,7 @@ def get_settings():
                 chunk_max_characters=settings.chunk_max_characters,
                 chunk_new_after_n_chars=settings.chunk_new_after_n_chars,
                 chunk_overlap=settings.chunk_overlap,
-                rag_prompt_template=settings.rag_prompt_template,
+                rag_prompt_template=rag_prompt_template,
                 updated_at=settings.updated_at
             )
     except HTTPException:

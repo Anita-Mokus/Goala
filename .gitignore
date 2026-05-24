@@ -42,6 +42,9 @@ chroma_db
 *~
 .DS_Store
 
+# Node
+node_modules/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 
@@ -55,6 +58,15 @@ htmlcov/
 # Logs
 *.log
 logs/
+
+# Scraper output
+shared/sapientia/
+
+# Data output
+data/
+
+# Frontend
+frontend/node_modules/
 
 # OS
 Thumbs.db
