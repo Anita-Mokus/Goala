@@ -10,9 +10,9 @@ from datetime import datetime
 
 from langchain_core.prompts import ChatPromptTemplate
 
-from src.services import RAGService
-from src.services.llm_providers import get_llm_provider
-from src.core.config import (
+from src.chat import RAGService
+from src.llm import get_llm_provider
+from src.config import (
     EMBEDDING_MODEL,
     LLM_MODEL,
     LLM_TEMPERATURE,

@@ -27,8 +27,8 @@ project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from src.services.rag_service import RAGService
-from src.core.config import RETRIEVER_K
+from src.chat import RAGService
+from src.config import RETRIEVER_K
 from src.utils.retrieval_analysis import (
     build_retrieved_context_ids,
     build_doc_id_numbering,

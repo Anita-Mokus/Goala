@@ -65,6 +65,9 @@ CHUNK_NEW_AFTER_N_CHARS = int(os.getenv("CHUNK_NEW_AFTER_N_CHARS", "800"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
 CHUNK_MULTIPAGE_SECTIONS = os.getenv("CHUNK_MULTIPAGE_SECTIONS", "true").lower() == "true"
 
+# HuggingFace token (required for gated datasets such as LiveRAG/Benchmark)
+HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN", "")
+
 # LLM Provider Selection
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openrouter")
 
@@ -92,6 +95,20 @@ elif LLM_PROVIDER.lower() == "ollama":
     LLM_MODEL = OLLAMA_LLM_MODEL
 
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))
+
+# Judge LLM configuration (used by evaluation pipelines)
+JUDGE_LLM_PROVIDER = os.getenv("JUDGE_LLM_PROVIDER", LLM_PROVIDER)
+JUDGE_LLM_MODEL = os.getenv("JUDGE_LLM_MODEL", LLM_MODEL)
+
+# LiveRAG prompt template (English benchmark, no company-specific context)
+LIVERAG_RAG_PROMPT_TEMPLATE = """You are a helpful assistant. Answer the question using only the provided context passages. If the context does not contain enough information, say so.
+
+CONTEXT:
+{context}
+
+QUESTION: {question}
+
+ANSWER:"""
 
 # Retriever settings
 RETRIEVER_K = 8

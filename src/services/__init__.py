@@ -1,6 +1,9 @@
-"""Services module for business logic."""
-from .rag_service import RAGService, get_rag_service
-from .liverag.ingest import IngestLiveRAG
-from .embeddings import get_embeddings
+"""
+Services module.
 
-__all__ = ["RAGService", "get_rag_service", "IngestLiveRAG", "get_embeddings"]
+Business logic has been reorganised into focused sub-packages:
+  src/chat/     — RAGService (retrieval + generation)
+  src/ingest/   — IngestService (file-based) + LiveRAGIngestService (HF dataset)
+  src/llm/      — LLM provider factory
+  src/embeddings/ — embedding model singleton
+"""
