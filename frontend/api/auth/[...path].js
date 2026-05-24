@@ -106,11 +106,27 @@ async function readJsonBody(req) {
   return JSON.parse(rawBody);
 }
 
+function resolveRequestPath(req) {
+  if (Array.isArray(req.query?.path)) {
+    return `/${req.query.path.join('/')}`;
+  }
+
+  if (typeof req.query?.path === 'string' && req.query.path.trim()) {
+    return `/${req.query.path.trim()}`;
+  }
+
+  try {
+    return new URL(req.url, 'http://localhost').pathname;
+  } catch {
+    return req.url || '/api/auth';
+  }
+}
+
 export default async function handler(req, res) {
-  const pathname = req.url || '/api/auth';
-  const isLogin = pathname.endsWith('/login');
-  const isMe = pathname.endsWith('/me');
-  const isLogout = pathname.endsWith('/logout');
+  const pathname = resolveRequestPath(req).replace(/\/$/, '');
+  const isLogin = pathname === '/login' || pathname.endsWith('/login');
+  const isMe = pathname === '/me' || pathname.endsWith('/me');
+  const isLogout = pathname === '/logout' || pathname.endsWith('/logout');
 
   if (!isAuthEnabled()) {
     res.status(503).json({ detail: 'Access gate is not configured' });
