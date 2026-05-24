@@ -11,20 +11,19 @@ function resolveVncWsUrl(): string | undefined {
   }
 
   if (/^wss?:\/\//i.test(configuredBaseUrl)) {
-    return configuredBaseUrl;
+    return configuredBaseUrl.replace(/\/$/, '');
   }
 
   const absoluteBaseUrl = /^https?:\/\//i.test(configuredBaseUrl)
     ? configuredBaseUrl
     : `https://${configuredBaseUrl}`;
-  const websocketBaseUrl = absoluteBaseUrl
-    .replace(/^https:/i, 'wss:')
-    .replace(/^http:/i, 'ws:')
-    .replace(/\/$/, '');
+  const parsedUrl = new URL(absoluteBaseUrl);
+  const websocketBaseUrl = `${parsedUrl.protocol === 'https:' ? 'wss:' : 'ws:'}//${parsedUrl.host}`;
+  const explicitPath = parsedUrl.pathname && parsedUrl.pathname !== '/'
+    ? parsedUrl.pathname.replace(/\/$/, '')
+    : '';
 
-  return websocketBaseUrl.endsWith('/websockify')
-    ? websocketBaseUrl
-    : `${websocketBaseUrl}/websockify`;
+  return `${websocketBaseUrl}${explicitPath}`;
 }
 
 const MessengerPage: React.FC = () => {
