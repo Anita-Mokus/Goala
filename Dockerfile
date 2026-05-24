@@ -85,6 +85,7 @@ RUN ln -sf /usr/bin/chromium /usr/bin/google-chrome
 # Copy application code and shared datasets
 COPY src/ ./src/
 COPY shared/ ./shared/
+COPY docker/migrations/ ./migrations/
 
 # Create Chrome profile directory with proper permissions
 RUN mkdir -p /app/chrome_profile && \
