@@ -15,6 +15,14 @@ def extract_page(html: str, url: str = "") -> str:
 
     content = soup.find(id="pageheader")
 
+
+    left_szk = soup.find(id="left_szk")
+    left_szk_lines: list[str] = []
+    if left_szk:
+        for block in left_szk.find_all(class_="szakrinfo"):
+            left_szk_lines.extend(block.get_text(separator="\n", strip=True).splitlines())
+            left_szk_lines.append("")
+
     if not content:
         for div_id in FALLBACK_REMOVE_IDS:
             el = soup.find(id=div_id)
@@ -38,4 +46,5 @@ def extract_page(html: str, url: str = "") -> str:
     if header:
         header.append("")
 
-    return "\n".join(header + lines)
+    sidebar = left_szk_lines + [""] if left_szk_lines else []
+    return "\n".join(header + sidebar + lines)
