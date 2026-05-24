@@ -33,6 +33,7 @@ from src.config.env import (
     normalize_dataset_key,
     get_dataset_folder,
     get_dataset_collection_name,
+    normalize_database_url,
 )
 
 from src.config.settings import (
@@ -85,6 +86,7 @@ __all__ = [
     "normalize_dataset_key",
     "get_dataset_folder",
     "get_dataset_collection_name",
+    "normalize_database_url",
     # settings.py exports
     "get_settings_from_db",
     "clear_settings_cache",
