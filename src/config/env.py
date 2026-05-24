@@ -3,20 +3,44 @@ Environment variables and static configuration constants.
 Single source of truth for all env-based settings.
 """
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-# Project paths
-DATA_FOLDER = os.getenv("DATA_FOLDER", "shared/sapientia")
+# Project paths and dataset scoping
+DEFAULT_DATASET_KEY = os.getenv("DEFAULT_DATASET_KEY", "sapientia")
+DATASETS_ROOT = Path(os.getenv("DATASETS_ROOT", "shared"))
+
+
+def normalize_dataset_key(dataset_key: str | None) -> str:
+    """Normalize a dataset key into a safe, lowercase identifier."""
+    key = (dataset_key or DEFAULT_DATASET_KEY).strip().lower()
+    safe_key = "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in key)
+    return safe_key.strip("_") or DEFAULT_DATASET_KEY
+
+
+def get_dataset_folder(dataset_key: str | None = None) -> Path:
+    """Return the filesystem folder that stores files for a dataset."""
+    return DATASETS_ROOT / normalize_dataset_key(dataset_key)
+
+
+def get_dataset_collection_name(dataset_key: str | None = None) -> str:
+    """Return the pgvector collection name for a dataset."""
+    dataset_suffix = normalize_dataset_key(dataset_key)
+    return f"{PGVECTOR_COLLECTION_PREFIX}_{dataset_suffix}"
+
+
+DATA_FOLDER = str(get_dataset_folder())
 
 # PostgreSQL / pgvector configuration (using psycopg3 driver)
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql+psycopg://postgres:postgres@localhost:5432/goala"
 )
-PGVECTOR_COLLECTION_NAME = "document_embeddings"
+PGVECTOR_COLLECTION_PREFIX = os.getenv("PGVECTOR_COLLECTION_PREFIX", "document_embeddings")
+PGVECTOR_COLLECTION_NAME = get_dataset_collection_name()
 
 # Model configurations
 EMBEDDING_MODEL = "BAAI/bge-m3"

@@ -4,14 +4,14 @@ Handles loading documents, creating semantic chunks, and storing vector embeddin
 """
 import os
 import traceback
-from typing import List
-from langchain_core.documents import Document
 from langchain_postgres import PGVector
 
 from src.config import (
-    DATA_FOLDER,
     DATABASE_URL,
-    PGVECTOR_COLLECTION_NAME,
+    DEFAULT_DATASET_KEY,
+    get_dataset_collection_name,
+    get_dataset_folder,
+    normalize_dataset_key,
 )
 from src.config.settings import (
     get_current_pdf_language,
@@ -30,11 +30,13 @@ from src.ingest.vector_store import ensure_extension_exists, create_vector_store
 class IngestService:
     """Service for ingesting documents into the vector database."""
     
-    def __init__(self):
+    def __init__(self, dataset_key: str = DEFAULT_DATASET_KEY):
         """Initialize the ingest service with embedding model and chunking config."""
+        self.dataset_key = normalize_dataset_key(dataset_key)
         self.embedding_function = get_embeddings()
         self.connection_string = DATABASE_URL
-        self.collection_name = PGVECTOR_COLLECTION_NAME
+        self.collection_name = get_dataset_collection_name(self.dataset_key)
+        self.data_folder = get_dataset_folder(self.dataset_key)
         
         # Get current chunking configuration
         self.chunk_max_chars = get_current_chunk_max_characters()
@@ -76,26 +78,27 @@ class IngestService:
         Args:
             doc_path: Path to the document file. If None, uses first supported file in DATA_FOLDER.
         """
-        if not os.path.exists(DATA_FOLDER):
+        data_folder = str(self.data_folder)
+        if not os.path.exists(data_folder):
             raise FileNotFoundError(
-                f"ERROR: Folder '{DATA_FOLDER}' not found. Please create it and add a document."
+                f"ERROR: Folder '{data_folder}' not found. Please create it and add a document."
             )
         
         # Auto-detect first supported file if no path provided
         if doc_path is None:
             supported_extensions = ['.pdf', '.txt', '.docx', '.html', '.csv']
             files = [
-                f for f in os.listdir(DATA_FOLDER)
+                f for f in os.listdir(data_folder)
                 if any(f.lower().endswith(ext) for ext in supported_extensions)
             ]
             
             if not files:
                 raise FileNotFoundError(
-                    f"ERROR: No supported files found in '{DATA_FOLDER}' folder. "
+                    f"ERROR: No supported files found in '{data_folder}' folder. "
                     f"Supported: {', '.join(supported_extensions)}"
                 )
             
-            doc_path = os.path.join(DATA_FOLDER, files[0])
+            doc_path = os.path.join(data_folder, files[0])
         
         print(f"Loading file: {doc_path}...")
         
@@ -112,7 +115,11 @@ class IngestService:
         )
         
         # Convert to LangChain Documents
-        documents = elements_to_documents(chunks, source_file=os.path.basename(doc_path))
+        documents = elements_to_documents(
+            chunks,
+            source_file=os.path.basename(doc_path),
+            dataset_key=self.dataset_key,
+        )
         print(f"  → Converted to {len(documents)} document chunks")
         
         # Create vector store
@@ -128,21 +135,22 @@ class IngestService:
     
     def ingest_all_documents(self) -> None:
         """Ingest all supported files from the data folder with per-file error handling."""
-        if not os.path.exists(DATA_FOLDER):
+        data_folder = str(self.data_folder)
+        if not os.path.exists(data_folder):
             raise FileNotFoundError(
-                f"ERROR: Folder '{DATA_FOLDER}' not found. Please create it and add documents."
+                f"ERROR: Folder '{data_folder}' not found. Please create it and add documents."
             )
         
         # Find all supported files
         supported_extensions = ['.pdf', '.txt', '.docx', '.html', '.csv']
         all_files = [
-            f for f in os.listdir(DATA_FOLDER)
+            f for f in os.listdir(data_folder)
             if any(f.lower().endswith(ext) for ext in supported_extensions)
         ]
         
         if not all_files:
             raise FileNotFoundError(
-                f"ERROR: No supported files found in '{DATA_FOLDER}' folder. "
+                f"ERROR: No supported files found in '{data_folder}' folder. "
                 f"Supported: {', '.join(supported_extensions)}"
             )
         
@@ -154,7 +162,7 @@ class IngestService:
         failed_files = []
         
         for doc_file in all_files:
-            doc_path = os.path.join(DATA_FOLDER, doc_file)
+            doc_path = os.path.join(data_folder, doc_file)
             print(f"\nProcessing: {doc_file}")
             
             try:
@@ -171,7 +179,11 @@ class IngestService:
                 )
                 
                 # Convert to LangChain Documents
-                documents = elements_to_documents(chunks, source_file=doc_file)
+                documents = elements_to_documents(
+                    chunks,
+                    source_file=doc_file,
+                    dataset_key=self.dataset_key,
+                )
                 
                 all_documents.extend(documents)
                 successful_files.append(doc_file)
