@@ -7,7 +7,7 @@ import time
 from src.scraper.crawler import DEFAULT_HEADERS, REQUEST_DELAY, REQUEST_TIMEOUT, START_URL
 
 
-DEFAULT_OUTPUT_DIR = Path(__file__).parents[2] / "data"
+DEFAULT_OUTPUT_DIR = Path(__file__).parents[2] / "shared" / "sapientia"
 FILE_PREFIX = "sapientia_"
 
 def slug_from_url(url: str) -> str:

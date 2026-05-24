@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Project paths
-DATA_FOLDER = "data"
+DATA_FOLDER = os.getenv("DATA_FOLDER", "shared/sapientia")
 
 # PostgreSQL / pgvector configuration (using psycopg3 driver)
 DATABASE_URL = os.getenv(

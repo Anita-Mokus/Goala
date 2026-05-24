@@ -1,6 +1,6 @@
 """
 Command-line interface for ingesting documents.
-Processes PDFs and TXT files from the data folder into the vector database.
+Processes PDFs and TXT files from the shared Sapientia folder into the vector database.
 """
 import sys
 from pathlib import Path
@@ -28,8 +28,8 @@ def main():
             print(f"Ingesting specific file: {doc_path}\n")
             ingest_service.ingest_document(doc_path)
         else:
-            # Ingeste all documents from data folder
-            print("Ingesting all documents from data folder...\n")
+            # Ingest all documents from the configured data folder
+            print("Ingesting all documents from the configured data folder...\n")
             ingest_service.ingest_all_documents()
         
         print("\n" + "=" * 60)

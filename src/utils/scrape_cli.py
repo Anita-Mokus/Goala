@@ -1,6 +1,6 @@
 """
 Command-line interface for scraping ms.sapientia.ro Felvételi section.
-Saves each page as a .txt file into the data/ folder for ingestion.
+Saves files into shared/sapientia/ for ingestion.
 """
 import sys
 from pathlib import Path

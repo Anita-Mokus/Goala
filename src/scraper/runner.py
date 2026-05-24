@@ -1,5 +1,5 @@
 """
-Orchestrates crawling and extraction, saves results as .txt files into data/.
+Orchestrates crawling and extraction, saves results into shared/sapientia/.
 """
 import re
 from pathlib import Path
@@ -9,8 +9,7 @@ from src.scraper.crawler import crawl
 from src.scraper.extractor import extract_page
 from src.scraper.pdf_downloader import download_pdfs
 
-
-DEFAULT_OUTPUT_DIR = Path(__file__).parents[2] / "data"
+DEFAULT_OUTPUT_DIR = Path(__file__).parents[2] / "shared" / "sapientia"
 FILE_PREFIX = "sapientia_"
 
 
