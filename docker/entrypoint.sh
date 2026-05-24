@@ -33,17 +33,17 @@ done
 
 # Start fluxbox window manager
 echo "Starting fluxbox window manager..."
-DISPLAY=:99 fluxbox >/dev/null 2>&1 &
+DISPLAY=:99 fluxbox &
 sleep 1
 
 # Start x11vnc server (VNC backend, only listens locally)
 echo "Starting x11vnc..."
-x11vnc -quiet -display :99 -forever -shared -rfbport 5900 -nopw -noxdamage -listen 127.0.0.1 >/dev/null 2>&1 &
+x11vnc -display :99 -forever -shared -rfbport 5900 -nopw -noxdamage -listen 127.0.0.1 &
 VNC_PID=$!
 
 # Start websockify to bridge VNC over WebSocket for noVNC
 echo "Starting websockify on port 6080..."
-websockify 0.0.0.0:6080 localhost:5900 >/dev/null 2>&1 &
+websockify 0.0.0.0:6080 localhost:5900 &
 WEBSOCKIFY_PID=$!
 
 echo "✓ Virtual display ready!"
