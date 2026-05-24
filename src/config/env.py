@@ -32,6 +32,16 @@ def get_dataset_collection_name(dataset_key: str | None = None) -> str:
     return f"{PGVECTOR_COLLECTION_PREFIX}_{dataset_suffix}"
 
 
+def normalize_database_url(database_url: str | None = None) -> str:
+    """Ensure SQLAlchemy uses the psycopg3 driver for Postgres connections."""
+    url = (database_url or DATABASE_URL).strip()
+    if url.startswith("postgresql+psycopg2://"):
+        return url.replace("postgresql+psycopg2://", "postgresql+psycopg://", 1)
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return url
+
+
 DEFAULT_DATASET_FOLDER = str(get_dataset_folder())
 
 # PostgreSQL / pgvector configuration (using psycopg3 driver)

@@ -8,10 +8,10 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.dialects.postgresql import JSONB
 from contextlib import contextmanager
 
-from src.config import DATABASE_URL
+from src.config import normalize_database_url
 
 # Create SQLAlchemy engine
-engine = create_engine(DATABASE_URL)
+engine = create_engine(normalize_database_url())
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Base class for models

@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
 
-from src.config import DATABASE_URL, DEFAULT_DATASET_KEY
+from src.config import DATABASE_URL, DEFAULT_DATASET_KEY, normalize_database_url
 from src.api.dependencies import get_rag_service
 
 router = APIRouter(tags=["chat"])
@@ -39,7 +39,7 @@ def health_check():
     """Health check endpoint with service validation."""
     try:
         # Test database connection
-        engine = create_engine(DATABASE_URL)
+        engine = create_engine(normalize_database_url())
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         engine.dispose()
