@@ -38,3 +38,7 @@ asyncpg>=0.30.0
 # Messenger Bot Integration
 selenium>=4.15.0
 requests>=2.31.0
+
+# Scraping
+beautifulsoup4>=4.14.3
+lxml>=6.1.1

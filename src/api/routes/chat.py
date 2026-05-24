@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
 
-from src.config import DATABASE_URL
+from src.config import DATABASE_URL, DEFAULT_DATASET_KEY
 from src.api.dependencies import get_rag_service
 
 router = APIRouter(tags=["chat"])
@@ -15,6 +15,7 @@ router = APIRouter(tags=["chat"])
 class ChatRequest(BaseModel):
     """Request model for chat endpoint."""
     message: str
+    dataset_key: str = DEFAULT_DATASET_KEY
 
 
 class ChatResponse(BaseModel):
@@ -71,7 +72,7 @@ def chat(request: ChatRequest):
         ChatResponse with the AI-generated response
     """
     try:
-        rag_service = get_rag_service()
+        rag_service = get_rag_service(request.dataset_key)
         result = rag_service.query(request.message)
         return ChatResponse(response=result)
     except Exception as e:

@@ -13,6 +13,21 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
 
+from src.integrations.messenger.history_bootstrap import bootstrap_thread_from_dom
+from src.integrations.messenger.history_context import (
+    select_history_window,
+    build_contextual_user_input,
+)
+from src.integrations.messenger.history_repository import (
+    get_or_create_thread,
+    count_thread_messages,
+    mark_thread_bootstrapped,
+    save_message,
+    get_recent_messages,
+    extract_conversation_id,
+)
+from src.integrations.messenger.thread_policy import is_likely_group_chat
+
 
 def process_message(bot, message: Dict):
     """
@@ -44,8 +59,49 @@ def process_message(bot, message: Dict):
             bot.driver.get(conv_id)
             time.sleep(1.2)
         
-        # Get response from RAG API
-        response = get_rag_response(bot, text, sender)
+        if not bot.config.ALLOW_GROUP_CHATS and is_likely_group_chat(sender):
+            print(f"  [INFO] Group chat detected for '{sender}'. Skipping per policy.")
+            _mark_processed(bot, message)
+            return
+
+        # Ensure thread exists and bootstrap from DOM once for first-time users
+        thread = get_or_create_thread(
+            conversation_url=conv_id or bot.driver.current_url,
+            display_name=sender,
+            metadata={"source": "messenger_bot"},
+        )
+        thread_id = int(thread["id"])
+        conversation_id = str(thread.get("conversation_id") or extract_conversation_id(conv_id or ""))
+
+        message_count_before = count_thread_messages(thread_id)
+        if message_count_before == 0 and not thread.get("bootstrapped_from_dom"):
+            bootstrapped_count = bootstrap_thread_from_dom(bot, thread_id, conversation_id)
+            mark_thread_bootstrapped(thread_id)
+            print(f"  [DEBUG] DOM bootstrap saved {bootstrapped_count} message(s) for conversation {conversation_id}")
+
+        save_message(
+            thread_id=thread_id,
+            role="user",
+            direction="inbound",
+            content=text,
+            source="live_poll",
+            metadata={
+                "sender": sender,
+                "conversation_url": conv_id,
+                "conversation_id": conversation_id,
+            },
+        )
+
+        recent_messages = get_recent_messages(thread_id, limit=max(bot.config.HISTORY_WINDOW_TURNS * 4, 40))
+        history_window = select_history_window(
+            messages=recent_messages,
+            max_turns=bot.config.HISTORY_WINDOW_TURNS,
+            max_chars=bot.config.HISTORY_MAX_CHARS,
+        )
+        contextual_input = build_contextual_user_input(history_window, text)
+
+        # Get response from RAG API using contextualized input
+        response = get_rag_response(bot, contextual_input, sender)
         
         if not response:
             print("  ✗ Failed to get response from RAG API")
@@ -63,13 +119,22 @@ def process_message(bot, message: Dict):
         # Send response
         if send_message(bot, response):
             print("  ✓ Response sent successfully")
+
+            save_message(
+                thread_id=thread_id,
+                role="assistant",
+                direction="outbound",
+                content=response,
+                source="live_send",
+                metadata={
+                    "sender": sender,
+                    "conversation_url": conv_id,
+                    "conversation_id": conversation_id,
+                },
+            )
             
             # Mark as processed
-            msg_hash = message.get('_msg_hash')
-            if conv_id and msg_hash:
-                bot._processed_messages.add((conv_id, msg_hash))
-                resp_hash = hashlib.sha256(response.encode(errors='replace')).hexdigest()[:16]
-                bot._last_sent[conv_id] = resp_hash
+            _mark_processed(bot, message, response)
             
             # Update stats
             with bot._lock:
@@ -81,6 +146,19 @@ def process_message(bot, message: Dict):
     
     except Exception as e:
         print(f"ERROR processing message: {e}")
+
+
+def _mark_processed(bot, message: Dict, response: Optional[str] = None) -> None:
+    """Track processed message hashes to avoid duplicate handling in-memory."""
+    conv_id = message.get('conversation_id')
+    msg_hash = message.get('_msg_hash')
+
+    if conv_id and msg_hash:
+        bot._processed_messages.add((conv_id, msg_hash))
+
+    if conv_id and response:
+        resp_hash = hashlib.sha256(response.encode(errors='replace')).hexdigest()[:16]
+        bot._last_sent[conv_id] = resp_hash
 
 
 def get_rag_response(bot, message: str, sender: str, max_retries: int = 3) -> Optional[str]:

@@ -6,10 +6,14 @@ import time
 from typing import List, Dict, Optional, Tuple
 
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 from src.integrations.messenger.message_ownership import is_message_from_us
 from src.integrations.messenger.message_sender import extract_sender_name
+
+MESSAGE_LOAD_TIMEOUT = 10
 
 
 def extract_latest_message(bot) -> Optional[Dict]:
@@ -23,7 +27,13 @@ def extract_latest_message(bot) -> Optional[Dict]:
         Dictionary with 'sender', 'text', and 'element' keys, or None.
     """
     try:
-        time.sleep(1)
+        try:
+            WebDriverWait(bot.driver, MESSAGE_LOAD_TIMEOUT).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, 'div[dir="auto"]'))
+            )
+        except TimeoutException:
+            return None
+
         message_selectors = [
             'div[dir="auto"]',
             'span.x1lliihq',
@@ -63,7 +73,14 @@ def extract_unanswered_client_messages(bot, conv_id: str = "") -> Optional[Dict]
         Dict with 'sender', 'text', 'element', or None if no client messages.
     """
     try:
-        time.sleep(1)
+        try:
+            WebDriverWait(bot.driver, MESSAGE_LOAD_TIMEOUT).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, 'div[dir="auto"]'))
+            )
+        except TimeoutException:
+            print(f"  [DEBUG] Timed out waiting for messages to load in {conv_id}")
+            return None
+
         message_selectors = ['div[role="row"] div[dir="auto"]', 'div[dir="auto"]']
         all_messages: List[Tuple[object, str, bool]] = []
 

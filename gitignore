@@ -42,6 +42,9 @@ chroma_db/
 *~
 .DS_Store
 
+# Node
+node_modules/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 

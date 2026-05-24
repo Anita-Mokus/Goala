@@ -1,7 +1,10 @@
 """Configuration package for environment and database-backed settings."""
 from src.config.env import (
+    DEFAULT_DATASET_KEY,
+    DATASETS_ROOT,
     DATA_FOLDER,
     DATABASE_URL,
+    PGVECTOR_COLLECTION_PREFIX,
     PGVECTOR_COLLECTION_NAME,
     EMBEDDING_MODEL,
     PDF_LANGUAGE,
@@ -27,6 +30,9 @@ from src.config.env import (
     CORS_METHODS,
     CORS_HEADERS,
     RAG_PROMPT_TEMPLATE,
+    normalize_dataset_key,
+    get_dataset_folder,
+    get_dataset_collection_name,
 )
 
 from src.config.settings import (
@@ -46,8 +52,11 @@ from src.config.settings import (
 
 __all__ = [
     # env.py exports
+    "DEFAULT_DATASET_KEY",
+    "DATASETS_ROOT",
     "DATA_FOLDER",
     "DATABASE_URL",
+    "PGVECTOR_COLLECTION_PREFIX",
     "PGVECTOR_COLLECTION_NAME",
     "EMBEDDING_MODEL",
     "PDF_LANGUAGE",
@@ -73,6 +82,9 @@ __all__ = [
     "CORS_METHODS",
     "CORS_HEADERS",
     "RAG_PROMPT_TEMPLATE",
+    "normalize_dataset_key",
+    "get_dataset_folder",
+    "get_dataset_collection_name",
     # settings.py exports
     "get_settings_from_db",
     "clear_settings_cache",
