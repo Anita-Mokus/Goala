@@ -1,6 +1,6 @@
 """
 Command-line interface for ingesting documents.
-Processes PDFs and TXT files from the shared Sapientia folder into the vector database.
+Processes PDFs and TXT files from the data folder into the vector database.
 """
 import argparse
 import sys
@@ -11,8 +11,7 @@ project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from src.ingest import IngestService
-from src.config import DEFAULT_DATASET_KEY, get_dataset_folder, normalize_dataset_key
+from src.services import IngestService
 
 
 def main():
@@ -34,23 +33,17 @@ def main():
     print("AI Chat Flow - Document Ingestion Tool")
     print("=" * 60 + "\n")
     
-    dataset_key = normalize_dataset_key(args.dataset)
-    ingest_service = IngestService(dataset_key=dataset_key)
+    ingest_service = IngestService()
     
     try:
-        dataset_folder = get_dataset_folder(dataset_key)
-        print(f"Dataset: {dataset_key}")
-        print(f"Dataset folder: {dataset_folder}")
-        print(f"Collection: {ingest_service.collection_name}\n")
-
         # Check if specific file is provided
-        if args.file:
-            doc_path = args.file
+        if len(sys.argv) > 1:
+            doc_path = sys.argv[1]
             print(f"Ingesting specific file: {doc_path}\n")
             ingest_service.ingest_document(doc_path)
         else:
-            # Ingest all documents from the dataset folder
-            print("Ingesting all documents from the dataset folder...\n")
+            # Ingeste all documents from data folder
+            print("Ingesting all documents from data folder...\n")
             ingest_service.ingest_all_documents()
         
         print("\n" + "=" * 60)
