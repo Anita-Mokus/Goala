@@ -15,6 +15,7 @@ router = APIRouter(prefix="/api/settings", tags=["settings"])
 class SettingsResponse(BaseModel):
     """Response model for settings."""
     id: int
+    dataset_name: str
     llm_provider: str
     llm_model: str
     llm_temperature: float
@@ -33,6 +34,7 @@ class SettingsResponse(BaseModel):
 
 class SettingsUpdate(BaseModel):
     """Request model for updating settings."""
+    dataset_name: str = Field(..., pattern="^(liverag|felveteli)$")
     llm_provider: str = Field(..., pattern="^(groq|deepseek|openrouter|ollama)$")
     llm_model: str = Field(..., min_length=1, max_length=100)
     llm_temperature: float = Field(..., ge=0.0, le=1.0)
@@ -68,6 +70,7 @@ def get_settings():
 
             return SettingsResponse(
                 id=settings.id,
+                dataset_name=settings.dataset_name,
                 llm_provider=settings.llm_provider,
                 llm_model=settings.llm_model,
                 llm_temperature=settings.llm_temperature,
@@ -109,6 +112,7 @@ def update_settings(settings_update: SettingsUpdate):
             
             # Update all fields
             settings.llm_provider = settings_update.llm_provider
+            settings.dataset_name = settings_update.dataset_name
             settings.llm_model = settings_update.llm_model
             settings.llm_temperature = settings_update.llm_temperature
             settings.retriever_k = settings_update.retriever_k
@@ -129,6 +133,7 @@ def update_settings(settings_update: SettingsUpdate):
             # Convert to dict while session is still active
             return SettingsResponse(
                 id=settings.id,
+                dataset_name=settings.dataset_name,
                 llm_provider=settings.llm_provider,
                 llm_model=settings.llm_model,
                 llm_temperature=settings.llm_temperature,
