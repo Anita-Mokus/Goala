@@ -27,6 +27,7 @@ def get_settings_from_db() -> Optional[dict]:
             
             if settings:
                 _settings_cache = {
+                    'dataset_name': settings.dataset_name,
                     'llm_provider': settings.llm_provider,
                     'llm_model': settings.llm_model,
                     'llm_temperature': settings.llm_temperature,
@@ -51,6 +52,15 @@ def clear_settings_cache():
     global _settings_cache
     _settings_cache = None
 
+
+def get_current_dataset_name() -> str:
+    """Get current dataset name from DB or env."""
+    from src.config.env import DEFAULT_DATASET_KEY
+    
+    db_settings = get_settings_from_db()
+    if db_settings:
+        return db_settings['dataset_name']
+    return DEFAULT_DATASET_KEY
 
 def get_current_llm_provider() -> str:
     """Get current LLM provider from DB or env."""

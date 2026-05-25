@@ -98,6 +98,7 @@ __all__ = [
     # settings.py exports
     "get_settings_from_db",
     "clear_settings_cache",
+    "get_current_dataset_name",
     "get_current_llm_provider",
     "get_current_llm_model",
     "get_current_llm_temperature",

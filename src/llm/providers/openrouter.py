@@ -20,10 +20,18 @@ class OpenRouterProvider(LLMProvider):
     def get_llm(self):
         """Get or create OpenRouter LLM instance."""
         if self._llm is None:
+            import os
             from langchain_openai import ChatOpenAI
+            api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError(
+                    "No API key found for OpenRouter. "
+                    "Set OPENROUTER_API_KEY in your environment."
+                )
             self._llm = ChatOpenAI(
                 model=self.model,
                 temperature=self.temperature,
                 base_url="https://openrouter.ai/api/v1",
+                api_key=api_key,
             )
         return self._llm
