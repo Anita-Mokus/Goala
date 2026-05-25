@@ -16,8 +16,8 @@ class ChatHistoryResponse(BaseModel):
     id: int
     question: str
     answer: str
-    model_used: Optional[str]
-    response_time_ms: Optional[int]
+    model_used: Optional[str] = None
+    response_time_ms: Optional[int] = None
     created_at: datetime
 
     class Config:
