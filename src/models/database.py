@@ -57,7 +57,10 @@ class ChatHistory(Base):
     dataset_name = Column(String(50), nullable=False, default="liverag")
     question = Column(Text, nullable=False)
     answer = Column(Text, nullable=False)
+    model_used = Column(String(100), nullable=True)
     response_time_ms = Column(Integer, nullable=True)
+    source = Column(String(50), nullable=False, default="api")
+    message_metadata = Column(JSONB, nullable=True)
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
 
     __table_args__ = (
