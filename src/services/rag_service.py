@@ -52,16 +52,16 @@ class RAGService:
         # out chunks from other relevant documents.
 
         
-        self.retriever = self.db.as_retriever(
-            search_type="mmr",
-            search_kwargs={"k": RETRIEVER_K, "fetch_k": RETRIEVER_K * 3},
-        )
-
-
         # self.retriever = self.db.as_retriever(
-        #     search_type="similarity",
-        #     search_kwargs={"k": RETRIEVER_K},
+        #     search_type="mmr",
+        #     search_kwargs={"k": RETRIEVER_K, "fetch_k": RETRIEVER_K * 3},
         # )
+
+
+        self.retriever = self.db.as_retriever(
+            search_type="similarity",
+            search_kwargs={"k": RETRIEVER_K},
+        )
         
         # Create chain
         self.chain = (
