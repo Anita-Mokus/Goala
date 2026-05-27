@@ -19,7 +19,7 @@ def extract_page(html: str, url: str = "") -> str:
     left_szk_lines: list[str] = []
     if left_szk:
         for block in left_szk.find_all(class_="szakrinfo"):
-            left_szk_lines.append(block.get_text(separator="\n", strip=True).splitlines())
+            left_szk_lines.extend(block.get_text(separator="\n", strip=True).splitlines())
             left_szk_lines.append("")
 
     if not content:

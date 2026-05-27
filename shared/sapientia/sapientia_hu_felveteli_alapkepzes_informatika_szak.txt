@@ -1,6 +1,40 @@
 Forrás: https://ms.sapientia.ro/hu/felveteli/alapkepzes/informatika-szak
 Cím: Informatika szak
 
+Helyek száma
+25
+Tandíjmentes hely
+25
+Költség-hozzájárulásos hely
+10
+Tandíjas hely
+
+Költség-hozzájárulás összege
+500
+euró/év
+
+Differenciált költség-hozzájárulás összege
+700
+euró/év
+
+Teljes tandíj összege
+900
+euró/év
+
+Képzés időtartama
+3
+év
+
+A felvételi jegy összetétele
+25%
+az érettségi vizsga átlaga
+75%
+az érettségi írásbeli vizsgán Matematikából, Informatikából vagy Fizikából elért legnagyobb jegy, vagy írásbeli felvételi ezen tantárgyak valamelyikéből / / FIGYELEM: az érettségi vizsga matematika/informatika/fizika jegy esetében szorzót használunk
+
+Beiratkozási időszak
+(...)
+
+
 Informatika szak
 ✕
 Keresés
