@@ -7,11 +7,13 @@ from langchain_core.documents import Document
 from langchain_postgres import PGVector
 from sqlalchemy import create_engine, text
 
+from src.config import normalize_database_url
+
 
 def ensure_extension_exists(connection_string: str) -> None:
     """Ensure pgvector extension exists in the database."""
     try:
-        engine = create_engine(connection_string, echo=False)
+        engine = create_engine(normalize_database_url(connection_string), echo=False)
         with engine.connect() as conn:
             conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
             conn.commit()

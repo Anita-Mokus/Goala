@@ -3,6 +3,45 @@ import { apiClient, MessengerStatus } from '../api/client';
 import VncViewer from '../components/VncViewer';
 import './MessengerPage.css';
 
+function resolveVncWsUrl(): string | undefined {
+  const configuredBaseUrl = import.meta.env.VITE_NOVNC_URL?.trim();
+  const configuredApiBaseUrl = import.meta.env.VITE_API_URL?.trim();
+  const defaultPath = '/websockify';
+
+  if (!configuredBaseUrl) {
+    if (configuredApiBaseUrl) {
+      const absoluteApiUrl = /^https?:\/\//i.test(configuredApiBaseUrl)
+        ? configuredApiBaseUrl
+        : `https://${configuredApiBaseUrl}`;
+      const parsedApiUrl = new URL(absoluteApiUrl);
+      const wsProtocol = parsedApiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${wsProtocol}//${parsedApiUrl.host}${defaultPath}`;
+    }
+
+    const browserProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    return `${browserProto}://${window.location.host}${defaultPath}`;
+  }
+
+  if (/^wss?:\/\//i.test(configuredBaseUrl)) {
+    const parsedWsUrl = new URL(configuredBaseUrl);
+    const explicitPath = parsedWsUrl.pathname && parsedWsUrl.pathname !== '/'
+      ? parsedWsUrl.pathname.replace(/\/$/, '')
+      : defaultPath;
+    return `${parsedWsUrl.protocol}//${parsedWsUrl.host}${explicitPath}`;
+  }
+
+  const absoluteBaseUrl = /^https?:\/\//i.test(configuredBaseUrl)
+    ? configuredBaseUrl
+    : `https://${configuredBaseUrl}`;
+  const parsedUrl = new URL(absoluteBaseUrl);
+  const websocketBaseUrl = `${parsedUrl.protocol === 'https:' ? 'wss:' : 'ws:'}//${parsedUrl.host}`;
+  const explicitPath = parsedUrl.pathname && parsedUrl.pathname !== '/'
+    ? parsedUrl.pathname.replace(/\/$/, '')
+    : defaultPath;
+
+  return `${websocketBaseUrl}${explicitPath}`;
+}
+
 const MessengerPage: React.FC = () => {
   const [status, setStatus] = useState<MessengerStatus>({
     running: false,
@@ -103,6 +142,8 @@ const MessengerPage: React.FC = () => {
     if (!timestamp) return 'Never';
     return new Date(timestamp).toLocaleString();
   };
+
+  const vncWsUrl = resolveVncWsUrl();
 
   return (
     <div className="messenger-page">
@@ -213,7 +254,7 @@ const MessengerPage: React.FC = () => {
 
       <div className="info-section">
         <h3>Chrome Browser — Live View</h3>
-        <VncViewer connected={status.running} />
+        <VncViewer connected={status.running} wsUrl={vncWsUrl} />
       </div>
 
       <div className="info-section">

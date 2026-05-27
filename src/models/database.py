@@ -8,10 +8,10 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.dialects.postgresql import JSONB
 from contextlib import contextmanager
 
-from src.config import DATABASE_URL
+from src.config import normalize_database_url
 
 # Create SQLAlchemy engine
-engine = create_engine(DATABASE_URL)
+engine = create_engine(normalize_database_url())
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Base class for models
@@ -26,6 +26,7 @@ class AppSettings(Base):
     __tablename__ = "app_settings"
 
     id = Column(Integer, primary_key=True, default=1)
+    dataset_name = Column(String(50), nullable=False, default="liverag")
     llm_provider = Column(String(50), nullable=False, default="openrouter")
     llm_model = Column(String(100), nullable=False, default="openai/gpt-oss-120b:exacto")
     llm_temperature = Column(Float, nullable=False, default=0.3)
@@ -53,13 +54,18 @@ class ChatHistory(Base):
     __tablename__ = "chat_history"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+    dataset_name = Column(String(50), nullable=False, default="liverag")
     question = Column(Text, nullable=False)
     answer = Column(Text, nullable=False)
     model_used = Column(String(100), nullable=True)
     response_time_ms = Column(Integer, nullable=True)
-    source = Column(String(50), nullable=False, default='api')
+    source = Column(String(50), nullable=False, default="api")
     message_metadata = Column(JSONB, nullable=True)
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
+
+    __table_args__ = (
+        CheckConstraint("dataset_name IN ('liverag', 'felveteli')", name='check_dataset_name_range'),
+    )
 
 
 @contextmanager

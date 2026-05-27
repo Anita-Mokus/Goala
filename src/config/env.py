@@ -3,20 +3,55 @@ Environment variables and static configuration constants.
 Single source of truth for all env-based settings.
 """
 import os
+import hashlib
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-# Project paths
-DATA_FOLDER = "data"
+# Project paths and dataset scoping
+DEFAULT_DATASET_KEY = os.getenv("DEFAULT_DATASET_KEY", "sapientia")
+DATASETS_ROOT = Path(os.getenv("DATASETS_ROOT", "shared"))
+
+
+def normalize_dataset_key(dataset_key: str | None) -> str:
+    """Normalize a dataset key into a safe, lowercase identifier."""
+    key = (dataset_key or DEFAULT_DATASET_KEY).strip().lower()
+    safe_key = "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in key)
+    return safe_key.strip("_") or DEFAULT_DATASET_KEY
+
+
+def get_dataset_folder(dataset_key: str | None = None) -> Path:
+    """Return the filesystem folder that stores files for a dataset."""
+    return DATASETS_ROOT / normalize_dataset_key(dataset_key)
+
+
+def get_dataset_collection_name(dataset_key: str | None = None) -> str:
+    """Return the pgvector collection name for a dataset."""
+    dataset_suffix = normalize_dataset_key(dataset_key)
+    return f"{PGVECTOR_COLLECTION_PREFIX}_{dataset_suffix}"
+
+
+def normalize_database_url(database_url: str | None = None) -> str:
+    """Ensure SQLAlchemy uses the psycopg3 driver for Postgres connections."""
+    url = (database_url or DATABASE_URL).strip()
+    if url.startswith("postgresql+psycopg2://"):
+        return url.replace("postgresql+psycopg2://", "postgresql+psycopg://", 1)
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return url
+
+
+DEFAULT_DATASET_FOLDER = str(get_dataset_folder())
 
 # PostgreSQL / pgvector configuration (using psycopg3 driver)
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql+psycopg://postgres:postgres@localhost:5432/goala"
 )
-PGVECTOR_COLLECTION_NAME = "document_embeddings"
+PGVECTOR_COLLECTION_PREFIX = os.getenv("PGVECTOR_COLLECTION_PREFIX", "document_embeddings")
+PGVECTOR_COLLECTION_NAME = get_dataset_collection_name()
 
 # Model configurations
 EMBEDDING_MODEL = "BAAI/bge-m3"
@@ -30,6 +65,9 @@ CHUNK_MAX_CHARACTERS = int(os.getenv("CHUNK_MAX_CHARACTERS", "1000"))
 CHUNK_NEW_AFTER_N_CHARS = int(os.getenv("CHUNK_NEW_AFTER_N_CHARS", "800"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
 CHUNK_MULTIPAGE_SECTIONS = os.getenv("CHUNK_MULTIPAGE_SECTIONS", "true").lower() == "true"
+
+# HuggingFace token (required for gated datasets such as LiveRAG/Benchmark)
+HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN", "")
 
 # LLM Provider Selection
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openrouter")
@@ -59,6 +97,20 @@ elif LLM_PROVIDER.lower() == "ollama":
 
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))
 
+# Judge LLM configuration (used by evaluation pipelines)
+JUDGE_LLM_PROVIDER = os.getenv("JUDGE_LLM_PROVIDER", LLM_PROVIDER)
+JUDGE_LLM_MODEL = os.getenv("JUDGE_LLM_MODEL", LLM_MODEL)
+
+# LiveRAG prompt template (English benchmark, no company-specific context)
+LIVERAG_RAG_PROMPT_TEMPLATE = """You are a helpful assistant. Answer the question using only the provided context passages. If the context does not contain enough information, say so.
+
+CONTEXT:
+{context}
+
+QUESTION: {question}
+
+ANSWER:"""
+
 # Retriever settings
 RETRIEVER_K = 8
 
@@ -68,13 +120,33 @@ API_DESCRIPTION = "Hotel Chatbot API with RAG capabilities"
 API_VERSION = "1.0.0"
 
 # CORS settings
-CORS_ORIGINS = [
+DEFAULT_CORS_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+]
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", ",".join(DEFAULT_CORS_ORIGINS)).split(",")
+    if origin.strip()
 ]
 CORS_CREDENTIALS = True
 CORS_METHODS = ["*"]
 CORS_HEADERS = ["*"]
+
+# Access gate settings
+ACCESS_GATE_COOKIE_NAME = os.getenv("ACCESS_GATE_COOKIE_NAME", "goala_access")
+ACCESS_GATE_SESSION_SECRET = os.getenv("ACCESS_GATE_SESSION_SECRET", "")
+ACCESS_GATE_SESSION_TTL_SECONDS = int(os.getenv("ACCESS_GATE_SESSION_TTL_SECONDS", "604800"))
+ACCESS_GATE_TOKEN_HASHES = [
+    token_hash.strip().lower()
+    for token_hash in os.getenv("ACCESS_GATE_TOKEN_HASHES", "").split(",")
+    if token_hash.strip()
+]
+
+
+def hash_access_token(token: str) -> str:
+    """Return the SHA-256 hash for an access token."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 # Default RAG Prompt Template
 RAG_PROMPT_TEMPLATE = """You are an expert assistant for MBH Bank (Magyar Bankholding Bank Nyrt.) customer support.

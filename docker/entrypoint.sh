@@ -33,21 +33,30 @@ done
 
 # Start fluxbox window manager
 echo "Starting fluxbox window manager..."
-DISPLAY=:99 fluxbox &
+DISPLAY=:99 fluxbox >/dev/null 2>&1 &
 sleep 1
 
 # Start x11vnc server (VNC backend, only listens locally)
 echo "Starting x11vnc..."
-x11vnc -display :99 -forever -shared -rfbport 5900 -nopw -noxdamage -listen 127.0.0.1 &
+x11vnc -quiet -display :99 -forever -shared -rfbport 5900 -nopw -noxdamage -listen 127.0.0.1 >/dev/null 2>&1 &
 VNC_PID=$!
 
 # Start websockify to bridge VNC over WebSocket for noVNC
-echo "Starting websockify on port 6080..."
-websockify 0.0.0.0:6080 localhost:5900 &
+NOVNC_PORT="${NOVNC_PORT:-6080}"
+APP_PORT="${PORT:-8000}"
+
+if [ "$APP_PORT" = "$NOVNC_PORT" ]; then
+    echo "ERROR: PORT ($APP_PORT) and NOVNC_PORT ($NOVNC_PORT) cannot be the same."
+    echo "Set Railway HTTP service port to a different value, and keep NOVNC_PORT for the live preview proxy."
+    exit 1
+fi
+
+echo "Starting websockify on port ${NOVNC_PORT}..."
+websockify "0.0.0.0:${NOVNC_PORT}" localhost:5900 >/dev/null 2>&1 &
 WEBSOCKIFY_PID=$!
 
 echo "✓ Virtual display ready!"
-echo "✓ noVNC WebSocket available on port 6080"
+echo "✓ noVNC WebSocket available on port ${NOVNC_PORT}"
 
 # Run database migrations (each migration runs only once; tracked in schema_migrations table)
 echo "Running database migrations..."

@@ -35,6 +35,18 @@ npm run dev
 
 The dev server runs on http://localhost:3000 and proxies API requests to the backend.
 
+If you want to run the frontend against a deployed Railway backend, set `VITE_API_URL` before starting Vite. You can use either the backend origin or the full API base path:
+
+```bash
+VITE_API_URL=https://your-backend.up.railway.app
+```
+
+or
+
+```bash
+VITE_API_URL=https://your-backend.up.railway.app/api
+```
+
 ## Production Build
 
 The frontend is containerized and runs in Docker:
@@ -63,4 +75,21 @@ All API calls go through `/api` prefix which is proxied to the backend container
 
 ## Environment Variables
 
-No frontend-specific environment variables required. API URL is handled via nginx proxy.
+`VITE_API_URL` - Optional. Backend base URL for the deployed frontend. If omitted, the app falls back to `/api` for the Docker/nginx setup.
+
+`VITE_NOVNC_URL` - Optional. noVNC websocket endpoint for the live browser preview. For Railway, this can be the proxy host and port (for example `kodama.proxy.rlwy.net:11575`) or a full websocket URL. If no path is provided, the frontend defaults to `/websockify`.
+
+Access gate deployment variables:
+
+- `ACCESS_GATE_TOKEN_HASHES` - Comma-separated SHA-256 hashes of the private access tokens.
+- `ACCESS_GATE_SESSION_SECRET` - Shared signing secret used to mint and verify auth cookies.
+- `ACCESS_GATE_COOKIE_NAME` - Optional. Cookie name for the auth session; defaults to `goala_access`.
+- `ACCESS_GATE_SESSION_TTL_SECONDS` - Optional. Session lifetime in seconds; defaults to 7 days.
+
+Set the same `ACCESS_GATE_TOKEN_HASHES` and `ACCESS_GATE_SESSION_SECRET` values on both Vercel and Railway.
+
+For Railway deployment, also set `CORS_ORIGINS` on the backend to include your Vercel domain, for example:
+
+```bash
+https://your-frontend.vercel.app,http://localhost:3000,http://127.0.0.1:3000
+```

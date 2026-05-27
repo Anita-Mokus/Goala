@@ -5,7 +5,13 @@ Handles document retrieval and response generation.
 import time
 from langchain_postgres import PGVector
 
-from src.config import DATABASE_URL, PGVECTOR_COLLECTION_NAME, OLLAMA_BASE_URL
+from src.config import (
+    DATABASE_URL,
+    DEFAULT_DATASET_KEY,
+    OLLAMA_BASE_URL,
+    get_dataset_collection_name,
+    normalize_dataset_key,
+)
 from src.config.settings import (
     get_current_llm_provider,
     get_current_llm_model,
@@ -23,8 +29,11 @@ from src.chat.history_logger import log_chat_to_history
 class RAGService:
     """Service for handling RAG operations."""
     
-    def __init__(self):
+    def __init__(self, dataset_key: str = DEFAULT_DATASET_KEY):
         """Initialize RAG components."""
+        self.dataset_key = normalize_dataset_key(dataset_key)
+        # Allows callers to override the prompt template (e.g. evaluation runner)
+        self.prompt = None
         # Use shared embedding function (singleton)
         self.embedding_function = get_embeddings()
         
@@ -33,7 +42,7 @@ class RAGService:
             self.db = PGVector(
                 embeddings=self.embedding_function,
                 connection=DATABASE_URL,
-                collection_name=PGVECTOR_COLLECTION_NAME,
+                collection_name=get_dataset_collection_name(self.dataset_key),
                 use_jsonb=True,
             )
         except Exception as e:
@@ -88,8 +97,32 @@ class RAGService:
         
         return answer
     
-    def query_with_metadata(self, question: str, source: str = "api", 
-                           message_metadata: dict = None) -> str:
+    def query_with_sources(self, question: str) -> tuple[str, list]:
+        """
+        Query the RAG system and return both the answer and retrieved documents.
+
+        Used by the evaluation pipeline to compute retrieval metrics (e.g. MRR)
+        without a redundant second retriever call.
+
+        If ``self.prompt`` has been set externally (e.g. by the eval runner to
+        override the default company prompt), that template is used instead.
+
+        Returns:
+            Tuple of (answer_string, list_of_retrieved_Documents).
+        """
+        from langchain_core.prompts import ChatPromptTemplate
+        clear_settings_cache()
+        self._initialize_chain()
+        retrieved_docs = self.retriever.invoke(question)
+        context = "\n\n".join(doc.page_content for doc in retrieved_docs)
+        prompt = self.prompt or ChatPromptTemplate.from_template(get_rag_prompt_template())
+        prompt_value = prompt.invoke({"context": context, "question": question})
+        answer = self.llm.invoke(prompt_value)
+        answer_text = answer.content if hasattr(answer, "content") else str(answer)
+        return answer_text, retrieved_docs
+
+    def query_with_metadata(self, question: str, source: str = "api",
+                            message_metadata: dict = None) -> str:
         """
         Query the RAG system with a question and log with custom metadata.
         

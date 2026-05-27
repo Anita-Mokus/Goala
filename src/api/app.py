@@ -2,8 +2,10 @@
 FastAPI application initialization.
 Configures app, CORS, routers, and startup event.
 """
+import asyncio
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import (
@@ -15,7 +17,15 @@ from src.config import (
     CORS_METHODS,
     CORS_HEADERS,
 )
-from src.api.routes import settings, history, messenger, chat
+from src.api.auth import (
+    ACCESS_GATE_COOKIE_NAME,
+    is_auth_enabled,
+    is_public_http_path,
+    verify_access_cookie_value,
+)
+from src.api.routes import settings, history, messenger, chat, auth
+
+RUN_STARTUP_INGEST = os.getenv("RUN_STARTUP_INGEST", "false").lower() == "true"
 
 
 # Initialize FastAPI app
@@ -34,16 +44,104 @@ app.add_middleware(
     allow_headers=CORS_HEADERS,
 )
 
+
+@app.middleware("http")
+async def access_gate_middleware(request: Request, call_next):
+    if request.method == "OPTIONS" or not is_auth_enabled() or is_public_http_path(request.url.path):
+        return await call_next(request)
+
+    if not verify_access_cookie_value(request.cookies.get(ACCESS_GATE_COOKIE_NAME)):
+        return JSONResponse({"detail": "Authentication required"}, status_code=401)
+
+    return await call_next(request)
+
 # Register API routers
+app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(settings.router)
 app.include_router(history.router)
 app.include_router(messenger.router)
 
 
+@app.websocket("/websockify")
+async def websocket_vnc_proxy(websocket: WebSocket):
+    """Proxy browser websocket frames to the local VNC TCP server."""
+    if is_auth_enabled() and not verify_access_cookie_value(websocket.cookies.get(ACCESS_GATE_COOKIE_NAME)):
+        await websocket.close(code=4401)
+        return
+
+    await websocket.accept()
+
+    try:
+        reader, writer = await asyncio.open_connection("127.0.0.1", 5900)
+    except Exception:
+        await websocket.close(code=1011)
+        return
+
+    async def websocket_to_vnc() -> None:
+        try:
+            while True:
+                message = await websocket.receive()
+                payload_bytes = message.get("bytes")
+                payload_text = message.get("text")
+
+                if payload_bytes is not None:
+                    writer.write(payload_bytes)
+                    await writer.drain()
+                elif payload_text is not None:
+                    writer.write(payload_text.encode("utf-8"))
+                    await writer.drain()
+                elif message.get("type") == "websocket.disconnect":
+                    break
+        except WebSocketDisconnect:
+            pass
+        except Exception:
+            pass
+
+    async def vnc_to_websocket() -> None:
+        try:
+            while True:
+                data = await reader.read(65536)
+                if not data:
+                    break
+                await websocket.send_bytes(data)
+        except Exception:
+            pass
+
+    tasks = [
+        asyncio.create_task(websocket_to_vnc()),
+        asyncio.create_task(vnc_to_websocket()),
+    ]
+
+    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+
+    for task in pending:
+        task.cancel()
+
+    for task in done:
+        try:
+            task.result()
+        except Exception:
+            pass
+
+    try:
+        writer.close()
+        await writer.wait_closed()
+    except Exception:
+        pass
+
+    try:
+        await websocket.close()
+    except Exception:
+        pass
+
+
 @app.on_event("startup")
 def startup_event():
     """Run ingestion on startup if vector database doesn't have documents."""
+    if not RUN_STARTUP_INGEST:
+        return
+
     # Clear stale Messenger bot status file from previous container runs
     try:
         from src.integrations.messenger.config import MessengerConfig

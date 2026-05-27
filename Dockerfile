@@ -82,9 +82,10 @@ COPY --from=base /usr/local/bin /usr/local/bin
 # Keep existing Chrome paths working with Chromium
 RUN ln -sf /usr/bin/chromium /usr/bin/google-chrome
 
-# Copy application code
+# Copy application code and shared datasets
 COPY src/ ./src/
-COPY data/ ./data/
+COPY shared/ ./shared/
+COPY docker/migrations/ ./migrations/
 
 # Create Chrome profile directory with proper permissions
 RUN mkdir -p /app/chrome_profile && \
@@ -107,7 +108,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 EXPOSE 8000 6080
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+    CMD sh -c "python -c \"import os, urllib.request; urllib.request.urlopen('http://localhost:%s/health' % os.getenv('PORT', '8000'))\"" || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+CMD ["sh", "-c", "exec uvicorn src.api.app:app --host 0.0.0.0 --port ${PORT:-8000} --no-access-log"]
