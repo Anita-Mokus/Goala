@@ -1,0 +1,302 @@
+[
+  {
+    "question_id": "Q001",
+    "question_text": "Hány tandíjmentes hely érhető el az Automatika és alkalmazott informatika mérnök szakon?",
+    "document_id": "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+    "expected_output": "Az Automatika és alkalmazott informatika mérnök szakon 10 tandíjmentes hely érhető el."
+  },
+  {
+    "question_id": "Q002",
+    "question_text": "Mekkora az éves költség-hozzájárulás összege az Automatika és alkalmazott informatika mérnök szakon?",
+    "document_id": "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+    "expected_output": "A költség-hozzájárulás összege ezen a szakon 500 euró/év."
+  },
+  {
+    "question_id": "Q003",
+    "question_text": "Melyik képzési ághoz tartozik az Automatika és alkalmazott informatika mérnök szak?",
+    "document_id": "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+    "expected_output": "A szak az Automatika, alkalmazott informatika és intelligens rendszerek képzési ághoz tartozik."
+  },
+  {
+    "question_id": "Q004",
+    "question_text": "Hány éves az alapképzés időtartama az Automatika és alkalmazott informatika mérnök szakon?",
+    "document_id": "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+    "expected_output": "Az alapképzés időtartama 4 év."
+  },
+  {
+    "question_id": "Q005",
+    "question_text": "Mekkora a teljes tandíj összege a Fordító és tolmács szakon?",
+    "document_id": "49bf1565-4aea-4043-8bfc-1f5721979d91",
+    "expected_output": "A teljes tandíj összege a Fordító és tolmács szakon 750 euró/év."
+  },
+  {
+    "question_id": "Q006",
+    "question_text": "Melyik képzési ághoz tartozik a Fordító és tolmács szak?",
+    "document_id": "49bf1565-4aea-4043-8bfc-1f5721979d91",
+    "expected_output": "A Fordító és tolmács szak az Alkalmazott idegen nyelvek képzési ághoz tartozik."
+  },
+  {
+    "question_id": "Q007",
+    "question_text": "Hány éves a nappali alapképzés a Fordító és tolmács szakon?",
+    "document_id": "49bf1565-4aea-4043-8bfc-1f5721979d91",
+    "expected_output": "A Fordító és tolmács szakon a képzés időtartama 3 év."
+  },
+  {
+    "question_id": "Q008",
+    "question_text": "Milyen arányban számít bele a magyar nyelv és irodalom érettségi írásbeli jegye a Fordító és tolmács szak felvételi jegyébe?",
+    "document_id": "49bf1565-4aea-4043-8bfc-1f5721979d91",
+    "expected_output": "A magyar nyelv és irodalom írásbeli érettségi jegye 50%-os arányban számít bele a felvételi jegybe."
+  },
+  {
+    "question_id": "Q009",
+    "question_text": "Mekkora a költség-hozzájárulás összege a Gépészmérnöki szakon?",
+    "document_id": "529f91e6-355b-45f7-97a1-a33845a9243b",
+    "expected_output": "A költség-hozzájárulás összege a Gépészmérnöki szakon 500 euró/év."
+  },
+  {
+    "question_id": "Q010",
+    "question_text": "Milyen képzési formában indul a Gépészmérnöki alapképzés?",
+    "document_id": "529f91e6-355b-45f7-97a1-a33845a9243b",
+    "expected_output": "A Gépészmérnöki szak 4 éves nappali alapképzés formájában indul."
+  },
+  {
+    "question_id": "Q011",
+    "question_text": "Melyik képzési ághoz tartozik a Gépészmérnöki szak?",
+    "document_id": "529f91e6-355b-45f7-97a1-a33845a9243b",
+    "expected_output": "A Gépészmérnöki szak az Ipari mérnöki képzési ághoz tartozik."
+  },
+  {
+    "question_id": "Q012",
+    "question_text": "Hány tandíjmentes helyet hirdetnek meg az Infokommunikációs hálózatok és rendszerek (Távközlés) mérnöki szakon?",
+    "document_id": "295a2007-8dbc-4614-a567-f2cda914c805",
+    "expected_output": "Ezen a szakon 15 tandíjmentes helyet hirdetnek meg."
+  },
+  {
+    "question_id": "Q013",
+    "question_text": "Mekkora a költség-hozzájárulás összege a Távközlés mérnöki szakon?",
+    "document_id": "295a2007-8dbc-4614-a567-f2cda914c805",
+    "expected_output": "A költség-hozzájárulás összege a Távközlés mérnöki szakon 500 euró/év."
+  },
+  {
+    "question_id": "Q014",
+    "question_text": "Melyik képzési ághoz tartozik a Távközlés mérnöki szak?",
+    "document_id": "295a2007-8dbc-4614-a567-f2cda914c805",
+    "expected_output": "A szak az Elektronika, távközlés és információtechnológia mérnöki képzési ághoz tartozik."
+  },
+  {
+    "question_id": "Q015",
+    "question_text": "Hány éves az alapképzés időtartama a Távközlés mérnöki szakon?",
+    "document_id": "295a2007-8dbc-4614-a567-f2cda914c805",
+    "expected_output": "A képzés időtartama ezen a szakon 4 év."
+  },
+  {
+    "question_id": "Q016",
+    "question_text": "Hány tandíjmentes hely érhető el az Informatika szakon?",
+    "document_id": "b300b1bb-ba01-43b5-8c2a-595ed3426562",
+    "expected_output": "Az Informatika szakon 25 tandíjmentes hely érhető el."
+  },
+  {
+    "question_id": "Q017",
+    "question_text": "Mekkora a teljes tandíj összege az Informatika szakon?",
+    "document_id": "b300b1bb-ba01-43b5-8c2a-595ed3426562",
+    "expected_output": "A teljes tandíj összege az Informatika szakon 900 euró/év."
+  },
+  {
+    "question_id": "Q018",
+    "question_text": "Hány éves az alapképzés az Informatika szakon?",
+    "document_id": "b300b1bb-ba01-43b5-8c2a-595ed3426562",
+    "expected_output": "Az Informatika szak képzési időtartama 3 év."
+  },
+  {
+    "question_id": "Q019",
+    "question_text": "Milyen arányban határozza meg az érettségi vizsga átlaga a felvételi jegyet a Kertészmérnöki szakon?",
+    "document_id": "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+    "expected_output": "A Kertészmérnöki szakon a felvételi jegy 100%-át az érettségi vizsga átlaga adja."
+  },
+  {
+    "question_id": "Q020",
+    "question_text": "Hány tandíjmentes helyet hirdetnek meg a Kertészmérnöki szakon?",
+    "document_id": "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+    "expected_output": "A Kertészmérnöki szakon 15 tandíjmentes helyet hirdetnek meg."
+  },
+  {
+    "question_id": "Q021",
+    "question_text": "Mekkora az éves költség-hozzájárulás összege a Kertészmérnöki szakon?",
+    "document_id": "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+    "expected_output": "A költség-hozzájárulás összege a Kertészmérnöki szakon 500 euró/év."
+  },
+  {
+    "question_id": "Q022",
+    "question_text": "Hány éves a nappali alapképzés a Kertészmérnöki szakon?",
+    "document_id": "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+    "expected_output": "A képzés időtartama a Kertészmérnöki szakon 4 év."
+  },
+  {
+    "question_id": "Q023",
+    "question_text": "Hány tandíjmentes hely érhető el a Kommunikáció és közkapcsolatok szakon?",
+    "document_id": "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+    "expected_output": "A Kommunikáció és közkapcsolatok szakon 15 tandíjmentes hely érhető el."
+  },
+  {
+    "question_id": "Q024",
+    "question_text": "Mekkora a teljes tandíj összege a Kommunikáció és közkapcsolatok szakon?",
+    "document_id": "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+    "expected_output": "A teljes tandíj összege ezen a szakon 900 euró/év."
+  },
+  {
+    "question_id": "Q025",
+    "question_text": "Hány éves a nappali alapképzés a Kommunikáció és közkapcsolatok szakon?",
+    "document_id": "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+    "expected_output": "A képzés időtartama ezen a szakon 3 év."
+  },
+  {
+    "question_id": "Q026",
+    "question_text": "Hány tandíjmentes helyet hirdetnek meg a Közegészségügyi szolgáltatások és politikák szakon?",
+    "document_id": "cc599057-33ee-407f-8c5a-e8ca6c4e2250",
+    "expected_output": "A Közegészségügyi szolgáltatások és politikák szakon 15 tandíjmentes hely érhető el."
+  },
+  {
+    "question_id": "Q027",
+    "question_text": "Mekkora az éves költség-hozzájárulás összege a Közegészségügyi szolgáltatások és politikák szakon?",
+    "document_id": "cc599057-33ee-407f-8c5a-e8ca6c4e2250",
+    "expected_output": "A költség-hozzájárulás összege ezen a szakon 500 euró/év."
+  },
+  {
+    "question_id": "Q028",
+    "question_text": "Hány éves a nappali alapképzés a Közegészségügyi szolgáltatások és politikák szakon?",
+    "document_id": "cc599057-33ee-407f-8c5a-e8ca6c4e2250",
+    "expected_output": "A képzés időtartama ezen a szakon 3 év."
+  },
+  {
+    "question_id": "Q029",
+    "question_text": "Hány tandíjmentes hely érhető el a Mechatronika mérnöki szakon?",
+    "document_id": "73e954a0-5f13-4547-91c2-bb004bb0649d",
+    "expected_output": "A Mechatronika mérnöki szakon 20 tandíjmentes hely érhető el."
+  },
+  {
+    "question_id": "Q030",
+    "question_text": "Mekkora a költség-hozzájárulás összege a Mechatronika mérnöki szakon?",
+    "document_id": "73e954a0-5f13-4547-91c2-bb004bb0649d",
+    "expected_output": "A költség-hozzájárulás összege a Mechatronika mérnöki szakon 500 euró/év."
+  },
+  {
+    "question_id": "Q031",
+    "question_text": "Hány éves a Mechatronika mérnöki alapképzés?",
+    "document_id": "73e954a0-5f13-4547-91c2-bb004bb0649d",
+    "expected_output": "A Mechatronika mérnöki szak képzési időtartama 4 év."
+  },
+  {
+    "question_id": "Q032",
+    "question_text": "Hány tandíjmentes helyet hirdetnek meg a Számítástechnika mérnöki szakon?",
+    "document_id": "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+    "expected_output": "A Számítástechnika mérnöki szakon 10 tandíjmentes hely érhető el."
+  },
+  {
+    "question_id": "Q033",
+    "question_text": "Mekkora az éves költség-hozzájárulás összege a Számítástechnika mérnöki szakon?",
+    "document_id": "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+    "expected_output": "A költség-hozzájárulás összege ezen a szakon 500 euró/év."
+  },
+  {
+    "question_id": "Q034",
+    "question_text": "Hány éves a nappali alapképzés a Számítástechnika mérnöki szakon?",
+    "document_id": "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+    "expected_output": "A képzés időtartama a Számítástechnika mérnöki szakon 4 év."
+  },
+  {
+    "question_id": "Q035",
+    "question_text": "Hány tandíjmentes hely érhető el a Tájépítészmérnöki szakon?",
+    "document_id": "663aaae1-77d7-4dd2-b028-a69251850f5e",
+    "expected_output": "A Tájépítészmérnöki szakon 12 tandíjmentes hely érhető el."
+  },
+  {
+    "question_id": "Q036",
+    "question_text": "Mekkora a teljes tandíj összege a Tájépítészmérnöki szakon?",
+    "document_id": "663aaae1-77d7-4dd2-b028-a69251850f5e",
+    "expected_output": "A teljes tandíj összege ezen a szakon 900 euró/év."
+  },
+  {
+    "question_id": "Q037",
+    "question_text": "Hány éves a nappali alapképzés a Tájépítészmérnöki szakon?",
+    "document_id": "663aaae1-77d7-4dd2-b028-a69251850f5e",
+    "expected_output": "A képzés időtartama a Tájépítészmérnöki szakon 4 év."
+  },
+  {
+    "question_id": "Q038",
+    "question_text": "Hány éves a Fejlett mechatronikai rendszerek mesteri szak képzési időtartama?",
+    "document_id": "d0003287-3b9e-4ac0-838a-06bc0a815086",
+    "expected_output": "A képzés időtartama ezen a mesteri szakon 2 év."
+  },
+  {
+    "question_id": "Q039",
+    "question_text": "Mekkora a szóbeli vizsga súlya a Fejlett mechatronikai rendszerek mesteri szak felvételi jegyében?",
+    "document_id": "d0003287-3b9e-4ac0-838a-06bc0a815086",
+    "expected_output": "A szóbeli vizsga a felvételi jegy 50%-át teszi ki."
+  },
+  {
+    "question_id": "Q040",
+    "question_text": "Hány éves a Növényorvos mesteri szak képzési időtartama?",
+    "document_id": "539f6ee7-2354-484f-9cca-76d94fc59c6e",
+    "expected_output": "A Növényorvos mesteri szak képzési időtartama 2 év."
+  },
+  {
+    "question_id": "Q041",
+    "question_text": "Mekkora az írásbeli vizsga súlya a Növényorvos mesteri szak felvételi jegyében?",
+    "document_id": "539f6ee7-2354-484f-9cca-76d94fc59c6e",
+    "expected_output": "Az írásbeli vizsga 40%-os arányban számít bele a felvételi jegybe."
+  },
+  {
+    "question_id": "Q042",
+    "question_text": "Melyik képzési ághoz tartozik a Számítógépes irányítási rendszerek mesteri szak?",
+    "document_id": "0edcffcd-05dc-4344-b1af-8f1c40ca2992",
+    "expected_output": "A Számítógépes irányítási rendszerek szak a Rendszermérnöki képzési ághoz tartozik."
+  },
+  {
+    "question_id": "Q043",
+    "question_text": "Melyik magyarországi egyetem a partnerintézménye a Szoftverfejlesztés mesteri szaknak?",
+    "document_id": "2375d860-32ca-46a2-bca9-24cd4a3d9a0a",
+    "expected_output": "A Szoftverfejlesztés mesteri szak partnerintézménye az Eötvös Loránd Tudományegyetem Informatikai Kara."
+  },
+  {
+    "question_id": "Q044",
+    "question_text": "Mikorra esik a 2026-os nyári alapképzési beiratkozási időszak?",
+    "document_id": "2353afd1-ab86-48d7-a6e0-1b94a2b740fe",
+    "expected_output": "A 2026-os nyári alapképzési beiratkozás 2026. július 8. és 19. között zajlik."
+  },
+  {
+    "question_id": "Q045",
+    "question_text": "Mikor tartják a 2026-os nyári mesterképzési felvételi vizsgát?",
+    "document_id": "2353afd1-ab86-48d7-a6e0-1b94a2b740fe",
+    "expected_output": "A mesterképzési felvételi vizsga időpontja 2026. július 22., szerda."
+  },
+  {
+    "question_id": "Q046",
+    "question_text": "Mi a telefonszáma Ungvári Zsuzsának, a kari PR-felelősnek?",
+    "document_id": "d3ef2fd9-919e-486b-ade8-dfcf2bf502f6",
+    "expected_output": "Ungvári Zsuzsa telefonszáma a 0755-142-432."
+  },
+  {
+    "question_id": "Q047",
+    "question_text": "Mennyi az éves díja egy apartmannak (3+3 ágy) a bentlakásban a 2025/2026-os tanévben?",
+    "document_id": "20765d5a-40cc-4707-9bde-29f01c4b14c7",
+    "expected_output": "Az éves díj egy 3+3 ágyas apartmanban 210 lej/fő."
+  },
+  {
+    "question_id": "Q048",
+    "question_text": "Milyen e-mail címre kell küldeni az első évesek bentlakási pályázatait?",
+    "document_id": "9f1bc4dd-cb8d-4bfc-af8b-823c69801c55",
+    "expected_output": "A pályázatokat az andrasannamaria@ms.sapientia.ro e-mail címre kell küldeni."
+  },
+  {
+    "question_id": "Q049",
+    "question_text": "Melyik napon közölték a 2024-es nyári felvételi végleges eredményeit?",
+    "document_id": "2d1ed139-5882-4106-8126-9b6f42ebea3c",
+    "expected_output": "A 2024/2025-ös tanév nyári felvételi végleges eredményeit 2024. július 31-én közölték."
+  },
+  {
+    "question_id": "Q050",
+    "question_text": "Meddig jelentkezhettek az első évesek a bentlakásba a 2025-2026-os tanévre?",
+    "document_id": "9f1bc4dd-cb8d-4bfc-af8b-823c69801c55",
+    "expected_output": "Az első éveseknek 2025. július 29., 12 óráig volt lehetőségük jelentkezni."
+  }
+]
