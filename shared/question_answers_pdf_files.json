@@ -1,0 +1,242 @@
+[
+  {
+    "question_id": "Q001",
+    "question_text": "Mi a felvételi jegy kiszámítási képlete a Sapientia EMTE Marosvásárhelyi Karán?",
+    "document_id": "ffa25ca9-94ed-4607-b9f6-63dce5f4291e",
+    "expected_output": "Felvételi jegy = (0.25 × 1. jegy + 0.75 × 2. jegy)"
+  },
+  {
+    "question_id": "Q002",
+    "question_text": "Mit jelent az 1. jegy a felvételi jegy kiszámításakor?",
+    "document_id": "ffa25ca9-94ed-4607-b9f6-63dce5f4291e",
+    "expected_output": "Az 1. jegy az érettségi átlag."
+  },
+  {
+    "question_id": "Q003",
+    "question_text": "Mekkora a szorzó matematika érettségi esetén elméleti szakirány, reál profil, matematika-informatika szak elvégzése után (M1 vizsgatípus)?",
+    "document_id": "ffa25ca9-94ed-4607-b9f6-63dce5f4291e",
+    "expected_output": "1.0"
+  },
+  {
+    "question_id": "Q004",
+    "question_text": "Mekkora a szorzó fizika érettségi esetén technológiai szakirány elvégzése után (F2 vizsgatípus)?",
+    "document_id": "ffa25ca9-94ed-4607-b9f6-63dce5f4291e",
+    "expected_output": "0.8"
+  },
+  {
+    "question_id": "Q005",
+    "question_text": "Mekkora a szorzó informatika érettségi esetén elméleti szakirány, természettudományok szak elvégzése után (I2 vizsgatípus)?",
+    "document_id": "ffa25ca9-94ed-4607-b9f6-63dce5f4291e",
+    "expected_output": "0.8"
+  },
+  {
+    "question_id": "Q006",
+    "question_text": "Mi volt az Automatika és alkalmazott informatika szak költséghozzájárulásos tandíja a 2022/2023-as tanévben?",
+    "document_id": "27b8b36b-5531-4d6b-b997-4ad40279b08b",
+    "expected_output": "2000 RON"
+  },
+  {
+    "question_id": "Q007",
+    "question_text": "Mekkora volt az Informatika szak teljes tandíjas képzésének díja a 2022/2023-as tanévben?",
+    "document_id": "27b8b36b-5531-4d6b-b997-4ad40279b08b",
+    "expected_output": "3750 RON"
+  },
+  {
+    "question_id": "Q008",
+    "question_text": "Mekkora volt az első tandíjrészlet összege a 2022/2023-as tanévben az összes tandíjas szakon?",
+    "document_id": "27b8b36b-5531-4d6b-b997-4ad40279b08b",
+    "expected_output": "500 RON"
+  },
+  {
+    "question_id": "Q009",
+    "question_text": "Mi volt az Automatika és alkalmazott informatika szak költséghozzájárulásos tandíja a 2024/2025-es tanévben?",
+    "document_id": "b6d4070c-057b-4a7e-8730-3a51cb2be7e4",
+    "expected_output": "2500 RON"
+  },
+  {
+    "question_id": "Q010",
+    "question_text": "Mekkora volt az első tandíjrészlet összege a 2024/2025-es tanévben?",
+    "document_id": "b6d4070c-057b-4a7e-8730-3a51cb2be7e4",
+    "expected_output": "600 RON"
+  },
+  {
+    "question_id": "Q011",
+    "question_text": "Melyik szenátusi határozat alapján készült a 2025/2026-os tanulmányi évre vonatkozó alapképzési felvételi szabályzat?",
+    "document_id": "7a30b6ad-dc9e-40d0-b32f-9c66dfecfa15",
+    "expected_output": "A 2961/2025.01.31. szenátusi határozat alapján."
+  },
+  {
+    "question_id": "Q012",
+    "question_text": "Hova kell fordulni külföldi érettségi oklevél hivatalos elismertetéséhez a 2025/2026-os felvételi szabályzat szerint?",
+    "document_id": "7a30b6ad-dc9e-40d0-b32f-9c66dfecfa15",
+    "expected_output": "A Sapientia Egyetem Rektori Hivatalához."
+  },
+  {
+    "question_id": "Q013",
+    "question_text": "Milyen típusú helyre iratkozhat az a hallgató, aki a Sapientia EMTE keretében egy második szakra kíván iratkozni (2025/2026-os felvételi szabályzat szerint)?",
+    "document_id": "7a30b6ad-dc9e-40d0-b32f-9c66dfecfa15",
+    "expected_output": "Csak tandíjas helyet foglalhat el."
+  },
+  {
+    "question_id": "Q014",
+    "question_text": "Melyik szenátusi határozat alapján készült a 2026/2027-es tanulmányi évre vonatkozó alapképzési felvételi szabályzat?",
+    "document_id": "69f3a885-f788-4ba3-ab8b-15228669976d",
+    "expected_output": "A 3084/2026.01.30. szenátusi határozat alapján."
+  },
+  {
+    "question_id": "Q015",
+    "question_text": "Mi a Sapientia Marosvásárhelyi Kar felvételivel kapcsolatos e-mail címe?",
+    "document_id": "69f3a885-f788-4ba3-ab8b-15228669976d",
+    "expected_output": "felveteli@ms.sapientia.ro"
+  },
+  {
+    "question_id": "Q016",
+    "question_text": "Melyik szakon volt az egyetlen fizika felvételi vizsgázó 2024. július 23-án, és mi volt a jegye?",
+    "document_id": "b547aa5f-f109-4a89-a1d8-a8f4ce1e0fe4",
+    "expected_output": "Az ybe8 azonosítójú jelölt volt az egyetlen fizika felvételiző, 5,05-ös jeggyel."
+  },
+  {
+    "question_id": "Q017",
+    "question_text": "Hány jelölt tett informatika felvételi vizsgát 2024. július 23-án a Sapientia Marosvásárhelyi Karon?",
+    "document_id": "5002c8f3-20f6-4cab-8d88-aa515b777d82",
+    "expected_output": "45 jelölt tett informatika felvételi vizsgát."
+  },
+  {
+    "question_id": "Q018",
+    "question_text": "Melyik jelölt ért el 9,00-ás jegyet az informatika felvételi vizsgán 2024. július 23-án?",
+    "document_id": "5002c8f3-20f6-4cab-8d88-aa515b777d82",
+    "expected_output": "A zhb0 azonosítójú jelölt ért el 9,00-ás jegyet."
+  },
+  {
+    "question_id": "Q019",
+    "question_text": "Hány jelölt nyert felvételt tandíjmentes helyre a Szoftverfejlesztés szakon a 2024. júliusi felvételi során?",
+    "document_id": "c0a34b70-2991-43c3-b9f8-fc6b8d21842c",
+    "expected_output": "15 jelölt nyert felvételt tandíjmentes helyre."
+  },
+  {
+    "question_id": "Q020",
+    "question_text": "Mi volt a legjobb felvételi átlag a Szoftverfejlesztés tandíjmentes szakon a 2024. júliusi felvételi során?",
+    "document_id": "c0a34b70-2991-43c3-b9f8-fc6b8d21842c",
+    "expected_output": "9,42 (az sgu1 és hzk7 azonosítójú jelöltek egyaránt elérték ezt az átlagot)."
+  },
+  {
+    "question_id": "Q021",
+    "question_text": "Mi volt a Szoftverfejlesztés tandíjas szak (SZF1) felvételi listáján az első helyezett jelölt felvételi átlaga 2024. júliusban?",
+    "document_id": "c0a34b70-2991-43c3-b9f8-fc6b8d21842c",
+    "expected_output": "8,14 (dze5 azonosítójú jelölt)"
+  },
+  {
+    "question_id": "Q022",
+    "question_text": "Mi volt a Fordító és tolmács szak román megfelelője (domeniu de licență és specializare) a 2024-es helyelfoglalási dokumentum szerint?",
+    "document_id": "3f354bdc-e5d5-4f48-adf5-3a71372fb026",
+    "expected_output": "Domeniul de licență: Limbi moderne aplicate; Specializarea: Traducere și interpretare."
+  },
+  {
+    "question_id": "Q023",
+    "question_text": "Mi volt az Informatika szak román megfelelője (domeniu de licență és program de studii) a 2024-es helyelfoglalási dokumentum szerint?",
+    "document_id": "3f354bdc-e5d5-4f48-adf5-3a71372fb026",
+    "expected_output": "Domeniul de licență: Informatică; Programul de studii: Informatică."
+  },
+  {
+    "question_id": "Q024",
+    "question_text": "Mi volt a Közegészségügyi szolgáltatások és politikák szak román megfelelője a 2024-es helyelfoglalási dokumentum szerint?",
+    "document_id": "3f354bdc-e5d5-4f48-adf5-3a71372fb026",
+    "expected_output": "Domeniul de licență: Științe administrative; Specializarea: Servicii și politici de sănătate publică."
+  },
+  {
+    "question_id": "Q025",
+    "question_text": "Mikor írták alá a 2024. júliusi alapképzéses beiskolázási szerződést Marosvásárhelyen?",
+    "document_id": "9c7a0d50-2e5f-4b50-83f7-a17c6e39ceeb",
+    "expected_output": "2024. július 25-én (25.07.2024)."
+  },
+  {
+    "question_id": "Q026",
+    "question_text": "Milyen mértékű a késedelmi kamat a fizetési kötelezettség elmulasztása esetén a 2024-es alapképzéses beiskolázási szerződés szerint?",
+    "document_id": "9c7a0d50-2e5f-4b50-83f7-a17c6e39ceeb",
+    "expected_output": "0,5% a ki nem fizetett összeg után naponta."
+  },
+  {
+    "question_id": "Q027",
+    "question_text": "Hány nappal a lejárat után lehet a hallgatót kizárni, ha nem fizeti be a késedelmi kamatot a 2024-es beiskolázási szerződés szerint?",
+    "document_id": "9c7a0d50-2e5f-4b50-83f7-a17c6e39ceeb",
+    "expected_output": "30 nap után."
+  },
+  {
+    "question_id": "Q028",
+    "question_text": "Mikor írták alá a 2025. júliusi mesterképzéses beiskolázási szerződést Marosvásárhelyen?",
+    "document_id": "fb5e7d2b-bb1f-4970-8bf7-d3dcdbded776",
+    "expected_output": "2025. július 18-án (18.07.2025)."
+  },
+  {
+    "question_id": "Q029",
+    "question_text": "Melyik román törvény alapján hozták létre a Sapientia Egyetemet (a beiskolázási szerződések szerint)?",
+    "document_id": "4df97118-1be5-4e36-8544-4367ad786878",
+    "expected_output": "A 58/2012-es számú törvény (Legea nr. 58/2012) alapján."
+  },
+  {
+    "question_id": "Q030",
+    "question_text": "Mi a Sapientia Egyetem székhelyének pontos címe a beiskolázási szerződések szerint?",
+    "document_id": "4df97118-1be5-4e36-8544-4367ad786878",
+    "expected_output": "Cluj-Napoca, str. Matei Corvin nr. 4, jud. Cluj."
+  },
+  {
+    "question_id": "Q031",
+    "question_text": "Mi a Sapientia Egyetem adószáma (cod de înregistrare fiscală) a beiskolázási szerződések szerint?",
+    "document_id": "4df97118-1be5-4e36-8544-4367ad786878",
+    "expected_output": "RO14645945"
+  },
+  {
+    "question_id": "Q032",
+    "question_text": "Milyen elektronikus platformon köteles a hallgató napi rendszerességgel tájékozódni tanulmányaival kapcsolatban a beiskolázási szerződés szerint?",
+    "document_id": "4df97118-1be5-4e36-8544-4367ad786878",
+    "expected_output": "A Neptun elektronikus platformon."
+  },
+  {
+    "question_id": "Q033",
+    "question_text": "A 2025. júliusi felvételi alkalmával a Fordító és tolmács alapképzés német képességfelmérő tesztjén (III. variáns) hány pontot ért a B rész 1. kérdésének helyes válasza?",
+    "document_id": "d26a25e0-6fa7-4877-9358-9f59ec3576ff",
+    "expected_output": "A B rész helyes válasza: C (a kérdésenkénti pontozás a tesztlapon meghatározott)."
+  },
+  {
+    "question_id": "Q034",
+    "question_text": "Hány kérdésből állt a 2025. júliusi német képességfelmérő teszt B része (III. variáns)?",
+    "document_id": "d26a25e0-6fa7-4877-9358-9f59ec3576ff",
+    "expected_output": "35 kérdésből (1-35. kérdések)."
+  },
+  {
+    "question_id": "Q035",
+    "question_text": "A 2025. júliusi német felvételi teszt (III. variáns) kulcsában mi a 10. kérdés helyes válasza?",
+    "document_id": "d26a25e0-6fa7-4877-9358-9f59ec3576ff",
+    "expected_output": "C"
+  },
+  {
+    "question_id": "Q036",
+    "question_text": "Hány kérdésből állt a 2024. szeptemberi román nyelvi felvételi teszt (III. variáns) a javítókulcs szerint?",
+    "document_id": "ef52c22a-eb26-4650-bebe-9f7bc5071075",
+    "expected_output": "45 kérdésből."
+  },
+  {
+    "question_id": "Q037",
+    "question_text": "Mi volt a 2024. szeptemberi román nyelvi felvételi teszt (III. variáns) 1. kérdésének helyes válasza?",
+    "document_id": "ef52c22a-eb26-4650-bebe-9f7bc5071075",
+    "expected_output": "D"
+  },
+  {
+    "question_id": "Q038",
+    "question_text": "Mi volt a 2024. szeptemberi román nyelvi felvételi teszt (III. variáns) 45. kérdésének helyes válasza?",
+    "document_id": "ef52c22a-eb26-4650-bebe-9f7bc5071075",
+    "expected_output": "B"
+  },
+  {
+    "question_id": "Q039",
+    "question_text": "Melyik kar szervezte a 2024. szeptemberi román nyelvi felvételi tesztet a javítókulcs szerint?",
+    "document_id": "ef52c22a-eb26-4650-bebe-9f7bc5071075",
+    "expected_output": "A Sapientia Egyetem Marosvásárhelyi Karának Alkalmazott Nyelvészeti Tanszéke (Departamentul de Lingvistică Aplicată)."
+  },
+  {
+    "question_id": "Q040",
+    "question_text": "Mikor kell benyújtani a helyelfoglalás visszaigazolását a 2024. júliusi mesterképzéses felvételi esetén a vonatkozó nyomtatvány szerint?",
+    "document_id": "8736e9db-0315-4532-9584-1f23dd437fb8",
+    "expected_output": "2024. július 26-án."
+  }
+]
