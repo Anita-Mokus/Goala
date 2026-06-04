@@ -1,8 +1,10 @@
 """
-Dataset parsing helpers for LiveRAG ingestion.
+Dataset parsing helpers for SapientiaRAG ingestion.
 
-Functions to convert HuggingFace dataset rows to LangChain Document objects
+Functions to convert local JSON dataset rows to LangChain Document objects
 and build question-to-doc_id mappings.
+
+
 """
 import json
 from typing import List, Set
@@ -10,13 +12,13 @@ from typing import List, Set
 from langchain_core.documents import Document
 
 
-def parse_supporting_document(entry) -> tuple[str, str]:
+def parse_document_field(entry) -> tuple[str, str]:
     """
-    Parse a single supporting document entry.
-    
+    Parse the 'document' field of a dataset row.
+
     Args:
         entry: Either a dict or JSON string with 'content' and 'doc_id' fields.
-        
+
     Returns:
         Tuple of (content, doc_id). Both may be empty strings if parsing fails.
     """
@@ -25,10 +27,10 @@ def parse_supporting_document(entry) -> tuple[str, str]:
             entry = json.loads(entry)
         except json.JSONDecodeError:
             return "", ""
-    
+
     if not isinstance(entry, dict):
         return "", ""
-    
+
     content = entry.get("content", "").strip()
     doc_id = entry.get("doc_id", "")
     return content, doc_id
@@ -36,86 +38,70 @@ def parse_supporting_document(entry) -> tuple[str, str]:
 
 def dataset_row_to_documents(row, seen_ids: Set[str]) -> List[Document]:
     """
-    Convert a single HuggingFace dataset row to LangChain Document objects.
-    
-    Each LiveRAG/Benchmark row has a `Supporting_Documents` field that is a
-    list of JSON strings (or already-parsed dicts), each with:
-      - 'content' : the passage text
-      - 'doc_id'  : unique document identifier
-    
-    Rows also carry `Question` and `Index` which are stored as metadata.
-    ``seen_ids`` is shared across all batch calls to deduplicate globally.
-    
+    Convert a single JSON dataset row to a LangChain Document object.
+
+    Each row carries a single `document` dict with 'content' and 'doc_id'.
+    ``seen_ids`` is shared across all rows to deduplicate globally.
+
     Args:
-        row: A single row from the HuggingFace dataset.
-        seen_ids: Set of already-seen doc_ids (modified in-place for deduplication).
-        
+        row: A single row from the local JSON dataset.
+        seen_ids: Set of already-seen doc_ids (modified in-place).
+
     Returns:
-        List of Document objects created from this row.
+        List with 0 or 1 Document objects.
     """
-    documents = []
-    supporting = row.get("Supporting_Documents") or []
-    
-    for entry in supporting:
-        content, doc_id = parse_supporting_document(entry)
-        
-        if not content:
-            continue
-        if doc_id and doc_id in seen_ids:
-            continue
-        if doc_id:
-            seen_ids.add(doc_id)
-        
-        metadata: dict = {"doc_id": doc_id}
-        if row.get("Index") is not None:
-            metadata["question_index"] = row["Index"]
-        
-        documents.append(Document(page_content=content, metadata=metadata))
-    
-    return documents
+    content, doc_id = parse_document_field(row.get("document") or {})
+
+    if not content:
+        return []
+    if doc_id and doc_id in seen_ids:
+        return []
+    if doc_id:
+        seen_ids.add(doc_id)
+
+    metadata: dict = {"doc_id": doc_id}
+    if row.get("question_id") is not None:
+        metadata["question_id"] = row["question_id"]
+
+    return [Document(page_content=content, metadata=metadata)]
 
 
 def build_question_docids_map(dataset) -> dict:
     """
     Build a mapping of question text → list of ground-truth doc_ids.
 
-    This is used during evaluation to compute Mean Reciprocal Rank (MRR):
-    for each question we need to know which doc_ids are relevant so we
-    can check whether the retriever surfaces them at the top of its ranking.
+    Used during evaluation to compute MRR: for each question we need to
+    know which doc_ids are relevant so we can check whether the retriever
+    surfaces them at the top of its ranking.
 
     Args:
-        dataset: Full HuggingFace dataset (all rows, not batched).
+        dataset: Full list of JSON rows.
 
     Returns:
         Dict mapping question string → list of doc_id strings.
     """
     mapping: dict = {}
     for row in dataset:
-        question = (row.get("Question") or "").strip()
+        question = (row.get("question_text") or "").strip()
         if not question:
             continue
-        supporting = row.get("Supporting_Documents") or []
-        doc_ids = []
-        for entry in supporting:
-            _, doc_id = parse_supporting_document(entry)
-            if doc_id:
-                doc_ids.append(doc_id)
-        mapping[question] = doc_ids
+        _, doc_id = parse_document_field(row.get("document") or {})
+        mapping[question] = [doc_id] if doc_id else []
     return mapping
 
 
 def extract_question_answer(row) -> tuple[str, str] | None:
     """
     Extract question and answer from a dataset row.
-    
+
     Args:
-        row: A single row from the HuggingFace dataset.
-        
+        row: A single row from the local JSON dataset.
+
     Returns:
         Tuple of (question, answer), or None if either is missing.
     """
-    question = (row.get("Question") or "").strip()
-    answer = str(row.get("Answer", "")).strip()
+    question = (row.get("question_text") or "").strip()
+    answer = str(row.get("expected_output", "")).strip()
     if question and answer:
         return (question, answer)
     return None
@@ -124,17 +110,12 @@ def extract_question_answer(row) -> tuple[str, str] | None:
 def extract_doc_ids_from_row(row) -> List[str]:
     """
     Extract all doc_ids from a single dataset row.
-    
+
     Args:
-        row: A single row from the HuggingFace dataset.
-        
+        row: A single row from the local JSON dataset.
+
     Returns:
-        List of doc_id strings.
+        List of doc_id strings (0 or 1 element).
     """
-    supporting = row.get("Supporting_Documents") or []
-    doc_ids = []
-    for entry in supporting:
-        _, doc_id = parse_supporting_document(entry)
-        if doc_id:
-            doc_ids.append(doc_id)
-    return doc_ids
+    _, doc_id = parse_document_field(row.get("document") or {})
+    return [doc_id] if doc_id else []
