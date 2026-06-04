@@ -1,8 +1,8 @@
 """
 LiveRAG Dataset Ingestion Service.
 
-Provides the IngestLiveRAG class for ingesting the LiveRAG/Benchmark dataset.
+Provides the IngestSapientiaRAG class for ingesting the SapientiaRAG dataset.
 """
-from .ingest import IngestLiveRAG
+from .ingest import IngestSapientiaRAG
 
-__all__ = ["IngestLiveRAG"]
+__all__ = ["IngestSapientiaRAG"]

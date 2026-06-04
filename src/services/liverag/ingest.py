@@ -39,7 +39,7 @@ class IngestSapientiaRAG:
         self.collection_name = PGVECTOR_COLLECTION_NAME
         self._project_root = Path(__file__).parent.parent.parent
 
-    def ingest(self, batch_size: int = 600) -> None:
+    def ingest(self, batch_size: int = 600, max_rows: Optional[int] = None) -> None:
         """
         Load the local JSON dataset and store all unique passages in PGVector.
 
@@ -49,6 +49,8 @@ class IngestSapientiaRAG:
         Args:
             batch_size: Number of rows to buffer before each embed + store flush.
                         Larger values reduce DB round-trips; tune to your RAM.
+            max_rows:   If set, stop after processing this many rows.
+                        Useful for smoke-testing the pipeline on a small slice.
         """
         print(f"Loading dataset from {_DATA_FILE}...")
         with open(_DATA_FILE, encoding="utf-8") as fh:
@@ -69,6 +71,9 @@ class IngestSapientiaRAG:
 
         for row in rows:
             row_count += 1
+            if max_rows is not None and row_count > max_rows:
+                print(f"  Reached max_rows={max_rows}, stopping early.")
+                break
 
             qa_pair = extract_question_answer(row)
             if qa_pair:

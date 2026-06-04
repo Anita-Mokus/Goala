@@ -15,7 +15,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 #from src.services import IngestService
-from src.services.liverag import IngestLiveRAG
+from src.services.liverag import IngestSapientiaRAG
 
 
 def main():
@@ -28,10 +28,10 @@ def main():
     if max_rows is not None:
         print(f"⚠  max_rows={max_rows} — partial ingest for testing\n")
 
-    ingest_liveRAG_service = IngestLiveRAG()
+    ingest_sapiRAG_service = IngestSapientiaRAG()
     
     try:
-        ingest_liveRAG_service.ingest(max_rows=max_rows)
+        ingest_sapiRAG_service.ingest(max_rows=max_rows)
         print("\n" + "=" * 60)
         print("Ingestion completed successfully!")
         print("=" * 60 + "\n")
