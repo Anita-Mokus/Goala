@@ -74,7 +74,7 @@ RETRIEVER_K = int(os.getenv("RETRIEVER_K", "5"))  # Number of documents to retri
 # API settings
 API_TITLE = "AI Chat Flow API"
 #API_DESCRIPTION = "Hotel Chatbot API with RAG capabilities"
-API_DESCRIPTION = "LiveRAG API for answering general-knowledge questions based on provided web passages."
+API_DESCRIPTION = "SapientiaRAG API for answering general-knowledge questions based on provided web passages."
 API_VERSION = "1.0.0"
 
 # CORS settings
@@ -88,11 +88,11 @@ CORS_METHODS = ["*"]
 CORS_HEADERS = ["*"]
 
 
-# Prompt template for the LiveRAG/Benchmark evaluation dataset.
+# Prompt template for the SapientiaRAG evaluation dataset.
 # The dataset contains English general-knowledge questions backed by FineWeb
 # web passages.  The expected answers are short and factual (1-3 sentences),
 # so the template prioritises precision and conciseness over completeness.
-LIVERAG_RAG_PROMPT_TEMPLATE = """You are a precise question-answering assistant. Your only job is to extract and state the correct answer from the provided passages.
+SAPIENTIA_RAG_PROMPT_TEMPLATE = """You are a precise question-answering assistant. Your only job is to extract and state the correct answer from the provided passages.
 
 RULES:
 1. Base your answer EXCLUSIVELY on the passages below — never use outside knowledge.

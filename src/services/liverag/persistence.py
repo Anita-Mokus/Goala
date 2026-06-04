@@ -10,7 +10,7 @@ from typing import List
 
 def save_question_docids_map(mapping: dict, project_root: Path) -> None:
     """
-    Persist the question → doc_ids mapping to ``shared/liverag_question_docids.json``.
+    Persist the question → doc_ids mapping to ``shared/sapientia_question_docids.json``.
 
     The file is written relative to the project root so it works
     both inside and outside Docker.
@@ -19,7 +19,7 @@ def save_question_docids_map(mapping: dict, project_root: Path) -> None:
         mapping: Dict mapping question text → list of doc_id strings.
         project_root: Path to the project root directory.
     """
-    output_path = project_root / "shared" / "liverag_question_docids.json"
+    output_path = project_root / "shared" / "sapientia_question_docids.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as fh:
         json.dump(mapping, fh, ensure_ascii=False, indent=2)
@@ -28,7 +28,7 @@ def save_question_docids_map(mapping: dict, project_root: Path) -> None:
 
 def save_question_answers(question_answers: List[tuple], project_root: Path) -> None:
     """
-    Persist question-answer pairs to ``shared/liverag_eval.json``.
+    Persist question-answer pairs to ``shared/sapientia_eval.json``.
 
     The output matches the existing eval file schema:
       { "datasets": [ { "name": ..., "questions": [ {"input": ..., "expected_output": ...} ] } ] }
@@ -37,15 +37,15 @@ def save_question_answers(question_answers: List[tuple], project_root: Path) -> 
         question_answers: List of (question, answer) tuples.
         project_root: Path to the project root directory.
     """
-    output_path = project_root / "shared" / "liverag_eval.json"
+    output_path = project_root / "shared" / "sapientia_eval.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     data = {
         "datasets": [
             {
-                "name": "liverag_benchmark_eval",
+                "name": "sapientia_benchmark_eval",
                 "description": (
-                    f"Questions and ground-truth answers from the LiveRAG/Benchmark dataset "
-                    f"({len(question_answers)} rows, FineWeb-10BT supporting documents)."
+                    f"Questions and ground-truth answers from the SapientiaRAG dataset "
+                    f"({len(question_answers)} rows)."
                 ),
                 "questions": [
                     {"input": q, "expected_output": a} for q, a in question_answers

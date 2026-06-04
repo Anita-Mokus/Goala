@@ -4,16 +4,13 @@ MRR Template Generator.
 Runs the retriever for every question in the evaluation dataset and
 produces three output files in ``shared/``:
 
-  liverag_mrr_contexts.txt  — human-readable review: each question followed
-                               by its retrieved contexts numbered by rank.
-
-  liverag_retrieval_analysis_single_doc.csv — retrieval analysis for single-doc questions.
+  sapientia_retrieval_analysis_single_doc.csv — retrieval analysis for single-doc questions.
                                Format: question_id,context_id,retrieved_context_id_1,...,K
 
-  liverag_retrieval_analysis_multi_doc.csv  — retrieval analysis for multi-doc questions.
+  sapientia_retrieval_analysis_multi_doc.csv  — retrieval analysis for multi-doc questions.
                                Format: question_id,context_ids (pipe-separated),retrieved_context_id_1,...,K
 
-  liverag_context_id_map.csv  — lookup table: context_id → raw_doc_id.
+  sapientia_context_id_map.csv  — lookup table: context_id → raw_doc_id.
 
 Run with:
     python -m src.utils.generate_mrr_template
@@ -35,14 +32,13 @@ from src.utils.retrieval_analysis import (
     to_numeric_doc_id,
 )
 
-EVAL_FILE_NAME   = "liverag_eval.json"
-CONTEXTS_FILE    = "liverag_mrr_contexts.txt"
-QUESTION_DOCIDS_FILE = "liverag_question_docids.json"
+EVAL_FILE_NAME   = "sapientia_eval.json"
+QUESTION_DOCIDS_FILE = "sapientia_question_docids.json"
 # Single-doc: question_id, context_id, retrieved_context_id_1..K
-RETRIEVAL_ANALYSIS_SINGLE_DOC_FILE = "liverag_retrieval_analysis_single_doc.csv"
+RETRIEVAL_ANALYSIS_SINGLE_DOC_FILE = "sapientia_retrieval_analysis_single_doc.csv"
 # Multi-doc:  question_id, context_ids (pipe-separated), retrieved_context_id_1..K
-RETRIEVAL_ANALYSIS_MULTI_DOC_FILE  = "liverag_retrieval_analysis_multi_doc.csv"
-CONTEXT_ID_MAP_FILE = "liverag_context_id_map.csv"  # context_id, raw_doc_id
+RETRIEVAL_ANALYSIS_MULTI_DOC_FILE  = "sapientia_retrieval_analysis_multi_doc.csv"
+CONTEXT_ID_MAP_FILE = "sapientia_context_id_map.csv"  # context_id, raw_doc_id
 SEPARATOR        = "=" * 72
 
 
