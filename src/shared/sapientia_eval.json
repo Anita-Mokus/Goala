@@ -1,0 +1,210 @@
+{
+  "datasets": [
+    {
+      "name": "sapientia_benchmark_eval",
+      "description": "Questions and ground-truth answers from the SapientiaRAG dataset (50 rows).",
+      "questions": [
+        {
+          "input": "Hány tandíjmentes hely érhető el az Automatika és alkalmazott informatika mérnök szakon?",
+          "expected_output": "Az Automatika és alkalmazott informatika mérnök szakon 10 tandíjmentes hely érhető el."
+        },
+        {
+          "input": "Mekkora az éves költség-hozzájárulás összege az Automatika és alkalmazott informatika mérnök szakon?",
+          "expected_output": "A költség-hozzájárulás összege ezen a szakon 500 euró/év."
+        },
+        {
+          "input": "Melyik képzési ághoz tartozik az Automatika és alkalmazott informatika mérnök szak?",
+          "expected_output": "A szak az Automatika, alkalmazott informatika és intelligens rendszerek képzési ághoz tartozik."
+        },
+        {
+          "input": "Hány éves az alapképzés időtartama az Automatika és alkalmazott informatika mérnök szakon?",
+          "expected_output": "Az alapképzés időtartama 4 év."
+        },
+        {
+          "input": "Mekkora a teljes tandíj összege a Fordító és tolmács szakon?",
+          "expected_output": "A teljes tandíj összege a Fordító és tolmács szakon 750 euró/év."
+        },
+        {
+          "input": "Melyik képzési ághoz tartozik a Fordító és tolmács szak?",
+          "expected_output": "A Fordító és tolmács szak az Alkalmazott idegen nyelvek képzési ághoz tartozik."
+        },
+        {
+          "input": "Hány éves a nappali alapképzés a Fordító és tolmács szakon?",
+          "expected_output": "A Fordító és tolmács szakon a képzés időtartama 3 év."
+        },
+        {
+          "input": "Milyen arányban számít bele a magyar nyelv és irodalom érettségi írásbeli jegye a Fordító és tolmács szak felvételi jegyébe?",
+          "expected_output": "A magyar nyelv és irodalom írásbeli érettségi jegye 50%-os arányban számít bele a felvételi jegybe."
+        },
+        {
+          "input": "Mekkora a költség-hozzájárulás összege a Gépészmérnöki szakon?",
+          "expected_output": "A költség-hozzájárulás összege a Gépészmérnöki szakon 500 euró/év."
+        },
+        {
+          "input": "Milyen képzési formában indul a Gépészmérnöki alapképzés?",
+          "expected_output": "A Gépészmérnöki szak 4 éves nappali alapképzés formájában indul."
+        },
+        {
+          "input": "Melyik képzési ághoz tartozik a Gépészmérnöki szak?",
+          "expected_output": "A Gépészmérnöki szak az Ipari mérnöki képzési ághoz tartozik."
+        },
+        {
+          "input": "Hány tandíjmentes helyet hirdetnek meg az Infokommunikációs hálózatok és rendszerek (Távközlés) mérnöki szakon?",
+          "expected_output": "Ezen a szakon 15 tandíjmentes helyet hirdetnek meg."
+        },
+        {
+          "input": "Mekkora a költség-hozzájárulás összege a Távközlés mérnöki szakon?",
+          "expected_output": "A költség-hozzájárulás összege a Távközlés mérnöki szakon 500 euró/év."
+        },
+        {
+          "input": "Melyik képzési ághoz tartozik a Távközlés mérnöki szak?",
+          "expected_output": "A szak az Elektronika, távközlés és információtechnológia mérnöki képzési ághoz tartozik."
+        },
+        {
+          "input": "Hány éves az alapképzés időtartama a Távközlés mérnöki szakon?",
+          "expected_output": "A képzés időtartama ezen a szakon 4 év."
+        },
+        {
+          "input": "Hány tandíjmentes hely érhető el az Informatika szakon?",
+          "expected_output": "Az Informatika szakon 25 tandíjmentes hely érhető el."
+        },
+        {
+          "input": "Mekkora a teljes tandíj összege az Informatika szakon?",
+          "expected_output": "A teljes tandíj összege az Informatika szakon 900 euró/év."
+        },
+        {
+          "input": "Hány éves az alapképzés az Informatika szakon?",
+          "expected_output": "Az Informatika szak képzési időtartama 3 év."
+        },
+        {
+          "input": "Milyen arányban határozza meg az érettségi vizsga átlaga a felvételi jegyet a Kertészmérnöki szakon?",
+          "expected_output": "A Kertészmérnöki szakon a felvételi jegy 100%-át az érettségi vizsga átlaga adja."
+        },
+        {
+          "input": "Hány tandíjmentes helyet hirdetnek meg a Kertészmérnöki szakon?",
+          "expected_output": "A Kertészmérnöki szakon 15 tandíjmentes helyet hirdetnek meg."
+        },
+        {
+          "input": "Mekkora az éves költség-hozzájárulás összege a Kertészmérnöki szakon?",
+          "expected_output": "A költség-hozzájárulás összege a Kertészmérnöki szakon 500 euró/év."
+        },
+        {
+          "input": "Hány éves a nappali alapképzés a Kertészmérnöki szakon?",
+          "expected_output": "A képzés időtartama a Kertészmérnöki szakon 4 év."
+        },
+        {
+          "input": "Hány tandíjmentes hely érhető el a Kommunikáció és közkapcsolatok szakon?",
+          "expected_output": "A Kommunikáció és közkapcsolatok szakon 15 tandíjmentes hely érhető el."
+        },
+        {
+          "input": "Mekkora a teljes tandíj összege a Kommunikáció és közkapcsolatok szakon?",
+          "expected_output": "A teljes tandíj összege ezen a szakon 900 euró/év."
+        },
+        {
+          "input": "Hány éves a nappali alapképzés a Kommunikáció és közkapcsolatok szakon?",
+          "expected_output": "A képzés időtartama ezen a szakon 3 év."
+        },
+        {
+          "input": "Hány tandíjmentes helyet hirdetnek meg a Közegészségügyi szolgáltatások és politikák szakon?",
+          "expected_output": "A Közegészségügyi szolgáltatások és politikák szakon 15 tandíjmentes hely érhető el."
+        },
+        {
+          "input": "Mekkora az éves költség-hozzájárulás összege a Közegészségügyi szolgáltatások és politikák szakon?",
+          "expected_output": "A költség-hozzájárulás összege ezen a szakon 500 euró/év."
+        },
+        {
+          "input": "Hány éves a nappali alapképzés a Közegészségügyi szolgáltatások és politikák szakon?",
+          "expected_output": "A képzés időtartama ezen a szakon 3 év."
+        },
+        {
+          "input": "Hány tandíjmentes hely érhető el a Mechatronika mérnöki szakon?",
+          "expected_output": "A Mechatronika mérnöki szakon 20 tandíjmentes hely érhető el."
+        },
+        {
+          "input": "Mekkora a költség-hozzájárulás összege a Mechatronika mérnöki szakon?",
+          "expected_output": "A költség-hozzájárulás összege a Mechatronika mérnöki szakon 500 euró/év."
+        },
+        {
+          "input": "Hány éves a Mechatronika mérnöki alapképzés?",
+          "expected_output": "A Mechatronika mérnöki szak képzési időtartama 4 év."
+        },
+        {
+          "input": "Hány tandíjmentes helyet hirdetnek meg a Számítástechnika mérnöki szakon?",
+          "expected_output": "A Számítástechnika mérnöki szakon 10 tandíjmentes hely érhető el."
+        },
+        {
+          "input": "Mekkora az éves költség-hozzájárulás összege a Számítástechnika mérnöki szakon?",
+          "expected_output": "A költség-hozzájárulás összege ezen a szakon 500 euró/év."
+        },
+        {
+          "input": "Hány éves a nappali alapképzés a Számítástechnika mérnöki szakon?",
+          "expected_output": "A képzés időtartama a Számítástechnika mérnöki szakon 4 év."
+        },
+        {
+          "input": "Hány tandíjmentes hely érhető el a Tájépítészmérnöki szakon?",
+          "expected_output": "A Tájépítészmérnöki szakon 12 tandíjmentes hely érhető el."
+        },
+        {
+          "input": "Mekkora a teljes tandíj összege a Tájépítészmérnöki szakon?",
+          "expected_output": "A teljes tandíj összege ezen a szakon 900 euró/év."
+        },
+        {
+          "input": "Hány éves a nappali alapképzés a Tájépítészmérnöki szakon?",
+          "expected_output": "A képzés időtartama a Tájépítészmérnöki szakon 4 év."
+        },
+        {
+          "input": "Hány éves a Fejlett mechatronikai rendszerek mesteri szak képzési időtartama?",
+          "expected_output": "A képzés időtartama ezen a mesteri szakon 2 év."
+        },
+        {
+          "input": "Mekkora a szóbeli vizsga súlya a Fejlett mechatronikai rendszerek mesteri szak felvételi jegyében?",
+          "expected_output": "A szóbeli vizsga a felvételi jegy 50%-át teszi ki."
+        },
+        {
+          "input": "Hány éves a Növényorvos mesteri szak képzési időtartama?",
+          "expected_output": "A Növényorvos mesteri szak képzési időtartama 2 év."
+        },
+        {
+          "input": "Mekkora az írásbeli vizsga súlya a Növényorvos mesteri szak felvételi jegyében?",
+          "expected_output": "Az írásbeli vizsga 40%-os arányban számít bele a felvételi jegybe."
+        },
+        {
+          "input": "Melyik képzési ághoz tartozik a Számítógépes irányítási rendszerek mesteri szak?",
+          "expected_output": "A Számítógépes irányítási rendszerek szak a Rendszermérnöki képzési ághoz tartozik."
+        },
+        {
+          "input": "Melyik magyarországi egyetem a partnerintézménye a Szoftverfejlesztés mesteri szaknak?",
+          "expected_output": "A Szoftverfejlesztés mesteri szak partnerintézménye az Eötvös Loránd Tudományegyetem Informatikai Kara."
+        },
+        {
+          "input": "Mikorra esik a 2026-os nyári alapképzési beiratkozási időszak?",
+          "expected_output": "A 2026-os nyári alapképzési beiratkozás 2026. július 8. és 19. között zajlik."
+        },
+        {
+          "input": "Mikor tartják a 2026-os nyári mesterképzési felvételi vizsgát?",
+          "expected_output": "A mesterképzési felvételi vizsga időpontja 2026. július 22., szerda."
+        },
+        {
+          "input": "Mi a telefonszáma Ungvári Zsuzsának, a kari PR-felelősnek?",
+          "expected_output": "Ungvári Zsuzsa telefonszáma a 0755-142-432."
+        },
+        {
+          "input": "Mennyi az éves díja egy apartmannak (3+3 ágy) a bentlakásban a 2025/2026-os tanévben?",
+          "expected_output": "Az éves díj egy 3+3 ágyas apartmanban 210 lej/fő."
+        },
+        {
+          "input": "Milyen e-mail címre kell küldeni az első évesek bentlakási pályázatait?",
+          "expected_output": "A pályázatokat az andrasannamaria@ms.sapientia.ro e-mail címre kell küldeni."
+        },
+        {
+          "input": "Melyik napon közölték a 2024-es nyári felvételi végleges eredményeit?",
+          "expected_output": "A 2024/2025-ös tanév nyári felvételi végleges eredményeit 2024. július 31-én közölték."
+        },
+        {
+          "input": "Meddig jelentkezhettek az első évesek a bentlakásba a 2025-2026-os tanévre?",
+          "expected_output": "Az első éveseknek 2025. július 29., 12 óráig volt lehetőségük jelentkezni."
+        }
+      ]
+    }
+  ]
+}
