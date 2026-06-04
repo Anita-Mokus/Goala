@@ -14,7 +14,7 @@ from src.core.config import (
     LLM_MODEL,
     LLM_TEMPERATURE,
     RETRIEVER_K,
-    LIVERAG_RAG_PROMPT_TEMPLATE,
+    SAPIENTIA_RAG_PROMPT_TEMPLATE,
 )
 from src.services.llm_providers import get_llm_provider
 from src.services.embeddings import get_embeddings
@@ -44,7 +44,7 @@ class RAGService:
         self.llm = llm_provider.get_llm()
         
         # Create prompt template
-        self.prompt = ChatPromptTemplate.from_template(LIVERAG_RAG_PROMPT_TEMPLATE)
+        self.prompt = ChatPromptTemplate.from_template(SAPIENTIA_RAG_PROMPT_TEMPLATE)
         
         # Create retriever using MMR (Maximum Marginal Relevance) for better
         # diversity: fetch_k=20 candidates, then select the k most diverse ones.
@@ -101,7 +101,7 @@ class RAGService:
         Returns:
             Tuple of (answer_string, list_of_retrieved_Documents).
             Each Document has a ``metadata["doc_id"]`` field when the
-            LiveRAG/Benchmark collection was ingested.
+            SapientiaRAG collection was ingested.
         """
         retrieved_docs = self.retriever.invoke(question)
         context = self._format_docs(retrieved_docs)
