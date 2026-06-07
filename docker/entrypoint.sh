@@ -59,9 +59,10 @@ echo "✓ Virtual display ready!"
 echo "✓ noVNC WebSocket available on port ${NOVNC_PORT}"
 
 # Run database migrations (each migration runs only once; tracked in schema_migrations table)
+# Use "|| true" pattern so set -e does not stop the container when migrations fail.
 echo "Running database migrations..."
-python -m src.utils.run_migrations
-MIGRATE_EXIT=$?
+MIGRATE_EXIT=0
+python -m src.utils.run_migrations || MIGRATE_EXIT=$?
 if [ "$MIGRATE_EXIT" -eq 0 ]; then
     echo "✓ Migrations step finished successfully"
 else

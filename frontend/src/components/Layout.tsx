@@ -1,14 +1,20 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { apiClient } from '../api/client';
+import { apiClient, UserRole } from '../api/client';
 import { siteAuthClient } from '../api/siteAuth';
 import './Layout.css';
 
 interface LayoutProps {
   children: ReactNode;
+  role: UserRole;
 }
 
-function Layout({ children }: LayoutProps) {
+const ROLE_LABELS: Record<UserRole, string> = {
+  admin: 'Administrator',
+  operator: 'Operator',
+};
+
+function Layout({ children, role }: LayoutProps) {
   const location = useLocation();
 
   const handleLogout = async () => {
@@ -25,16 +31,19 @@ function Layout({ children }: LayoutProps) {
         <div className="sidebar-header">
           <h1>Goala</h1>
           <p>Admin Panel</p>
+          <p className="sidebar-role">{ROLE_LABELS[role]}</p>
         </div>
         <ul className="sidebar-menu">
-          <li>
-            <Link
-              to="/settings"
-              className={location.pathname === '/settings' ? 'active' : ''}
-            >
-              Settings
-            </Link>
-          </li>
+          {role === 'admin' && (
+            <li>
+              <Link
+                to="/settings"
+                className={location.pathname === '/settings' ? 'active' : ''}
+              >
+                Settings
+              </Link>
+            </li>
+          )}
           <li>
             <Link
               to="/history"

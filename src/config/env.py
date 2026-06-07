@@ -137,11 +137,26 @@ CORS_HEADERS = ["*"]
 ACCESS_GATE_COOKIE_NAME = os.getenv("ACCESS_GATE_COOKIE_NAME", "goala_access")
 ACCESS_GATE_SESSION_SECRET = os.getenv("ACCESS_GATE_SESSION_SECRET", "")
 ACCESS_GATE_SESSION_TTL_SECONDS = int(os.getenv("ACCESS_GATE_SESSION_TTL_SECONDS", "604800"))
-ACCESS_GATE_TOKEN_HASHES = [
-    token_hash.strip().lower()
-    for token_hash in os.getenv("ACCESS_GATE_TOKEN_HASHES", "").split(",")
-    if token_hash.strip()
-]
+
+
+def _parse_token_hashes(env_var: str) -> list[str]:
+    return [
+        token_hash.strip().lower()
+        for token_hash in os.getenv(env_var, "").split(",")
+        if token_hash.strip()
+    ]
+
+
+ACCESS_GATE_OPERATOR_TOKEN_HASHES = _parse_token_hashes("ACCESS_GATE_OPERATOR_TOKEN_HASHES")
+ACCESS_GATE_TOKEN_HASHES = _parse_token_hashes("ACCESS_GATE_TOKEN_HASHES")
+
+_admin_hashes: list[str] = []
+_seen_admin_hashes: set[str] = set()
+for token_hash in _parse_token_hashes("ACCESS_GATE_ADMIN_TOKEN_HASHES") + ACCESS_GATE_TOKEN_HASHES:
+    if token_hash not in _seen_admin_hashes:
+        _seen_admin_hashes.add(token_hash)
+        _admin_hashes.append(token_hash)
+ACCESS_GATE_ADMIN_TOKEN_HASHES = _admin_hashes
 
 
 def hash_access_token(token: str) -> str:

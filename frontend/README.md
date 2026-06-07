@@ -81,12 +81,20 @@ All API calls go through `/api` prefix which is proxied to the backend container
 
 Access gate deployment variables:
 
-- `ACCESS_GATE_TOKEN_HASHES` - Comma-separated SHA-256 hashes of the private access tokens.
 - `ACCESS_GATE_SESSION_SECRET` - Shared signing secret used to mint and verify auth cookies.
+- `ACCESS_GATE_ADMIN_TOKEN_HASHES` - Comma-separated SHA-256 hashes of administrator tokens (Settings + full panel access).
+- `ACCESS_GATE_OPERATOR_TOKEN_HASHES` - Comma-separated SHA-256 hashes of operator tokens (History + Messenger; no Settings).
+- `ACCESS_GATE_TOKEN_HASHES` - Legacy optional list; entries are treated as administrator tokens.
 - `ACCESS_GATE_COOKIE_NAME` - Optional. Cookie name for the auth session; defaults to `goala_access`.
 - `ACCESS_GATE_SESSION_TTL_SECONDS` - Optional. Session lifetime in seconds; defaults to 7 days.
 
-Set the same `ACCESS_GATE_TOKEN_HASHES` and `ACCESS_GATE_SESSION_SECRET` values on both Vercel and Railway.
+Generate a token hash:
+
+```bash
+python -c "import hashlib; print(hashlib.sha256(b'your-token').hexdigest())"
+```
+
+Set the same access gate variables on both Vercel and Railway.
 
 For Railway deployment, also set `CORS_ORIGINS` on the backend to include your Vercel domain, for example:
 

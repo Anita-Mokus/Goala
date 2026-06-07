@@ -1,5 +1,8 @@
+import type { UserRole } from './client';
+
 export interface AccessAuthStatus {
   authenticated: boolean;
+  role: UserRole | null;
 }
 
 const AUTH_BASE_URL = '/api/auth';
@@ -18,7 +21,7 @@ export const siteAuthClient = {
   async getStatus(): Promise<AccessAuthStatus> {
     const response = await requestAuth('/me');
     if (!response.ok) {
-      return { authenticated: false };
+      return { authenticated: false, role: null };
     }
     return response.json();
   },

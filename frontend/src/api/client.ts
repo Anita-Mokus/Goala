@@ -85,9 +85,12 @@ export interface MessengerActionResponse {
   message: string;
 }
 
+export type UserRole = 'admin' | 'operator';
+
 export interface AuthStatusResponse {
   authenticated: boolean;
   expires_at: string | null;
+  role: UserRole | null;
 }
 
 export const apiClient = {
@@ -189,7 +192,7 @@ export const apiClient = {
   async getBackendAuthStatus(): Promise<AuthStatusResponse> {
     const response = await apiFetch('/auth/me');
     if (!response.ok) {
-      return { authenticated: false, expires_at: null };
+      return { authenticated: false, expires_at: null, role: null };
     }
     return response.json();
   },

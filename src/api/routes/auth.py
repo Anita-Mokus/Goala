@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel
@@ -10,9 +11,10 @@ from pydantic import BaseModel
 from src.api.auth import (
     ACCESS_GATE_COOKIE_NAME,
     get_cookie_expiry_timestamp,
+    get_role_from_cookie,
     is_auth_enabled,
-    is_valid_access_token,
     issue_access_cookie_value,
+    resolve_role_from_token,
     verify_access_cookie_value,
 )
 
@@ -26,6 +28,7 @@ class LoginRequest(BaseModel):
 class AuthStatusResponse(BaseModel):
     authenticated: bool
     expires_at: str | None = None
+    role: Literal["admin", "operator"] | None = None
 
 
 def _build_status_response(cookie_value: str | None) -> AuthStatusResponse:
@@ -34,9 +37,13 @@ def _build_status_response(cookie_value: str | None) -> AuthStatusResponse:
         expires_at_iso = (
             datetime.fromtimestamp(expires_at, tz=timezone.utc).isoformat() if expires_at else None
         )
-        return AuthStatusResponse(authenticated=True, expires_at=expires_at_iso)
+        return AuthStatusResponse(
+            authenticated=True,
+            expires_at=expires_at_iso,
+            role=get_role_from_cookie(cookie_value),
+        )
 
-    return AuthStatusResponse(authenticated=False, expires_at=None)
+    return AuthStatusResponse(authenticated=False, expires_at=None, role=None)
 
 
 @router.get("/me", response_model=AuthStatusResponse)
@@ -49,10 +56,11 @@ def login(request_body: LoginRequest, response: Response):
     if not is_auth_enabled():
         raise HTTPException(status_code=503, detail="Access gate is not configured")
 
-    if not is_valid_access_token(request_body.token):
+    role = resolve_role_from_token(request_body.token)
+    if not role:
         raise HTTPException(status_code=401, detail="Invalid access token")
 
-    cookie_value = issue_access_cookie_value()
+    cookie_value = issue_access_cookie_value(role)
     response.set_cookie(
         key=ACCESS_GATE_COOKIE_NAME,
         value=cookie_value,
@@ -68,4 +76,4 @@ def login(request_body: LoginRequest, response: Response):
 @router.post("/logout", response_model=AuthStatusResponse)
 def logout(response: Response):
     response.delete_cookie(key=ACCESS_GATE_COOKIE_NAME, path="/")
-    return AuthStatusResponse(authenticated=False, expires_at=None)
+    return AuthStatusResponse(authenticated=False, expires_at=None, role=None)

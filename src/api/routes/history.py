@@ -1,14 +1,17 @@
 """
 API routes for chat history management.
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
 
+from src.api.auth_dependencies import require_session_role
+from src.api.role_resolver import ROLE_ADMIN, ROLE_OPERATOR
 from src.models.database import ChatHistory, get_db_session
 
 router = APIRouter(prefix="/api/history", tags=["history"])
+require_panel_user = require_session_role(ROLE_ADMIN, ROLE_OPERATOR)
 
 
 class ChatHistoryResponse(BaseModel):
@@ -37,7 +40,8 @@ class ChatHistoryListResponse(BaseModel):
 def get_chat_history(
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
-    search: Optional[str] = Query(None, description="Search in questions and answers")
+    search: Optional[str] = Query(None, description="Search in questions and answers"),
+    _role: str = Depends(require_panel_user),
 ):
     """
     Get paginated chat history.
@@ -85,7 +89,7 @@ def get_chat_history(
 
 
 @router.get("/{history_id}", response_model=ChatHistoryResponse)
-def get_chat_history_by_id(history_id: int):
+def get_chat_history_by_id(history_id: int, _role: str = Depends(require_panel_user)):
     """
     Get a specific chat history entry by ID.
     

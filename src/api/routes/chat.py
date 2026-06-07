@@ -2,14 +2,17 @@
 Chat API routes.
 Endpoints: POST /chat, GET /, GET /health.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
 
 from src.config import DATABASE_URL, DEFAULT_DATASET_KEY, normalize_database_url
+from src.api.auth_dependencies import require_session_role
 from src.api.dependencies import get_rag_service
+from src.api.role_resolver import ROLE_ADMIN, ROLE_OPERATOR
 
 router = APIRouter(tags=["chat"])
+require_panel_user = require_session_role(ROLE_ADMIN, ROLE_OPERATOR)
 
 
 class ChatRequest(BaseModel):
@@ -61,7 +64,7 @@ def health_check():
 
 
 @router.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest):
+def chat(request: ChatRequest, _role: str = Depends(require_panel_user)):
     """
     Main chat endpoint - send a message, get an AI response.
     

@@ -1,7 +1,7 @@
 """
 FastAPI routes for Messenger bot control and monitoring.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -10,10 +10,13 @@ import threading
 import subprocess
 import os
 
+from src.api.auth_dependencies import require_session_role
+from src.api.role_resolver import ROLE_ADMIN, ROLE_OPERATOR
 from src.integrations.messenger.registry import set_bot, get_bot, get_bot_thread, clear_bot
 from src.integrations.messenger.status_file import read_status_file
 
 router = APIRouter(prefix="/api/messenger", tags=["messenger"])
+require_panel_user = require_session_role(ROLE_ADMIN, ROLE_OPERATOR)
 
 
 class MessengerStatusResponse(BaseModel):
@@ -33,7 +36,7 @@ class MessengerActionResponse(BaseModel):
 
 
 @router.get("/status", response_model=MessengerStatusResponse)
-def get_messenger_status():
+def get_messenger_status(_role: str = Depends(require_panel_user)):
     """
     Get current Messenger bot status.
     
@@ -72,7 +75,7 @@ def get_messenger_status():
 
 
 @router.post("/start", response_model=MessengerActionResponse)
-def start_messenger_bot():
+def start_messenger_bot(_role: str = Depends(require_panel_user)):
     """
     Start the Messenger bot in background mode.
     
@@ -131,7 +134,7 @@ def start_messenger_bot():
 
 
 @router.post("/stop", response_model=MessengerActionResponse)
-def stop_messenger_bot():
+def stop_messenger_bot(_role: str = Depends(require_panel_user)):
     """
     Stop the Messenger bot.
     
@@ -165,7 +168,7 @@ def stop_messenger_bot():
 
 
 @router.post("/pause", response_model=MessengerActionResponse)
-def pause_messenger_bot():
+def pause_messenger_bot(_role: str = Depends(require_panel_user)):
     """
     Pause the Messenger bot.
     
@@ -197,7 +200,7 @@ def pause_messenger_bot():
 
 
 @router.post("/resume", response_model=MessengerActionResponse)
-def resume_messenger_bot():
+def resume_messenger_bot(_role: str = Depends(require_panel_user)):
     """
     Resume the Messenger bot.
     
@@ -229,7 +232,7 @@ def resume_messenger_bot():
 
 
 @router.get("/login-redirect")
-def messenger_login_redirect():
+def messenger_login_redirect(_role: str = Depends(require_panel_user)):
     """
     Redirect to Messenger login page.
     
@@ -239,7 +242,7 @@ def messenger_login_redirect():
 
 
 @router.get("/debug")
-def debug_messenger_bot():
+def debug_messenger_bot(_role: str = Depends(require_panel_user)):
     """
     Debug endpoint: inspects the live Messenger page and reports conversation links
     found in the sidebar along with their bold (unread) detection result.
@@ -359,7 +362,7 @@ def debug_messenger_bot():
 
 
 @router.get("/diagnostics")
-def get_chrome_diagnostics():
+def get_chrome_diagnostics(_role: str = Depends(require_panel_user)):
     """
     Get Chrome environment diagnostics.
     

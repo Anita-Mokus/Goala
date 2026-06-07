@@ -1,15 +1,18 @@
 """
 API routes for application settings management.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from datetime import datetime
 
 from src.models.database import AppSettings, get_db_session
 from src.config.env import RAG_PROMPT_TEMPLATE
+from src.api.auth_dependencies import require_session_role
+from src.api.role_resolver import ROLE_ADMIN
 from src.config.settings import clear_settings_cache
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
+require_admin = require_session_role(ROLE_ADMIN)
 
 
 class SettingsResponse(BaseModel):
@@ -48,7 +51,7 @@ class SettingsUpdate(BaseModel):
 
 
 @router.get("", response_model=SettingsResponse)
-def get_settings():
+def get_settings(_role: str = Depends(require_admin)):
     """
     Get current application settings.
     
@@ -90,7 +93,7 @@ def get_settings():
 
 
 @router.put("", response_model=SettingsResponse)
-def update_settings(settings_update: SettingsUpdate):
+def update_settings(settings_update: SettingsUpdate, _role: str = Depends(require_admin)):
     """
     Update application settings.
     

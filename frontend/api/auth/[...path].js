@@ -2,14 +2,37 @@ import crypto from 'node:crypto';
 
 const COOKIE_NAME = process.env.ACCESS_GATE_COOKIE_NAME || 'goala_access';
 const SESSION_SECRET = process.env.ACCESS_GATE_SESSION_SECRET || '';
-const TOKEN_HASHES = (process.env.ACCESS_GATE_TOKEN_HASHES || '')
-  .split(',')
-  .map((value) => value.trim().toLowerCase())
-  .filter(Boolean);
 const SESSION_TTL_SECONDS = Number(process.env.ACCESS_GATE_SESSION_TTL_SECONDS || '604800');
 
+function parseTokenHashes(envVar) {
+  return (process.env[envVar] || '')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function buildAdminTokenHashes() {
+  const seen = new Set();
+  const hashes = [];
+
+  for (const hashValue of [
+    ...parseTokenHashes('ACCESS_GATE_ADMIN_TOKEN_HASHES'),
+    ...parseTokenHashes('ACCESS_GATE_TOKEN_HASHES'),
+  ]) {
+    if (!seen.has(hashValue)) {
+      seen.add(hashValue);
+      hashes.push(hashValue);
+    }
+  }
+
+  return hashes;
+}
+
+const ADMIN_TOKEN_HASHES = buildAdminTokenHashes();
+const OPERATOR_TOKEN_HASHES = parseTokenHashes('ACCESS_GATE_OPERATOR_TOKEN_HASHES');
+
 function isAuthEnabled() {
-  return Boolean(SESSION_SECRET && TOKEN_HASHES.length > 0);
+  return Boolean(SESSION_SECRET && (ADMIN_TOKEN_HASHES.length > 0 || OPERATOR_TOKEN_HASHES.length > 0));
 }
 
 function hashToken(token) {
@@ -24,29 +47,29 @@ function base64UrlDecode(value) {
   return Buffer.from(value, 'base64url');
 }
 
-function createCookieValue() {
-  const issuedAt = Math.floor(Date.now() / 1000);
-  const payload = JSON.stringify({
-    iat: issuedAt,
-    exp: issuedAt + SESSION_TTL_SECONDS,
-  });
-  const payloadSegment = base64UrlEncode(payload);
-  const signature = crypto
-    .createHmac('sha256', SESSION_SECRET)
-    .update(payloadSegment, 'ascii')
-    .digest();
-  return `${payloadSegment}.${base64UrlEncode(signature)}`;
+function resolveRoleFromToken(token) {
+  const submittedHash = hashToken(token.trim());
+
+  if (ADMIN_TOKEN_HASHES.some((hashValue) => safeEquals(hashValue, submittedHash))) {
+    return 'admin';
+  }
+
+  if (OPERATOR_TOKEN_HASHES.some((hashValue) => safeEquals(hashValue, submittedHash))) {
+    return 'operator';
+  }
+
+  return null;
 }
 
-function verifyCookieValue(cookieValue) {
+function decodeVerifiedPayload(cookieValue) {
   if (!isAuthEnabled() || !cookieValue || typeof cookieValue !== 'string') {
-    return false;
+    return null;
   }
 
   try {
     const [payloadSegment, signatureSegment] = cookieValue.split('.', 2);
     if (!payloadSegment || !signatureSegment) {
-      return false;
+      return null;
     }
 
     const expectedSignature = crypto
@@ -59,14 +82,47 @@ function verifyCookieValue(cookieValue) {
       expectedSignature.length !== providedSignature.length ||
       !crypto.timingSafeEqual(expectedSignature, providedSignature)
     ) {
-      return false;
+      return null;
     }
 
     const payload = JSON.parse(base64UrlDecode(payloadSegment).toString('utf8'));
-    return Number(payload.exp || 0) > Math.floor(Date.now() / 1000);
+    if (Number(payload.exp || 0) <= Math.floor(Date.now() / 1000)) {
+      return null;
+    }
+
+    return payload;
   } catch {
-    return false;
+    return null;
   }
+}
+
+function createCookieValue(role) {
+  const issuedAt = Math.floor(Date.now() / 1000);
+  const payload = JSON.stringify({
+    iat: issuedAt,
+    exp: issuedAt + SESSION_TTL_SECONDS,
+    role,
+  });
+  const payloadSegment = base64UrlEncode(payload);
+  const signature = crypto
+    .createHmac('sha256', SESSION_SECRET)
+    .update(payloadSegment, 'ascii')
+    .digest();
+  return `${payloadSegment}.${base64UrlEncode(signature)}`;
+}
+
+function verifyCookieValue(cookieValue) {
+  return decodeVerifiedPayload(cookieValue) !== null;
+}
+
+function getRoleFromCookie(cookieValue) {
+  const payload = decodeVerifiedPayload(cookieValue);
+  if (!payload) {
+    return null;
+  }
+
+  const role = payload.role;
+  return role === 'admin' || role === 'operator' ? role : null;
 }
 
 function safeEquals(left, right) {
@@ -75,9 +131,9 @@ function safeEquals(left, right) {
   return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer);
 }
 
-function buildCookieOptions(maxAgeSeconds) {
+function buildCookieOptions(cookieValue, maxAgeSeconds) {
   return [
-    `${COOKIE_NAME}=${createCookieValue()}`,
+    `${COOKIE_NAME}=${cookieValue}`,
     'Path=/',
     'HttpOnly',
     'Secure',
@@ -134,8 +190,12 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'GET' && isMe) {
-    const authenticated = verifyCookieValue(req.cookies?.[COOKIE_NAME]);
-    res.status(200).json({ authenticated });
+    const cookieValue = req.cookies?.[COOKIE_NAME];
+    const authenticated = verifyCookieValue(cookieValue);
+    res.status(200).json({
+      authenticated,
+      role: authenticated ? getRoleFromCookie(cookieValue) : null,
+    });
     return;
   }
 
@@ -146,21 +206,21 @@ export default async function handler(req, res) {
       return;
     }
 
-    const submittedHash = hashToken(token.trim());
-    const matches = TOKEN_HASHES.some((hashValue) => safeEquals(hashValue, submittedHash));
-    if (!matches) {
+    const role = resolveRoleFromToken(token);
+    if (!role) {
       res.status(401).json({ detail: 'Invalid access token' });
       return;
     }
 
-    res.setHeader('Set-Cookie', buildCookieOptions(SESSION_TTL_SECONDS));
-    res.status(200).json({ authenticated: true });
+    const cookieValue = createCookieValue(role);
+    res.setHeader('Set-Cookie', buildCookieOptions(cookieValue, SESSION_TTL_SECONDS));
+    res.status(200).json({ authenticated: true, role });
     return;
   }
 
   if (req.method === 'POST' && isLogout) {
     res.setHeader('Set-Cookie', clearCookieOptions());
-    res.status(200).json({ authenticated: false });
+    res.status(200).json({ authenticated: false, role: null });
     return;
   }
 

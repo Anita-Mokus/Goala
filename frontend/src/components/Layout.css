@@ -28,6 +28,12 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
+.sidebar-role {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
 .sidebar-menu {
   list-style: none;
 }

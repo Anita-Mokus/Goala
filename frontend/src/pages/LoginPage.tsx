@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { apiClient } from '../api/client';
+import { apiClient, UserRole } from '../api/client';
 import { siteAuthClient } from '../api/siteAuth';
 import './LoginPage.css';
 
 interface LoginPageProps {
-  onAuthenticated: () => void;
+  onAuthenticated: (role: UserRole) => void;
 }
 
 function LoginPage({ onAuthenticated }: LoginPageProps) {
@@ -20,15 +20,21 @@ function LoginPage({ onAuthenticated }: LoginPageProps) {
     try {
       await siteAuthClient.login(token);
 
+      let backendStatus;
       try {
-        await apiClient.loginBackend(token);
+        backendStatus = await apiClient.loginBackend(token);
       } catch (backendError) {
         await siteAuthClient.logout().catch(() => undefined);
         throw backendError;
       }
 
+      if (!backendStatus.role) {
+        await siteAuthClient.logout().catch(() => undefined);
+        throw new Error('Authentication failed: missing role');
+      }
+
       setToken('');
-      onAuthenticated();
+      onAuthenticated(backendStatus.role);
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : 'Authentication failed');
     } finally {
