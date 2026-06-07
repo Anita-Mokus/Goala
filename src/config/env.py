@@ -133,6 +133,10 @@ CORS_CREDENTIALS = True
 CORS_METHODS = ["*"]
 CORS_HEADERS = ["*"]
 
+# VNC proxy settings (WebSocket → local x11vnc TCP server)
+VNC_HOST = os.getenv("VNC_HOST", "127.0.0.1")
+VNC_PORT = int(os.getenv("VNC_PORT", "5900"))
+
 # Access gate settings
 ACCESS_GATE_COOKIE_NAME = os.getenv("ACCESS_GATE_COOKIE_NAME", "goala_access")
 ACCESS_GATE_SESSION_SECRET = os.getenv("ACCESS_GATE_SESSION_SECRET", "")

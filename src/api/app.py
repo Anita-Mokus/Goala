@@ -16,6 +16,8 @@ from src.config import (
     CORS_CREDENTIALS,
     CORS_METHODS,
     CORS_HEADERS,
+    VNC_HOST,
+    VNC_PORT,
 )
 from src.api.auth import (
     ACCESS_GATE_COOKIE_NAME,
@@ -73,7 +75,7 @@ async def websocket_vnc_proxy(websocket: WebSocket):
     await websocket.accept()
 
     try:
-        reader, writer = await asyncio.open_connection("127.0.0.1", 5900)
+        reader, writer = await asyncio.open_connection(VNC_HOST, VNC_PORT)
     except Exception:
         await websocket.close(code=1011)
         return
