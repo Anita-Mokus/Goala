@@ -1,0 +1,17 @@
+{
+  "metadata": {
+    "timestamp": "2026-06-09 15:31:16",
+    "llm_provider": "groq",
+    "llm_model": "openai/gpt-oss-120b",
+    "llm_temperature": 0.1,
+    "judge_llm_provider": "ollama",
+    "judge_llm_model": "qwen2.5",
+    "rag_prompt_template": "SAPIENTIA_RAG_PROMPT_TEMPLATE",
+    "embedding_model": "BAAI/bge-m3",
+    "retriever_k": 5
+  },
+  "results": [],
+  "statistics": {
+    "multi_supporting_doc": null
+  }
+}
