@@ -17,6 +17,7 @@ from src.config import (
     LLM_MODEL,
     LLM_TEMPERATURE,
     LLM_PROVIDER,
+    OLLAMA_BASE_URL,
     RETRIEVER_K,
     JUDGE_LLM_MODEL,
     JUDGE_LLM_PROVIDER,
@@ -216,9 +217,11 @@ def evaluate_rag():
     
     # Initialize judge LLM using configured provider
     print("Initializing judge LLM...")
-    judge_provider = get_llm_provider(JUDGE_LLM_PROVIDER, JUDGE_LLM_MODEL, JUDGE_LLM_TEMPERATURE)
+    judge_provider = get_llm_provider(JUDGE_LLM_PROVIDER,JUDGE_LLM_MODEL,JUDGE_LLM_TEMPERATURE,base_url=OLLAMA_BASE_URL,)
     judge_llm = judge_provider.get_llm()
     print(f"  Judge: {JUDGE_LLM_PROVIDER} / {JUDGE_LLM_MODEL}")
+    if JUDGE_LLM_PROVIDER.lower() == "ollama":
+        print(f"  Ollama base URL: {OLLAMA_BASE_URL}")
         
     # Prepare metadata
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
