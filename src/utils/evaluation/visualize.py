@@ -425,7 +425,7 @@ def judge_score_single_multi_comparison(
     ax.set_xticklabels([str(s) for s in score_vals])
     ax.set_xlabel("Judge Score")
     ax.set_ylabel("Number of questions")
-    ax.set_title(f"Judge Score Distribution — {subset_label} (MMR vs Standard/Similarity)")
+    ax.set_title(f"Judge Score Distribution — {subset_label} (MMR vs Standard Retrieval)")
     ax.legend()
     fig.tight_layout()
     _save(fig, f"{subset_label.lower().replace(' ', '_')}_judge_score_mmr_vs_standard.png", out_dir)
