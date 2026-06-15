@@ -169,8 +169,15 @@ def _load_eval_jsons(
                 continue
             if f"_{subset.lower()}_" not in f"_{stem}_":
                 continue
-            if search_type and f"_{search_type.lower()}_" not in f"_{stem}_":
-                continue
+            if search_type:
+                search_type_key = search_type.lower()
+                valid_search_types = {search_type_key}
+                if search_type_key == "standard":
+                    valid_search_types.add("similarity")
+                if search_type_key == "similarity":
+                    valid_search_types.add("standard")
+                if not any(f"_{token}_" in f"_{stem}_" for token in valid_search_types):
+                    continue
             files.append(f)
 
     loaded = []
@@ -336,10 +343,14 @@ def plot_metrics_by_group(all_data: list[dict], out_dir: Path) -> None:
 
 
 def judge_score_single_multi_comparison(
-    all_data: list[dict], out_dir: Path, results_dirs: list[Path] | None = None, search_type: str | None = None
+    subset_key: str,
+    subset_label: str,
+    out_dir: Path,
+    results_dirs: list[Path] | None = None,
 ) -> None:
-    """Grouped bar chart: for each judge score value (1-5) show count for single-doc vs multi-doc."""
-    def _collect_scores(subset_key: str, search_type: str) -> tuple[dict[int, int], int]:
+    """Grouped bar chart for a subset: compare mmr vs standard/similarity at each judge score."""
+
+    def _collect_scores(search_type: str) -> tuple[dict[int, int], int]:
         data = _load_eval_jsons(
             subset_key,
             search_type=search_type,
@@ -353,11 +364,11 @@ def judge_score_single_multi_comparison(
         ]
         return {s: scores.count(s) for s in range(1, 6)}, len(scores)
 
-    single_counts, single_n = _collect_scores("single_doc", search_type)
-    multi_counts, multi_n = _collect_scores("multi_doc", search_type)
+    mmr_counts, mmr_n = _collect_scores("mmr")
+    standard_counts, standard_n = _collect_scores("standard")
 
-    if single_n == 0 and multi_n == 0:
-        print("[skip] No valid judge scores found for single/multi comparison.")
+    if mmr_n == 0 and standard_n == 0:
+        print("[skip] No valid judge scores found for mmr/standard comparison.")
         return
 
     score_vals = list(range(1, 6))
@@ -365,30 +376,44 @@ def judge_score_single_multi_comparison(
     width = 0.35
 
     colors = sns.color_palette("muted", 2)
-    single_bars = [single_counts[s] for s in score_vals]
-    multi_bars = [multi_counts[s] for s in score_vals]
+    mmr_bars = [mmr_counts[s] for s in score_vals]
+    standard_bars = [standard_counts[s] for s in score_vals]
 
-    single_avg = sum(s * single_counts[s] for s in score_vals) / single_n if single_n else 0
-    multi_avg = sum(s * multi_counts[s] for s in score_vals) / multi_n if multi_n else 0
+    mmr_avg = sum(s * mmr_counts[s] for s in score_vals) / mmr_n if mmr_n else 0
+    standard_avg = (
+        sum(s * standard_counts[s] for s in score_vals) / standard_n if standard_n else 0
+    )
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    b1 = ax.bar(x - width / 2, single_bars, width, label=f"Single-Doc (avg={single_avg:.2f}, n={single_n})", color=colors[0])
-    b2 = ax.bar(x + width / 2, multi_bars, width, label=f"Multi-Doc  (avg={multi_avg:.2f}, n={multi_n})", color=colors[1])
+    b1 = ax.bar(
+        x - width / 2,
+        mmr_bars,
+        width,
+        label=f"MMR (avg={mmr_avg:.2f}, n={mmr_n})",
+        color=colors[0],
+    )
+    b2 = ax.bar(
+        x + width / 2,
+        standard_bars,
+        width,
+        label=f"Standard/Similarity (avg={standard_avg:.2f}, n={standard_n})",
+        color=colors[1],
+    )
 
-    max_cnt = max(max(single_bars, default=0), max(multi_bars, default=0))
-    for bar, cnt in zip(b1, single_bars):
+    max_cnt = max(max(mmr_bars, default=0), max(standard_bars, default=0))
+    for bar, cnt in zip(b1, mmr_bars):
         if cnt:
-            pct = 100.0 * cnt / single_n if single_n else 0
+            pct = 100.0 * cnt / mmr_n if mmr_n else 0
             ax.text(
                 bar.get_x() + bar.get_width() / 2,
                 bar.get_height() + max_cnt * 0.01,
                 f"{cnt}\n({pct:.1f}%)",
                 ha="center", va="bottom", fontsize=8, fontweight="bold",
             )
-    for bar, cnt in zip(b2, multi_bars):
+    for bar, cnt in zip(b2, standard_bars):
         if cnt:
-            pct = 100.0 * cnt / multi_n if multi_n else 0
+            pct = 100.0 * cnt / standard_n if standard_n else 0
             ax.text(
                 bar.get_x() + bar.get_width() / 2,
                 bar.get_height() + max_cnt * 0.01,
@@ -400,79 +425,10 @@ def judge_score_single_multi_comparison(
     ax.set_xticklabels([str(s) for s in score_vals])
     ax.set_xlabel("Judge Score")
     ax.set_ylabel("Number of questions")
-    ax.set_title(f"{search_type.upper()} retrieval")
+    ax.set_title(f"Judge Score Distribution — {subset_label} (MMR vs Standard/Similarity)")
     ax.legend()
     fig.tight_layout()
-    _save(fig, f"{search_type}_judge_score_single_multi_comparison.png", out_dir)
-
-# def judge_score_single_multi_comparison_mmr_vs_similarity(
-#     all_data: list[dict], out_dir: Path, results_dirs: list[Path] | None = None
-# ) -> None:
-#     """Compare similarity scores and MMR scores for single-doc vs multi-doc questions grouped by judge score."""
-#     _ = all_data
-
-#     def _collect_scores(subset_key: str, search_type: str) -> tuple[dict[int, int], int]:
-#         data = _load_eval_jsons(
-#             subset_key,
-#             search_type=search_type,
-#             results_dirs=results_dirs,
-#         )
-#         scores = [
-#             r["score"]
-#             for run in data
-#             for r in run.get("results", [])
-#             if isinstance(r.get("score"), int)
-#         ]
-#         return {s: scores.count(s) for s in range(1, 6)}, len(scores)
-
-#     mmr_single, n_mmr_single = _collect_scores("single_doc", "mmr")
-#     mmr_multi, n_mmr_multi = _collect_scores("multi_doc", "mmr")
-#     sim_single, n_sim_single = _collect_scores("single_doc", "similarity")
-#     sim_multi, n_sim_multi = _collect_scores("multi_doc", "similarity")
-
-#     if (n_mmr_single + n_mmr_multi + n_sim_single + n_sim_multi) == 0:
-#         print("  [skip] No MMR/similarity eval files found for single/multi comparison.")
-#         return
-
-#     score_vals = list(range(1, 6))
-#     x = np.arange(len(score_vals))
-#     width = 0.2
-#     offsets = [-1.5 * width, -0.5 * width, 0.5 * width, 1.5 * width]
-#     colors = sns.color_palette("muted", 4)
-
-#     series = [
-#         ("mmr_single_doc", [mmr_single[s] for s in score_vals], n_mmr_single, offsets[0], colors[0]),
-#         ("mmr_multi_doc", [mmr_multi[s] for s in score_vals], n_mmr_multi, offsets[1], colors[1]),
-#         ("similarity_single_doc", [sim_single[s] for s in score_vals], n_sim_single, offsets[2], colors[2]),
-#         ("similarity_multi_doc", [sim_multi[s] for s in score_vals], n_sim_multi, offsets[3], colors[3]),
-#     ]
-
-#     fig, ax = plt.subplots(figsize=(12, 6))
-#     max_cnt = max((max(vals, default=0) for _, vals, _, _, _ in series), default=0)
-
-#     for label, vals, n, x_off, color in series:
-#         bars = ax.bar(x + x_off, vals, width, color=color, label=f"{label} (n={n})")
-#         for bar, cnt in zip(bars, vals):
-#             if cnt:
-#                 ax.text(
-#                     bar.get_x() + bar.get_width() / 2,
-#                     bar.get_height() + max_cnt * 0.01,
-#                     str(cnt),
-#                     ha="center",
-#                     va="bottom",
-#                     fontsize=8,
-#                     fontweight="bold",
-#                 )
-
-#     ax.set_xticks(x)
-#     ax.set_xticklabels([str(s) for s in score_vals])
-#     ax.set_xlabel("Judge Score")
-#     ax.set_ylabel("Number of questions")
-#     ax.set_title("Judge Score Distribution by Retrieval Strategy and Question Group")
-#     ax.legend()
-#     fig.tight_layout()
-#     _save(fig, "judge_score_single_multi_comparison_mmr_vs_similarity.png", out_dir)
-
+    _save(fig, f"{subset_label.lower().replace(' ', '_')}_judge_score_mmr_vs_standard.png", out_dir)
 
 
 
@@ -504,23 +460,16 @@ def generate_eval_charts(out_dir: Path) -> None:
     all_docs_data = _load_eval_jsons("all_docs", results_dirs=merged_results_dirs)
     if all_docs_data:
         plot_metrics_by_group(all_docs_data, out_dir)
-        judge_score_single_multi_comparison(
-            all_docs_data,
-            out_dir,
-            results_dirs=merged_results_dirs,
-            search_type="mmr",
-        )
-        judge_score_single_multi_comparison(
-            all_docs_data,
-            out_dir,
-            results_dirs=merged_results_dirs,
-            search_type="standard",
-        )
-        # judge_score_single_multi_comparison_mmr_vs_similarity(
-        #     all_docs_data,
-        #     out_dir,
-        #     results_dirs=merged_results_dirs,
-        # )
+    for subset_key, subset_label in _SUBSETS[:2]:
+        subset_data = _load_eval_jsons(subset_key, results_dirs=merged_results_dirs)
+        if subset_data:
+            print(f"-- {subset_label} MMR vs Standard/Similarity --")
+            judge_score_single_multi_comparison(
+                subset_key,
+                subset_label,
+                out_dir,
+                results_dirs=merged_results_dirs,
+            )
 
 
 def main() -> None:
