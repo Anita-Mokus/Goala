@@ -117,8 +117,8 @@ def plot_retrieval_rr_distribution(
 
 
 _RETRIEVAL_SUBSETS: list[tuple[str, str, str]] = [
-    ("liverag_retrieval_analysis_single_doc.csv", "single_doc", "Single-Doc"),
-    ("liverag_retrieval_analysis_multi_doc.csv",  "multi_doc",  "Multi-Doc"),
+    ("sapientia_retrieval_analysis_single_doc.csv", "single_doc", "Single-Doc"),
+    ("sapientia_retrieval_analysis_multi_doc.csv",  "multi_doc",  "Multi-Doc"),
 ]
 
 
@@ -139,7 +139,7 @@ def generate_retrieval_charts(out_dir: Path) -> None:
         plot_retrieval_rr_distribution(df, out_dir, k, suffix=suffix, label=label)
 
     if not any_found:
-        print("  [skip] No retrieval analysis CSVs found in shared/.")
+        print("No retrieval analysis CSVs found in shared/.")
 
 
 
@@ -149,6 +149,19 @@ _SUBSETS: list[tuple[str, str]] = [
     ("all_docs",   "All Questions"),
 ]
 
+_CATEGORY_MAP: dict[str, tuple[str, str]] = {
+    "overall": ("overall", "Overall"),
+    "single_doc": ("single_supporting_doc", "Single-Doc"),
+    "single_supporting_doc": ("single_supporting_doc", "Single-Doc"),
+    "multi_doc": ("multi_supporting_doc", "Multi-Doc"),
+    "multi_supporting_doc": ("multi_supporting_doc", "Multi-Doc"),
+}
+
+
+def _resolve_category(category: str) -> tuple[str, str]:
+    """Map a user-facing category name to a statistics key and label."""
+    return _CATEGORY_MAP.get(category.lower(), (category, category.replace("_", " ").title()))
+
 
 def _load_eval_jsons(
     subset: str,
@@ -157,7 +170,7 @@ def _load_eval_jsons(
 ) -> list[dict]:
     """Load eval JSONs filtered by subset/search_type from one or more directories."""
     if results_dirs is None:
-        results_dirs = [_project_root() / "evaluation_results"]
+        results_dirs = [_project_root() / "evaluation_results" / "evaluation_results_different_models"]
 
     files = []
     for results_dir in results_dirs:
@@ -165,7 +178,7 @@ def _load_eval_jsons(
             continue
         for f in sorted(results_dir.glob("*.json")):
             stem = f.stem.lower()
-            if "eval_results_liverag" not in stem:
+            if "eval_results_sapientia" not in stem:
                 continue
             if f"_{subset.lower()}_" not in f"_{stem}_":
                 continue
@@ -281,65 +294,64 @@ def plot_judge_score_boxplot(out_dir: Path, results_dirs: list[Path] | None = No
     _save(fig, "judge_score_boxplot.png", out_dir)
 
 
-def plot_metrics_by_group(all_data: list[dict], out_dir: Path) -> None:
-    """Grouped bar chart comparing overall / single / multi across key metrics."""
-    group_keys = ["overall", "single_supporting_doc", "multi_supporting_doc"]
-    group_labels = ["Overall", "Single GT doc", "Multi GT docs"]
+def plot_metrics_by_group(all_data: list[dict], out_dir: Path, *, category: str = "overall") -> None:
+    """Bar chart for a selected category across key metrics."""
+    category_key, category_label = _resolve_category(category)
     metric_keys = ["mrr.mean_reciprocal_rank", "recall_at_k.mean_recall"]
     metric_labels = ["MRR", "Recall@K"]
 
-    merged: dict[str, dict] = {g: {} for g in group_keys}
+    merged: dict[str, float] = {}
     run_count = 0
     for run in all_data:
         stats = run.get("statistics", {})
+        group_stats = stats.get(category_key)
+        if not group_stats:
+            continue
         run_count += 1
-        for g in group_keys:
-            group_stats = stats.get(g)
-            if not group_stats:
-                continue
-            for mk in metric_keys:
-                keys = mk.split(".")
-                val = group_stats
-                for k in keys:
-                    val = val.get(k) if isinstance(val, dict) else None
-                    if val is None:
-                        break
-                if val is not None:
-                    merged[g][mk] = merged[g].get(mk, 0.0) + float(val)
+        for mk in metric_keys:
+            keys = mk.split(".")
+            val = group_stats
+            for k in keys:
+                val = val.get(k) if isinstance(val, dict) else None
+                if val is None:
+                    break
+            if val is not None:
+                merged[mk] = merged.get(mk, 0.0) + float(val)
 
-    if run_count > 1:
-        for g in merged:
-            for mk in merged[g]:
-                merged[g][mk] /= run_count
+    if not run_count:
+        print(f"No statistics found for category '{category_key}'.")
+        return
+
+    for mk in merged:
+        merged[mk] /= run_count
 
     x = np.arange(len(metric_labels))
-    width = 0.25
-    colors = sns.color_palette("muted", len(group_keys))
+    width = 0.5
 
     fig, ax = plt.subplots(figsize=(9, 5))
-    for i, (gk, gl, color) in enumerate(zip(group_keys, group_labels, colors)):
-        vals = [merged[gk].get(mk) for mk in metric_keys]
-        valid = [v if v is not None else 0 for v in vals]
-        bars = ax.bar(x + i * width, valid, width, label=gl, color=color)
-        for bar, v in zip(bars, vals):
-            if v is not None:
-                ax.text(
-                    bar.get_x() + bar.get_width() / 2,
-                    bar.get_height() + 0.01,
-                    f"{v:.3f}",
-                    ha="center",
-                    va="bottom",
-                    fontsize=8,
-                )
+    vals = [merged.get(mk) for mk in metric_keys]
+    valid = [v if v is not None else 0 for v in vals]
+    color = sns.color_palette("muted", 1)[0]
+    bars = ax.bar(x, valid, width, label=category_label, color=color)
+    for bar, v in zip(bars, vals):
+        if v is not None:
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                bar.get_height() + 0.01,
+                f"{v:.3f}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
 
     ax.set_xticks(x + width)
-    ax.set_xticklabels(["MRR", "Recall@K"])
+    ax.set_xticklabels(metric_labels)
     ax.set_ylim(0, 1.1)
     ax.set_ylabel("Score (0–1)")
-    ax.set_title("Key Metrics by Question Group")
+    ax.set_title(f"Key Metrics — {category_label}")
     ax.legend()
     fig.tight_layout()
-    _save(fig, "metrics_by_group.png", out_dir)
+    _save(fig, f"metrics_by_group_{category_key}.png", out_dir)
 
 
 def judge_score_single_multi_comparison(
@@ -441,29 +453,34 @@ def generate_eval_charts(out_dir: Path) -> None:
         d for d in [results_dir_MMR, results_dir_similarity] if d.exists()
     ]
     if not merged_results_dirs:
-        print("[skip] No evaluation result directories found in shared/MMR and shared/STANDARD.")
+        print("No evaluation result directories found in shared/MMR and shared/STANDARD.")
         return
 
     if not any(any(d.glob("*.json")) for d in merged_results_dirs):
-        print("[skip] No evaluation result JSONs found in shared/MMR or shared/STANDARD.")
+        print("No evaluation result JSONs found in shared/MMR or shared/STANDARD.")
         return
 
     for subset_key, subset_label in _SUBSETS:
         data = _load_eval_jsons(subset_key, results_dirs=merged_results_dirs)
         if not data:
-            print(f"[skip] No files found for subset '{subset_key}'.")
+            print(f"No files found for subset '{subset_key}'.")
             continue
         print(f"-- {subset_label} ({subset_key}) --")
         plot_judge_score_distribution(data, out_dir, suffix=subset_key, label=subset_label)
     plot_judge_score_boxplot(out_dir, results_dirs=merged_results_dirs)
 
-    all_docs_data = _load_eval_jsons("all_docs", results_dirs=merged_results_dirs)
-    if all_docs_data:
-        plot_metrics_by_group(all_docs_data, out_dir)
+    for subset_key, subset_label in _SUBSETS:
+        data = _load_eval_jsons(subset_key, results_dirs=merged_results_dirs)
+        if not data:
+            print(f"No files found for subset '{subset_key}'.")
+            continue
+        category_key, _ = _resolve_category(subset_key)
+        print(f"-- {subset_label} metrics ({category_key}) --")
+        plot_metrics_by_group(data, out_dir, category=subset_key)
     for subset_key, subset_label in _SUBSETS[:2]:
         subset_data = _load_eval_jsons(subset_key, results_dirs=merged_results_dirs)
         if subset_data:
-            print(f"-- {subset_label} MMR vs Standard/Similarity --")
+            print(f"{subset_label} MMR vs Standard/Similarity --")
             judge_score_single_multi_comparison(
                 subset_key,
                 subset_label,
