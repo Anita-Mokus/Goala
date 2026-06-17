@@ -86,34 +86,6 @@ def _compute_retrieval_metrics(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def plot_retrieval_rank_distribution(
-    df: pd.DataFrame, out_dir: Path, k: int = 5, *, suffix: str, label: str
-) -> None:
-    """Bar chart of the rank at which the GT doc was first found."""
-    rank_labels = [str(i) for i in range(1, k + 1)] + ["Not found"]
-    counts = [
-        int((df["first_hit_rank"] == i).sum()) for i in range(1, k + 1)
-    ] + [int((df["first_hit_rank"] == 0).sum())]
-
-    palette = sns.color_palette("muted", k) + [(0.6, 0.6, 0.6)]
-    fig, ax = plt.subplots(figsize=(7, 4))
-    bars = ax.bar(rank_labels, counts, color=palette)
-    ax.set_xlabel("Rank of first GT match")
-    ax.set_ylabel("Number of questions")
-    ax.set_title(f"Distribution of First GT Hit Rank — {label}")
-    for bar, cnt in zip(bars, counts):
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + max(counts) * 0.01,
-            str(cnt),
-            ha="center",
-            va="bottom",
-            fontsize=10,
-        )
-    fig.tight_layout()
-    _save(fig, f"retrieval_rank_distribution_{suffix}.png", out_dir)
-
-
 def plot_retrieval_rr_distribution(
     df: pd.DataFrame, out_dir: Path, k: int = 5, *, suffix: str, label: str
 ) -> None:
@@ -164,7 +136,6 @@ def generate_retrieval_charts(out_dir: Path) -> None:
         k = len([c for c in df.columns if c.startswith("retrieved_context_id_")])
 
         print(f"  Loaded {len(df)} rows from {csv_name}  (K={k})")
-        plot_retrieval_rank_distribution(df, out_dir, k, suffix=suffix, label=label)
         plot_retrieval_rr_distribution(df, out_dir, k, suffix=suffix, label=label)
 
     if not any_found:
@@ -179,10 +150,36 @@ _SUBSETS: list[tuple[str, str]] = [
 ]
 
 
-def _load_eval_jsons(subset: str) -> list[dict]:
-    """Load all eval JSONs whose filename matches the given subset key."""
-    results_dir = _project_root() / "evaluation_results"
-    files = sorted(results_dir.glob(f"eval_results_liveRAG_{subset}_*.json"))
+def _load_eval_jsons(
+    subset: str,
+    search_type: str | None = None,
+    results_dirs: list[Path] | None = None,
+) -> list[dict]:
+    """Load eval JSONs filtered by subset/search_type from one or more directories."""
+    if results_dirs is None:
+        results_dirs = [_project_root() / "evaluation_results"]
+
+    files = []
+    for results_dir in results_dirs:
+        if not results_dir.exists():
+            continue
+        for f in sorted(results_dir.glob("*.json")):
+            stem = f.stem.lower()
+            if "eval_results_liverag" not in stem:
+                continue
+            if f"_{subset.lower()}_" not in f"_{stem}_":
+                continue
+            if search_type:
+                search_type_key = search_type.lower()
+                valid_search_types = {search_type_key}
+                if search_type_key == "standard":
+                    valid_search_types.add("similarity")
+                if search_type_key == "similarity":
+                    valid_search_types.add("standard")
+                if not any(f"_{token}_" in f"_{stem}_" for token in valid_search_types):
+                    continue
+            files.append(f)
+
     loaded = []
     for f in files:
         with open(f, encoding="utf-8") as fh:
@@ -233,11 +230,11 @@ def plot_judge_score_distribution(
     _save(fig, f"judge_score_distribution_{suffix}.png", out_dir)
 
 
-def plot_judge_score_boxplot(out_dir: Path) -> None:
+def plot_judge_score_boxplot(out_dir: Path, results_dirs: list[Path] | None = None) -> None:
     """Side-by-side boxplot of judge scores for single-doc, multi-doc, and all questions."""
     subset_records: list[tuple[str, list[int]]] = []
     for subset_key, subset_label in _SUBSETS[:2]:
-        data = _load_eval_jsons(subset_key)
+        data = _load_eval_jsons(subset_key, results_dirs=results_dirs)
         scores = [
             r["score"]
             for run in data
@@ -256,15 +253,17 @@ def plot_judge_score_boxplot(out_dir: Path) -> None:
     colors = sns.color_palette("muted", len(labels))
 
     fig, ax = plt.subplots(figsize=(8, 5))
-    bp = ax.boxplot(
-        score_lists,
-        labels=labels,
-        patch_artist=True,
-        medianprops={"color": "red", "linewidth": 2.5},
-        whiskerprops={"linewidth": 1.5},
-        capprops={"linewidth": 1.5},
-        flierprops={"marker": "o", "markersize": 4, "alpha": 0.5},
-    )
+    boxplot_kwargs = {
+        "patch_artist": True,
+        "medianprops": {"color": "red", "linewidth": 2.5},
+        "whiskerprops": {"linewidth": 1.5},
+        "capprops": {"linewidth": 1.5},
+        "flierprops": {"marker": "o", "markersize": 4, "alpha": 0.5},
+    }
+    try:
+        bp = ax.boxplot(score_lists, tick_labels=labels, **boxplot_kwargs)
+    except TypeError:
+        bp = ax.boxplot(score_lists, labels=labels, **boxplot_kwargs)
     for patch, color in zip(bp["boxes"], colors):
         patch.set_facecolor(color)
         patch.set_alpha(0.75)
@@ -343,81 +342,20 @@ def plot_metrics_by_group(all_data: list[dict], out_dir: Path) -> None:
     _save(fig, "metrics_by_group.png", out_dir)
 
 
-def plot_score_vs_rr(
-    all_data: list[dict], out_dir: Path, *, suffix: str, label: str
+def judge_score_single_multi_comparison(
+    subset_key: str,
+    subset_label: str,
+    out_dir: Path,
+    results_dirs: list[Path] | None = None,
 ) -> None:
-    """Scatter plot of judge score vs reciprocal rank for a single subset."""
-    rows = []
-    for run in all_data:
-        for r in run.get("results", []):
-            score = r.get("score")
-            rr = r.get("reciprocal_rank")
-            if isinstance(score, int) and rr is not None:
-                rows.append({"score": score, "rr": float(rr)})
-    if not rows:
-        print(f"  [skip] No score/rr pairs found for '{suffix}'.")
-        return
+    """Grouped bar chart for a subset: compare mmr vs standard/similarity at each judge score."""
 
-    df = pd.DataFrame(rows)
-    rng = np.random.default_rng(42)
-    df["score_jittered"] = df["score"] + rng.uniform(-0.25, 0.25, len(df))
-
-    fig, ax = plt.subplots(figsize=(7, 5))
-    ax.scatter(
-        df["rr"],
-        df["score_jittered"],
-        alpha=0.35,
-        s=18,
-        color=sns.color_palette("muted")[0],
-        edgecolors="none",
-    )
-
-    rr_vals = sorted(df["rr"].unique())
-    mean_scores = [df.loc[df["rr"] == rv, "score"].mean() for rv in rr_vals]
-    ax.plot(rr_vals, mean_scores, "o-", color="crimson", lw=2, ms=7, label="Mean score per RR")
-
-    ax.set_xlabel("Reciprocal Rank")
-    ax.set_ylabel("Judge Score")
-    ax.set_yticks(range(1, 6))
-    ax.set_title(f"Judge Score vs Retrieval Reciprocal Rank — {label}")
-    ax.legend()
-    fig.tight_layout()
-    _save(fig, f"score_vs_rr_scatter_{suffix}.png", out_dir)
-
-
-def plot_multi_run_mrr(all_data: list[dict], out_dir: Path) -> None:
-    """Line chart of MRR over multiple evaluation runs."""
-    if len(all_data) < 2:
-        return
-
-    timestamps, mrr_vals = [], []
-    for run in all_data:
-        meta = run.get("metadata", {})
-        ts = meta.get("timestamp", "?")
-        stats = run.get("statistics", {})
-        mrr = (stats.get("overall") or {}).get("mrr", {}).get("mean_reciprocal_rank")
-        if mrr is not None:
-            timestamps.append(ts)
-            mrr_vals.append(float(mrr))
-
-    if len(mrr_vals) < 2:
-        return
-
-    fig, ax = plt.subplots(figsize=(max(6, len(timestamps)), 4))
-    ax.plot(timestamps, mrr_vals, "o-", lw=2, color=sns.color_palette("muted")[2])
-    for x, y in zip(timestamps, mrr_vals):
-        ax.text(x, y + 0.005, f"{y:.4f}", ha="center", va="bottom", fontsize=9)
-    ax.set_xlabel("Run timestamp")
-    ax.set_ylabel("MRR")
-    ax.set_title("MRR Across Evaluation Runs")
-    plt.xticks(rotation=30, ha="right")
-    fig.tight_layout()
-    _save(fig, "multi_run_mrr.png", out_dir)
-
-def judge_score_single_multi_comparison(all_data: list[dict], out_dir: Path) -> None:
-    """Grouped bar chart: for each judge score value (1-5) show count for single-doc vs multi-doc."""
-    def _collect_scores(subset_key: str) -> dict[int, int]:
-        data = _load_eval_jsons(subset_key)
+    def _collect_scores(search_type: str) -> tuple[dict[int, int], int]:
+        data = _load_eval_jsons(
+            subset_key,
+            search_type=search_type,
+            results_dirs=results_dirs,
+        )
         scores = [
             r["score"]
             for run in data
@@ -426,11 +364,11 @@ def judge_score_single_multi_comparison(all_data: list[dict], out_dir: Path) -> 
         ]
         return {s: scores.count(s) for s in range(1, 6)}, len(scores)
 
-    single_counts, single_n = _collect_scores("single_doc")
-    multi_counts, multi_n = _collect_scores("multi_doc")
+    mmr_counts, mmr_n = _collect_scores("mmr")
+    standard_counts, standard_n = _collect_scores("standard")
 
-    if single_n == 0 and multi_n == 0:
-        print("[skip] No valid judge scores found for single/multi comparison.")
+    if mmr_n == 0 and standard_n == 0:
+        print("[skip] No valid judge scores found for mmr/standard comparison.")
         return
 
     score_vals = list(range(1, 6))
@@ -438,30 +376,44 @@ def judge_score_single_multi_comparison(all_data: list[dict], out_dir: Path) -> 
     width = 0.35
 
     colors = sns.color_palette("muted", 2)
-    single_bars = [single_counts[s] for s in score_vals]
-    multi_bars = [multi_counts[s] for s in score_vals]
+    mmr_bars = [mmr_counts[s] for s in score_vals]
+    standard_bars = [standard_counts[s] for s in score_vals]
 
-    single_avg = sum(s * single_counts[s] for s in score_vals) / single_n if single_n else 0
-    multi_avg = sum(s * multi_counts[s] for s in score_vals) / multi_n if multi_n else 0
+    mmr_avg = sum(s * mmr_counts[s] for s in score_vals) / mmr_n if mmr_n else 0
+    standard_avg = (
+        sum(s * standard_counts[s] for s in score_vals) / standard_n if standard_n else 0
+    )
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    b1 = ax.bar(x - width / 2, single_bars, width, label=f"Single-Doc (avg={single_avg:.2f}, n={single_n})", color=colors[0])
-    b2 = ax.bar(x + width / 2, multi_bars, width, label=f"Multi-Doc  (avg={multi_avg:.2f}, n={multi_n})", color=colors[1])
+    b1 = ax.bar(
+        x - width / 2,
+        mmr_bars,
+        width,
+        label=f"MMR (avg={mmr_avg:.2f}, n={mmr_n})",
+        color=colors[0],
+    )
+    b2 = ax.bar(
+        x + width / 2,
+        standard_bars,
+        width,
+        label=f"Standard/Similarity (avg={standard_avg:.2f}, n={standard_n})",
+        color=colors[1],
+    )
 
-    max_cnt = max(max(single_bars, default=0), max(multi_bars, default=0))
-    for bar, cnt in zip(b1, single_bars):
+    max_cnt = max(max(mmr_bars, default=0), max(standard_bars, default=0))
+    for bar, cnt in zip(b1, mmr_bars):
         if cnt:
-            pct = 100.0 * cnt / single_n if single_n else 0
+            pct = 100.0 * cnt / mmr_n if mmr_n else 0
             ax.text(
                 bar.get_x() + bar.get_width() / 2,
                 bar.get_height() + max_cnt * 0.01,
                 f"{cnt}\n({pct:.1f}%)",
                 ha="center", va="bottom", fontsize=8, fontweight="bold",
             )
-    for bar, cnt in zip(b2, multi_bars):
+    for bar, cnt in zip(b2, standard_bars):
         if cnt:
-            pct = 100.0 * cnt / multi_n if multi_n else 0
+            pct = 100.0 * cnt / standard_n if standard_n else 0
             ax.text(
                 bar.get_x() + bar.get_width() / 2,
                 bar.get_height() + max_cnt * 0.01,
@@ -473,35 +425,51 @@ def judge_score_single_multi_comparison(all_data: list[dict], out_dir: Path) -> 
     ax.set_xticklabels([str(s) for s in score_vals])
     ax.set_xlabel("Judge Score")
     ax.set_ylabel("Number of questions")
-    ax.set_title("Judge Score Distribution — Single-Doc vs Multi-Doc")
+    ax.set_title(f"Judge Score Distribution — {subset_label} (MMR vs Standard Retrieval)")
     ax.legend()
     fig.tight_layout()
-    _save(fig, "judge_score_single_multi_comparison.png", out_dir)
+    _save(fig, f"{subset_label.lower().replace(' ', '_')}_judge_score_mmr_vs_standard.png", out_dir)
+
+
 
 
 def generate_eval_charts(out_dir: Path) -> None:
-    results_dir = _project_root() / "evaluation_results"
-    if not results_dir.exists() or not any(results_dir.glob("eval_results_liveRAG_*.json")):
-        print("  [skip] No evaluation result JSONs found in evaluation_results/.")
+    results_dir_MMR = _project_root() / "shared" / "MMR"
+    results_dir_similarity = _project_root() / "shared" / "STANDARD"
+
+    merged_results_dirs = [
+        d for d in [results_dir_MMR, results_dir_similarity] if d.exists()
+    ]
+    if not merged_results_dirs:
+        print("[skip] No evaluation result directories found in shared/MMR and shared/STANDARD.")
+        return
+
+    if not any(any(d.glob("*.json")) for d in merged_results_dirs):
+        print("[skip] No evaluation result JSONs found in shared/MMR or shared/STANDARD.")
         return
 
     for subset_key, subset_label in _SUBSETS:
-        data = _load_eval_jsons(subset_key)
+        data = _load_eval_jsons(subset_key, results_dirs=merged_results_dirs)
         if not data:
-            print(f"  [skip] No files found for subset '{subset_key}'.")
+            print(f"[skip] No files found for subset '{subset_key}'.")
             continue
-        print(f"  -- {subset_label} ({subset_key}) --")
+        print(f"-- {subset_label} ({subset_key}) --")
         plot_judge_score_distribution(data, out_dir, suffix=subset_key, label=subset_label)
-        plot_score_vs_rr(data, out_dir, suffix=subset_key, label=subset_label)
+    plot_judge_score_boxplot(out_dir, results_dirs=merged_results_dirs)
 
-    plot_judge_score_boxplot(out_dir)
-
-    all_docs_data = _load_eval_jsons("all_docs")
+    all_docs_data = _load_eval_jsons("all_docs", results_dirs=merged_results_dirs)
     if all_docs_data:
         plot_metrics_by_group(all_docs_data, out_dir)
-        plot_multi_run_mrr(all_docs_data, out_dir)
-        judge_score_single_multi_comparison(all_docs_data, out_dir)
-
+    for subset_key, subset_label in _SUBSETS[:2]:
+        subset_data = _load_eval_jsons(subset_key, results_dirs=merged_results_dirs)
+        if subset_data:
+            print(f"-- {subset_label} MMR vs Standard/Similarity --")
+            judge_score_single_multi_comparison(
+                subset_key,
+                subset_label,
+                out_dir,
+                results_dirs=merged_results_dirs,
+            )
 
 
 def main() -> None:
