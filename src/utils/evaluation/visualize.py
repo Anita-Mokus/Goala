@@ -295,6 +295,7 @@ def plot_judge_score_distribution_by_retrieval_type(
 
     fig, ax = plt.subplots(figsize=(10, 6))
     for i, ((subset_label, percentages, total, avg), color) in enumerate(zip(subset_records, colors)):
+        counts = [round(pct * total / 100.0) for pct in percentages]
         bars = ax.bar(
             x + (i - (len(subset_records) - 1) / 2) * width,
             percentages,
@@ -302,12 +303,12 @@ def plot_judge_score_distribution_by_retrieval_type(
             label=f"{subset_label} (avg={avg:.2f}, n={total})",
             color=color,
         )
-        for bar, pct in zip(bars, percentages):
+        for bar, count, pct in zip(bars, counts, percentages):
             if pct:
                 ax.text(
                     bar.get_x() + bar.get_width() / 2,
                     bar.get_height() + 0.8,
-                    f"{pct:.1f}%",
+                    f"{count}\n({pct:.1f}%)",
                     ha="center",
                     va="bottom",
                     fontsize=8,
