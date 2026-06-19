@@ -188,6 +188,33 @@ def _load_eval_jsons(
     return loaded
 
 
+def _results_dirs_for_retrieval_type(retrieval_type: str) -> list[Path]:
+    """Return the evaluation results directories for a retrieval type."""
+    retrieval_type_key = retrieval_type.lower()
+    if retrieval_type_key == "standard":
+        retrieval_type_key = "standard"
+    elif retrieval_type_key == "mmr":
+        retrieval_type_key = "mmr"
+
+    base_dir = _project_root() / "shared"
+    candidates = {
+        "standard": base_dir / "STANDARD",
+        "mmr": base_dir / "MMR",
+    }
+    result_dir = candidates.get(retrieval_type_key)
+    return [result_dir] if result_dir and result_dir.exists() else []
+
+
+def _scores_to_percentages(scores: list[int]) -> tuple[list[int], list[float], int, float]:
+    """Convert score counts to percentages for plotting."""
+    score_vals = list(range(1, 6))
+    counts = [scores.count(score) for score in score_vals]
+    total = len(scores)
+    percentages = [(count / total * 100.0) if total else 0.0 for count in counts]
+    avg = sum(scores) / total if total else 0.0
+    return counts, percentages, total, avg
+
+
 def plot_judge_score_distribution(
     all_data: list[dict], out_dir: Path, *, suffix: str, label: str
 ) -> None:
@@ -228,6 +255,74 @@ def plot_judge_score_distribution(
         )
     fig.tight_layout()
     _save(fig, f"judge_score_distribution_{suffix}.png", out_dir)
+
+
+def plot_judge_score_distribution_by_retrieval_type(
+    retrieval_type: str,
+    out_dir: Path,
+    results_dirs: list[Path] | None = None,
+) -> None:
+    """Grouped percentage chart for single-doc vs multi-doc questions within one retrieval type."""
+    retrieval_type_key = retrieval_type.lower()
+    if results_dirs is None:
+        results_dirs = _results_dirs_for_retrieval_type(retrieval_type_key)
+
+    if not results_dirs:
+        print(f"[skip] No results directory found for retrieval type '{retrieval_type_key}'.")
+        return
+
+    subset_records: list[tuple[str, list[int], int, float]] = []
+    for subset_key, subset_label in _SUBSETS[:2]:
+        data = _load_eval_jsons(subset_key, results_dirs=results_dirs)
+        scores = [
+            r["score"]
+            for run in data
+            for r in run.get("results", [])
+            if isinstance(r.get("score"), int)
+        ]
+        if scores:
+            counts, percentages, total, avg = _scores_to_percentages(scores)
+            subset_records.append((subset_label, percentages, total, avg))
+
+    if not subset_records:
+        print(f"  [skip] No valid judge scores found for retrieval type '{retrieval_type_key}'.")
+        return
+
+    score_vals = list(range(1, 6))
+    x = np.arange(len(score_vals))
+    width = 0.35
+    colors = sns.color_palette("muted", len(subset_records))
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    for i, ((subset_label, percentages, total, avg), color) in enumerate(zip(subset_records, colors)):
+        bars = ax.bar(
+            x + (i - (len(subset_records) - 1) / 2) * width,
+            percentages,
+            width,
+            label=f"{subset_label} (avg={avg:.2f}, n={total})",
+            color=color,
+        )
+        for bar, pct in zip(bars, percentages):
+            if pct:
+                ax.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    bar.get_height() + 0.8,
+                    f"{pct:.1f}%",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
+                    fontweight="bold",
+                )
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([str(score) for score in score_vals])
+    ax.set_xlabel("Judge Score")
+    ax.set_ylabel("Percentage")
+    ax.set_ylim(0, 105)
+    ax.set_title(f"{retrieval_type_key.upper()} retrieval")
+    ax.legend()
+    fig.tight_layout()
+    _save(fig, f"judge_score_distribution_{retrieval_type_key}_pct.png", out_dir)
 
 
 def plot_judge_score_boxplot(out_dir: Path, results_dirs: list[Path] | None = None) -> None:
@@ -456,6 +551,9 @@ def generate_eval_charts(out_dir: Path) -> None:
         print(f"-- {subset_label} ({subset_key}) --")
         plot_judge_score_distribution(data, out_dir, suffix=subset_key, label=subset_label)
     plot_judge_score_boxplot(out_dir, results_dirs=merged_results_dirs)
+
+    for retrieval_type in ("standard", "mmr"):
+        plot_judge_score_distribution_by_retrieval_type(retrieval_type, out_dir)
 
     all_docs_data = _load_eval_jsons("all_docs", results_dirs=merged_results_dirs)
     if all_docs_data:
