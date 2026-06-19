@@ -2,12 +2,9 @@ Forrás: https://ms.sapientia.ro/hu/felveteli/alapkepzes/infokommunikacios-haloz
 Cím: Infokommunikációs hálózatok és rendszerek (Távközlés) mérnöki szak
 
 Helyek száma
-15
-Tandíjmentes hely
-15
-Költség-hozzájárulásos hely
-10
-Differenciált költség-hozzájárulásos
+Tandíjmentes hely: 15
+Költség-hozzájárulásos hely: 15
+Differenciált költség-hozzájárulásos: 10
 
 Költség-hozzájárulás összege
 500
@@ -22,10 +19,9 @@ Képzés időtartama
 év
 
 A felvételi jegy összetétele
-25%
-az érettségi vizsga átlaga
-75%
-az érettségi írásbeli vizsgán Matematikából, Informatikából vagy Fizikából elért legnagyobb jegy vagy írásbeli felvételi ezen tantárgyak valamelyikéből//FIGYELEM: az érettségi vizsga Matematika//Informatika//Fizika  jegy esetében szorzót használunk
+az érettségi vizsga átlaga: 25%
+az érettségi írásbeli vizsgán Matematikából, Informatikából vagy Fizikából elért legnagyobb jegy, vagy írásbeli felvételi ezen tantárgyak valamelyikéből: 75%
+ / / FIGYELEM: az érettségi vizsga matematika/informatika/fizika jegy esetében szorzót használunk.
 
 Beiratkozási időszak
 (...)
@@ -78,25 +74,9 @@ a világgazdaságban az egyik legtöbb pénzt megmozgató ágazat a távközlés
 a szakon első két évben oktatott alapozó tantárgyak nagy része közös a Számítástechnika és az Automatizálás szakok tantárgyaival?
 a szak tantervében több mint 20 olyan tantárgy van amely programozást tartalmaz?
 A felvételi jegy összetétele
-25% az érettségi vizsga átlaga
-75% az érettségi írásbeli vizsgán
-Matematikából, Informatikából
-vagy
-Fizikából
-elért legnagyobb jegy (ha az
-EMTER
--en 7-es jegy fölött teljesítessz, akkor a versenyen szerzett eredményeddel kiválthatod ezt)
-vagy
-az írásbeli felvételi vizsgán
-Matematikából, Informatikából
-vagy
-Fizikából
-elért jegyek közül a legnagyobb.
-FIGYELEM: az érettségi vizsga
-Matematika // Informatika // Fizika
-jegy esetében szorzót használunk (bővebben lásd a
-felvételi szabályzatot
-)
+az érettségi vizsga átlaga: 25%
+az érettségi írásbeli vizsgán Matematikából, Informatikából vagy Fizikából elért legnagyobb jegy, vagy írásbeli felvételi ezen tantárgyak valamelyikéből: 75%
+ / / FIGYELEM: az érettségi vizsga matematika/informatika/fizika jegy esetében szorzót használunk.
 Felvételi kedvezmények
 lásd:
 Kari felvételi szabályzat

@@ -2,10 +2,8 @@ Forrás: https://ms.sapientia.ro/hu/felveteli/alapkepzes/fordito-es-tolmacs-szak
 Cím: Fordító és tolmács szak
 
 Helyek száma
-20
-Tandíjmentes hely
-30
-Tandíjas hely
+Tandíjmentes hely: 20
+Tandíjas hely: 30
 
 Teljes tandíj összege
 750
@@ -16,12 +14,9 @@ Képzés időtartama
 év
 
 A felvételi jegy összetétele
-50%
-az érettségi vizsgán Magyar nyelv és irodalom tantárgyból az írásbeli próbán szerzett jegy
-25%
-az érettségi vizsgán Román nyelv és irodalom tantárgyból az írásbeli próbán szerzett jegy
-25%
-a legfrissebb idegen nyelvi tanulmányok angol vagy német vizsgaeredményével egyenértékű jegy
+az érettségi vizsgán Magyar nyelv és irodalom tantárgyból az írásbeli próbán szerzett jegy: 50%
+az érettségi vizsgán Román nyelv és irodalom tantárgyból az írásbeli próbán szerzett jegy: 25%
+a legfrissebb idegen nyelvi tanulmányok angol vagy német vizsgaeredményével egyenértékű jegy: 25%
 
 Beiratkozási időszak
 (...)
@@ -77,15 +72,9 @@ az uniós és romániai intézményekben óriási igény van jól képzett szakf
 ahhoz, hogy valakiből igazán jó fordító, illetve tolmács váljék, nem elég a magas szintű nyelvtudás,
 tolmácsként beutazhatod a világot, és izgalmasabbnál izgalmasabb embereket ismerhetsz meg.
 A felvételi jegy összetétele:
-50% az érettségi vizsgán
-magyar nyelv és irodalom
-tantárgyból az írásbeli próbán szerzett jegy
-25% az érettségi vizsgán
-román nyelv és irodalom
-tantárgyból az írásbeli próbán szerzett jegyű
-25% a legfrissebb
-idegen nyelvi tanulmányok
-angol/német vizsgaeredményével egyenértékű jegy
+az érettségi vizsgán Magyar nyelv és irodalom tantárgyból az írásbeli próbán szerzett jegy: 50%
+az érettségi vizsgán Román nyelv és irodalom tantárgyból az írásbeli próbán szerzett jegy: 25%
+a legfrissebb idegen nyelvi tanulmányok angol vagy német vizsgaeredményével egyenértékű jegy: 25%
 Felvételi kedvezmények és megjegyzések
 A Kari Felvételi Bizottság a felvételi jegy kiszámításánál figyelembe veszi a különböző tantárgyversenyeken vagy teszteken elért eredményeket.  A tantárgyversenyek és tesztek pontos listája, valamint az elért eredmények beszámításának módja elérhető a kari
 felvételi szabályzatok

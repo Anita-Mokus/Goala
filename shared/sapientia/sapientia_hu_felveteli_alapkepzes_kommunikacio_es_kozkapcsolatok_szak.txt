@@ -2,14 +2,10 @@ Forrás: https://ms.sapientia.ro/hu/felveteli/alapkepzes/kommunikacio-es-kozkapc
 Cím: Kommunikáció és közkapcsolatok szak
 
 Helyek száma
-15
-Tandíjmentes hely
-15
-Költség-hozzájárulásos hely
-10
-Differenciált költség-hozzájárulásos
-10
-Tandíjas hely
+Tandíjmentes hely: 15
+Költség-hozzájárulásos hely: 15
+Differenciált költség-hozzájárulásos: 10
+Tandíjas hely: 10
 
 Költség-hozzájárulás összege
 500
@@ -28,10 +24,8 @@ Képzés időtartama
 év
 
 A felvételi jegy összetétele
-50%
-az érettségi vizsga átlaga
-50%
-az érettségi vizsgán magyar/román nyelv és irodalom tantárgyból elért jegy
+az érettségi vizsga átlaga: 50%
+az érettségi vizsgán magyar/román nyelv és irodalom tantárgyból elért jegy: 50%
 
 Beiratkozási időszak
 (...)
@@ -81,12 +75,8 @@ közösségi média menedzser
 sajtószóvivő
 rendezvényszervező
 A felvételi jegy összetétele
-50% az érettségi vizsga átlaga
-50% az érettségi vizsgán
-Magyar nyelv és irodalom
-tantárgyból vagy
-Román nyelv és irodalom
-tantárgyból az írásbeli próbán szerzett jegy (amennyiben a jelentkező román tannyelvű gimnáziumban tanult)
+az érettségi vizsga átlaga: 50%
+az érettségi vizsgán Magyar nyelv és irodalom tantárgyból vagy Román nyelv és irodalom tantárgyból az írásbeli próbán szerzett jegy (amennyiben a jelentkező román tannyelvű gimnáziumban tanult): 50%
 Felvételi kedvezmények
 lásd:
 Kari felvételi szabályzat

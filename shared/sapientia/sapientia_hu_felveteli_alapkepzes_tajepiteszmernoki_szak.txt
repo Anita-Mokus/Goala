@@ -2,14 +2,10 @@ Forrás: https://ms.sapientia.ro/hu/felveteli/alapkepzes/tajepiteszmernoki-szak
 Cím: Tájépítészmérnöki szak
 
 Helyek száma
-12
-Tandíjmentes hely
-18
-Költség-hozzájárulásos hely
-2
-Differenciált költség-hozzájárulásos
-8
-Tandíjas hely
+Tandíjmentes hely: 12
+Költség-hozzájárulásos hely: 18
+Differenciált költség-hozzájárulásos: 2
+Tandíjas hely: 8
 
 Költség-hozzájárulás összege
 500
@@ -28,8 +24,7 @@ Képzés időtartama
 év
 
 A felvételi jegy összetétele
-100%
-az érettségi vizsga átlaga
+az érettségi vizsga átlaga: 100%
 
 Beiratkozási időszak
 (...)
@@ -79,7 +74,7 @@ Tudod-e, hogy...?
 a tájépítészet főfeladata a tájat alkotó természeti és mesterséges elemek átrendezése, új kompozícióba tömörítése, valamint az emberi alkotások „tájba illesztése”;
 részt veszünk Erdély kastélykertjeinek felmérésében és felújításában.
 A felvételi jegy összetétele:
-100% érettségi átlag
+érettségi átlag: 100%
 Felvételi kedvezmények
 lásd:
 Kari felvételi szabályzat
