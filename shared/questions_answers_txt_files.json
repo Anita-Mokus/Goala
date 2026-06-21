@@ -3,7 +3,7 @@
     "question_id": "Q001",
     "question_text": "Hány tandíjmentes hely érhető el az Automatika és alkalmazott informatika mérnök szakon?",
     "document_id": "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
-    "expected_output": "Az Automatika és alkalmazott informatika mérnök szakon 10 tandíjmentes hely érhető el."
+    "expected_output": "Az Automatika és alkalmazott informatika mérnök szakon 20 tandíjmentes hely érhető el."
   },
   {
     "question_id": "Q002",

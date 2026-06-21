@@ -7,6 +7,12 @@ from unstructured.chunking.title import chunk_by_title
 from langchain_core.documents import Document
 
 
+def normalize_chunking_params(chunk_max_chars: int, chunk_overlap: int,) -> tuple[int, int]:
+    if chunk_max_chars <= 1:
+        return chunk_max_chars, 0
+    normalized_overlap = max(0, min(chunk_overlap, chunk_max_chars - 1))
+    return chunk_max_chars, normalized_overlap
+
 def chunk_elements(
     elements: List,
     chunk_max_chars: int,
@@ -29,6 +35,11 @@ def chunk_elements(
         List of chunked elements (CompositeElement, Table, or TableChunk)
     """
     try:
+        chunk_max_chars, chunk_overlap = normalize_chunking_params(
+            chunk_max_chars,
+            chunk_overlap,
+        )
+
         chunks = chunk_by_title(
             elements,
             max_characters=chunk_max_chars,

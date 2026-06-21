@@ -2,7 +2,7 @@
 API routes for application settings management.
 """
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from datetime import datetime
 
 from src.models.database import AppSettings, get_db_session
@@ -45,6 +45,12 @@ class SettingsUpdate(BaseModel):
     chunk_new_after_n_chars: int = Field(..., ge=100, le=5000)
     chunk_overlap: int = Field(..., ge=0, le=1000)
     rag_prompt_template: str = Field(..., min_length=10)
+
+    @model_validator(mode="after")
+    def validate_chunking_config(self):
+        if self.chunk_overlap >= self.chunk_max_characters:
+            raise ValueError("chunk_overlap must be smaller than chunk_max_characters")
+        return self
 
 
 @router.get("", response_model=SettingsResponse)
