@@ -15,6 +15,7 @@ Usage:
   python -m src.utils.ingest_cli --liverag --dataset liverag_test --max-rows 100
 """
 import argparse
+from datetime import datetime
 import sys
 from pathlib import Path
 
@@ -63,6 +64,9 @@ def main():
     print("Goala — Document Ingestion Tool")
     print("=" * 60 + "\n")
 
+    start = datetime.now()
+    print(f"Started at: {start.strftime('%Y-%m-%d %H:%M:%S')}\n")
+
     try:
         if args.liverag:
             dataset_key = args.dataset if args.dataset != DEFAULT_DATASET_KEY else "liverag"
@@ -88,6 +92,12 @@ def main():
     except Exception as e:
         print(f"\nERROR: {e}\n")
         sys.exit(1)
+
+    completed = datetime.now()
+    duration = completed - start
+    
+    print(f"Completed at: {completed.strftime('%Y-%m-%d %H:%M:%S')}\n")
+    print(f"Duration: {duration}")
 
 
 if __name__ == "__main__":

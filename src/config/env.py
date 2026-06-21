@@ -14,6 +14,8 @@ load_dotenv()
 DEFAULT_DATASET_KEY = os.getenv("DEFAULT_DATASET_KEY", "sapientia")
 DATASETS_ROOT = Path(os.getenv("DATASETS_ROOT", "shared"))
 
+ENABLE_GPU = os.getenv("ENABLE_GPU", "true")
+
 
 def normalize_dataset_key(dataset_key: str | None) -> str:
     """Normalize a dataset key into a safe, lowercase identifier."""

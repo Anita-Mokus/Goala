@@ -1,5 +1,6 @@
 """Configuration package for environment and database-backed settings."""
 from src.config.env import (
+    ENABLE_GPU,
     DEFAULT_DATASET_KEY,
     DATASETS_ROOT,
     DEFAULT_DATASET_FOLDER,
@@ -62,6 +63,7 @@ from src.config.settings import (
 
 __all__ = [
     # env.py exports
+    "ENABLE_GPU",
     "DEFAULT_DATASET_KEY",
     "DATASETS_ROOT",
     "DEFAULT_DATASET_FOLDER",
