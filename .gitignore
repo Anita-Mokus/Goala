@@ -65,6 +65,10 @@ shared/sapientia/
 # Data output
 data/
 
+# Database dumps
+*.dump
+*.sql.gz
+
 # Frontend
 frontend/node_modules/
 
