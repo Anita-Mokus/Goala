@@ -27,29 +27,45 @@ def create_vector_store(
     documents: List[Document],
     embedding_function,
     connection_string: str,
-    collection_name: str
+    collection_name: str,
+    batch_size: int = 500,
 ) -> PGVector:
     """
-    Create or update the vector store with documents.
-    
+    Create or update the vector store with documents, flushing in batches
+    to avoid OOM with large document sets.
+
     Args:
         documents: List of document chunks to store
         embedding_function: Embedding function instance
         connection_string: PostgreSQL connection string
         collection_name: Name of the collection
-        
+        batch_size: Number of documents to embed and insert per flush
+
     Returns:
         PGVector instance
     """
     try:
-        vector_store = PGVector.from_documents(
-            documents=documents,
-            embedding=embedding_function,
-            connection=connection_string,
-            collection_name=collection_name,
-            use_jsonb=True,
-            pre_delete_collection=True
-        )
+        normalized = normalize_database_url(connection_string)
+        vector_store = None
+
+        for i in range(0, len(documents), batch_size):
+            batch = documents[i:i + batch_size]
+            batch_num = i // batch_size + 1
+            total_batches = (len(documents) + batch_size - 1) // batch_size
+            print(f"Batch {batch_num}/{total_batches} ({len(batch)} docs)...")
+
+            if vector_store is None:
+                vector_store = PGVector.from_documents(
+                    documents=batch,
+                    embedding=embedding_function,
+                    connection=normalized,
+                    collection_name=collection_name,
+                    use_jsonb=True,
+                    pre_delete_collection=True,
+                )
+            else:
+                vector_store.add_documents(batch)
+
         return vector_store
     except Exception as e:
         print(f"Error creating vector store: {e}")
