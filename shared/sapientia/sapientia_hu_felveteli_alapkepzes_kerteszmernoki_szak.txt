@@ -2,12 +2,9 @@ Forrás: https://ms.sapientia.ro/hu/felveteli/alapkepzes/kerteszmernoki-szak
 Cím: Kertészmérnöki szak
 
 Helyek száma
-15
-Tandíjmentes hely
-15
-Költség-hozzájárulásos hely
-15
-Differenciált költség-hozzájárulásos
+Tandíjmentes hely: 15
+Költség-hozzájárulásos hely: 15
+Differenciált költség-hozzájárulásos: 15
 
 Költség-hozzájárulás összege
 500
@@ -22,8 +19,7 @@ Képzés időtartama
 év
 
 A felvételi jegy összetétele
-100%
-érettségi vizsga átlaga
+érettségi vizsga átlaga: 100%
 
 Beiratkozási időszak
 (...)

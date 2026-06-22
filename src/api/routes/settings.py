@@ -37,7 +37,7 @@ class SettingsResponse(BaseModel):
 
 class SettingsUpdate(BaseModel):
     """Request model for updating settings."""
-    dataset_name: str = Field(..., pattern="^(liverag|felveteli)$")
+    dataset_name: str = Field(..., pattern="^(liverag|sapientia)$")
     llm_provider: str = Field(..., pattern="^(groq|deepseek|openrouter|ollama)$")
     llm_model: str = Field(..., min_length=1, max_length=100)
     llm_temperature: float = Field(..., ge=0.0, le=1.0)

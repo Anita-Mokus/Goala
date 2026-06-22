@@ -2,10 +2,8 @@ Forrás: https://ms.sapientia.ro/hu/felveteli/mesterkepzes/szoftverfejlesztes-sz
 Cím: Szoftverfejlesztés szak
 
 Helyek száma
-15
-Tandíjmentes hely
-15
-Tandíjas hely
+Tandíjmentes hely: 15
+Tandíjas hely: 15
 
 Teljes tandíj összege
 500
@@ -16,10 +14,8 @@ Képzés időtartama
 év
 
 A felvételi jegy összetétele
-50%
-a licensz vizsga átlaga
-50%
-írásbeli vizsga
+a licensz vizsga átlaga: 50%
+írásbeli vizsga: 50%
 
 Beiratkozási időszak
 2025. augusztus 27 - szeptember 4.
