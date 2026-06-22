@@ -41,7 +41,9 @@ class IngestService:
         # Get current chunking configuration
         self.chunk_max_chars = get_current_chunk_max_characters()
         self.chunk_new_after = get_current_chunk_new_after_n_chars()
-        self.chunk_overlap = get_current_chunk_overlap()
+        raw_overlap = get_current_chunk_overlap()
+        # unstructured requires overlap < max_characters; clamp silently if DB has bad values
+        self.chunk_overlap = min(raw_overlap, max(0, self.chunk_max_chars - 1))
         self.multipage_sections = CHUNK_MULTIPAGE_SECTIONS
         
         # Get current partitioning configuration
