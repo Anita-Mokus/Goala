@@ -339,47 +339,6 @@ def plot_metrics_by_group(all_data: list[dict], out_dir: Path) -> None:
     _save(fig, "metrics_by_group.png", out_dir)
 
 
-def plot_score_vs_rr(
-    all_data: list[dict], out_dir: Path, *, suffix: str, label: str
-) -> None:
-    """Scatter plot of judge score vs reciprocal rank for a single subset."""
-    rows = []
-    for run in all_data:
-        for r in run.get("results", []):
-            score = r.get("score")
-            rr = r.get("reciprocal_rank")
-            if isinstance(score, int) and rr is not None:
-                rows.append({"score": score, "rr": float(rr)})
-    if not rows:
-        print(f"  [skip] No score/rr pairs found for '{suffix}'.")
-        return
-
-    df = pd.DataFrame(rows)
-    rng = np.random.default_rng(42)
-    df["score_jittered"] = df["score"] + rng.uniform(-0.25, 0.25, len(df))
-
-    fig, ax = plt.subplots(figsize=(7, 5))
-    ax.scatter(
-        df["rr"],
-        df["score_jittered"],
-        alpha=0.35,
-        s=18,
-        color=sns.color_palette("muted")[0],
-        edgecolors="none",
-    )
-
-    rr_vals = sorted(df["rr"].unique())
-    mean_scores = [df.loc[df["rr"] == rv, "score"].mean() for rv in rr_vals]
-    ax.plot(rr_vals, mean_scores, "o-", color="crimson", lw=2, ms=7, label="Mean score per RR")
-
-    ax.set_xlabel("Reciprocal Rank")
-    ax.set_ylabel("Judge Score")
-    ax.set_yticks(range(1, 6))
-    ax.set_title(f"Judge Score vs Retrieval Reciprocal Rank — {label}")
-    ax.legend()
-    fig.tight_layout()
-    _save(fig, f"score_vs_rr_scatter_{suffix}.png", out_dir)
-
 
 def plot_multi_run_mrr(all_data: list[dict], out_dir: Path) -> None:
     """Line chart of MRR over multiple evaluation runs."""
@@ -488,7 +447,6 @@ def generate_eval_charts(out_dir: Path) -> None:
             continue
         print(f"  -- {subset_label} ({subset_key}) --")
         plot_judge_score_distribution(data, out_dir, suffix=subset_key, label=subset_label)
-        plot_score_vs_rr(data, out_dir, suffix=subset_key, label=subset_label)
 
     plot_judge_score_boxplot(out_dir)
 
