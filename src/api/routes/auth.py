@@ -48,8 +48,6 @@ def _build_status_response(cookie_value: str | None) -> AuthStatusResponse:
 
 @router.get("/me", response_model=AuthStatusResponse)
 def read_auth_status(request: Request):
-    if not is_auth_enabled():
-        return AuthStatusResponse(authenticated=True, role="admin")
     return _build_status_response(request.cookies.get(ACCESS_GATE_COOKIE_NAME))
 
 
