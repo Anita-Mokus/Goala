@@ -21,6 +21,7 @@ from src.config import (
     JUDGE_LLM_MODEL,
     JUDGE_LLM_PROVIDER,
     LIVERAG_RAG_PROMPT_TEMPLATE,
+    OLLAMA_BASE_URL
 )
 
 from src.utils.evaluation.config import (
@@ -216,7 +217,7 @@ def evaluate_rag():
     
     # Initialize judge LLM using configured provider
     print("Initializing judge LLM...")
-    judge_provider = get_llm_provider(JUDGE_LLM_PROVIDER, JUDGE_LLM_MODEL, JUDGE_LLM_TEMPERATURE)
+    judge_provider = get_llm_provider(JUDGE_LLM_PROVIDER, JUDGE_LLM_MODEL, JUDGE_LLM_TEMPERATURE, base_url=OLLAMA_BASE_URL)
     judge_llm = judge_provider.get_llm()
     print(f"  Judge: {JUDGE_LLM_PROVIDER} / {JUDGE_LLM_MODEL}")
         
