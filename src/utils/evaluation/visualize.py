@@ -14,6 +14,7 @@ Run with:
 import json
 from pathlib import Path
 
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -258,7 +259,7 @@ def plot_judge_score_boxplot(out_dir: Path) -> None:
     fig, ax = plt.subplots(figsize=(8, 5))
     bp = ax.boxplot(
         score_lists,
-        labels=labels,
+        tick_labels=labels,
         patch_artist=True,
         medianprops={"color": "red", "linewidth": 2.5},
         whiskerprops={"linewidth": 1.5},
@@ -269,15 +270,10 @@ def plot_judge_score_boxplot(out_dir: Path) -> None:
         patch.set_facecolor(color)
         patch.set_alpha(0.75)
 
-    for i, scores in enumerate(score_lists, start=1):
-        mean_val = sum(scores) / len(scores)
-        ax.plot(i, mean_val, marker="D", color="crimson", markersize=7, zorder=5, label="Mean" if i == 1 else "")
-
     ax.set_ylabel("Judge Score (1–5)")
     ax.set_title("Judge Score Distribution by Question Group")
     ax.set_ylim(0.5, 5.5)
     ax.set_yticks(range(1, 6))
-    ax.legend(loc="lower right")
     fig.tight_layout()
     _save(fig, "judge_score_boxplot.png", out_dir)
 
@@ -504,6 +500,110 @@ def generate_eval_charts(out_dir: Path) -> None:
 
 
 
+
+_COMPARISON_DIR = _project_root() / "EvalResults_Visualizations"
+
+_COMPARISON_FILES = {
+    "mmr_single": _COMPARISON_DIR / "eval_results_liveRAG_single_doc_20260409_111755.json",
+    "mmr_multi":  _COMPARISON_DIR / "eval_results_liveRAG_multi_doc_20260409_111755.json",
+    "sim_single": _COMPARISON_DIR / "similarity_single_doc.json",
+    "sim_multi":  _COMPARISON_DIR / "similarity_multi_doc.json",
+}
+
+
+def _recall_stats(data: dict) -> tuple[float, float, int]:
+    """Return (mean, std, n) of recall_at_k values from a loaded result dict."""
+    vals = [r["recall_at_k"] for r in data.get("results", []) if "recall_at_k" in r]
+    arr = np.array(vals, dtype=float)
+    return float(arr.mean()), float(arr.std(ddof=1)), len(arr)
+
+
+def plot_recall_retrieval_comparison(out_dir: Path) -> None:
+    """Grouped bar chart: Similarity vs MMR — Recall@K for single-doc and multi-doc questions."""
+    missing = [k for k, p in _COMPARISON_FILES.items() if not p.exists()]
+    if missing:
+        print(f"[skip] Retrieval comparison: missing files: {missing}")
+        return
+
+    loaded = {}
+    for key, path in _COMPARISON_FILES.items():
+        with open(path, encoding="utf-8") as fh:
+            loaded[key] = json.load(fh)
+
+    stats = {k: _recall_stats(v) for k, v in loaded.items()}
+    sim_single_mean, _, _ = stats["sim_single"]
+    sim_multi_mean,  _, _  = stats["sim_multi"]
+    mmr_single_mean, _, _ = stats["mmr_single"]
+    mmr_multi_mean,  _, _  = stats["mmr_multi"]
+
+    categories = ["Single-doc\nQuestions", "Multi-doc\nQuestions"]
+    sim_means = [sim_single_mean, sim_multi_mean]
+    mmr_means = [mmr_single_mean, mmr_multi_mean]
+
+    x = np.arange(len(categories))
+    bar_w = 0.34
+    gap   = 0.06
+
+    SIM_COLOR = "#2563EB"
+    MMR_COLOR = "#F97316"
+
+    fig, ax = plt.subplots(figsize=(8, 5.5))
+    fig.patch.set_facecolor("#FAFAFA")
+    ax.set_facecolor("#FAFAFA")
+
+    bars_sim = ax.bar(
+        x - bar_w / 2 - gap / 2, sim_means, width=bar_w,
+        color=SIM_COLOR, edgecolor="white", linewidth=1.2,
+        label="Similarity", zorder=3,
+    )
+    bars_mmr = ax.bar(
+        x + bar_w / 2 + gap / 2, mmr_means, width=bar_w,
+        color=MMR_COLOR, edgecolor="white", linewidth=1.2,
+        label="MMR", zorder=3,
+    )
+
+    for bar, mean in zip(bars_sim, sim_means):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.012,
+            f"{mean:.3f}", ha="center", va="bottom",
+            fontsize=10.5, fontweight="bold", color=SIM_COLOR,
+        )
+    for bar, mean in zip(bars_mmr, mmr_means):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.012,
+            f"{mean:.3f}", ha="center", va="bottom",
+            fontsize=10.5, fontweight="bold", color="#C2410C",
+        )
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(categories, fontsize=12, fontweight="bold")
+    ax.set_ylabel("Recall@K average", fontsize=12, labelpad=10)
+    ax.set_ylim(0.6, 1.08)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.2f}"))
+    ax.set_yticks(np.arange(0.60, 1.05, 0.05))
+    ax.tick_params(axis="y", labelsize=10)
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_color("#D1D5DB")
+    ax.spines["bottom"].set_color("#D1D5DB")
+    ax.grid(axis="y", linestyle="--", linewidth=0.7, color="#E5E7EB", zorder=0)
+
+    ax.set_title(
+        "Recall@K Comparison",
+        fontsize=14, fontweight="bold", pad=16, color="#111827",
+    )
+    legend_handles = [
+        mpatches.Patch(facecolor=SIM_COLOR, edgecolor="white", label="Similarity"),
+        mpatches.Patch(facecolor=MMR_COLOR, edgecolor="white", label="MMR"),
+    ]
+    ax.legend(handles=legend_handles, fontsize=11, frameon=True,
+              framealpha=0.9, edgecolor="#D1D5DB", loc="upper right")
+
+    fig.tight_layout()
+    _save(fig, "recall_comparison_similarity_vs_mmr.png", out_dir)
+
+
 def main() -> None:
     _apply_style()
     out_dir = _out_dir()
@@ -514,6 +614,9 @@ def main() -> None:
 
     print("\n[Evaluation charts — evaluation_results/*.json]")
     generate_eval_charts(out_dir)
+
+    print("\n[Retrieval comparison — Similarity vs MMR Recall@K]")
+    plot_recall_retrieval_comparison(out_dir)
 
     print("\nDone.")
 

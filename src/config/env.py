@@ -112,7 +112,7 @@ QUESTION: {question}
 ANSWER:"""
 
 # Retriever settings
-RETRIEVER_K = 8
+RETRIEVER_K = 5
 
 # API settings
 API_TITLE = "AI Chat Flow API"
