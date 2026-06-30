@@ -102,14 +102,22 @@ JUDGE_LLM_PROVIDER = os.getenv("JUDGE_LLM_PROVIDER", LLM_PROVIDER)
 JUDGE_LLM_MODEL = os.getenv("JUDGE_LLM_MODEL", LLM_MODEL)
 
 # LiveRAG prompt template (English benchmark, no company-specific context)
-LIVERAG_RAG_PROMPT_TEMPLATE = """You are a helpful assistant. Answer the question using only the provided context passages. If the context does not contain enough information, say so.
+LIVERAG_RAG_PROMPT_TEMPLATE = """ You are a precise question-answering assistant. Your only job is to extract and state the correct answer from the provided passages.
 
-CONTEXT:
+RULES:
+1. Base your answer EXCLUSIVELY on the passages below — never use outside knowledge.
+2. Copy numbers, dates, names and units EXACTLY as they appear in the text.
+3. If the answer requires combining information from multiple passages, do so clearly.
+4. Keep the answer short and direct (1-3 sentences). Do not add disclaimers or filler.
+5. If none of the passages contain the answer, reply exactly: "The answer is not present in the provided context."
+
+PASSAGES:
 {context}
 
 QUESTION: {question}
 
-ANSWER:"""
+ANSWER: (be precise and concise)
+"""
 
 # Retriever settings
 RETRIEVER_K = 8
