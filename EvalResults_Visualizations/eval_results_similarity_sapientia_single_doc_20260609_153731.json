@@ -1,0 +1,1457 @@
+{
+  "metadata": {
+    "timestamp": "2026-06-09 15:31:16",
+    "llm_provider": "groq",
+    "llm_model": "openai/gpt-oss-120b",
+    "llm_temperature": 0.1,
+    "judge_llm_provider": "ollama",
+    "judge_llm_model": "qwen2.5",
+    "rag_prompt_template": "SAPIENTIA_RAG_PROMPT_TEMPLATE",
+    "embedding_model": "BAAI/bge-m3",
+    "retriever_k": 5
+  },
+  "results": [
+    {
+      "question": "Hány tandíjmentes hely érhető el az Automatika és alkalmazott informatika mérnök szakon?",
+      "question_index": 0,
+      "question_id": 0,
+      "context_id": 1,
+      "context_ids": [
+        1
+      ],
+      "expected_output": "Az Automatika és alkalmazott informatika mérnök szakon 10 tandíjmentes hely érhető el.",
+      "llm_answer": "10 tandíjmentes hely érhető el az Automatika és alkalmazott informatika mérnök szakon.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact number of tandíjmentes (uninterrupted) places available for the Automatika és alkalmazott informatika mérnök szakon.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "295a2007-8dbc-4614-a567-f2cda914c805"
+      ],
+      "retrieved_context_id_1": 1,
+      "retrieved_context_id_2": 5,
+      "retrieved_context_id_3": 9,
+      "retrieved_context_id_4": 10,
+      "retrieved_context_id_5": 4
+    },
+    {
+      "question": "Mekkora az éves költség-hozzájárulás összege az Automatika és alkalmazott informatika mérnök szakon?",
+      "question_index": 1,
+      "question_id": 1,
+      "context_id": 1,
+      "context_ids": [
+        1
+      ],
+      "expected_output": "A költség-hozzájárulás összege ezen a szakon 500 euró/év.",
+      "llm_answer": "500 euró/év.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact amount of the annual contribution as stated in the ground truth answer.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562"
+      ],
+      "retrieved_context_id_1": 1,
+      "retrieved_context_id_2": 9,
+      "retrieved_context_id_3": 10,
+      "retrieved_context_id_4": 4,
+      "retrieved_context_id_5": 5
+    },
+    {
+      "question": "Melyik képzési ághoz tartozik az Automatika és alkalmazott informatika mérnök szak?",
+      "question_index": 2,
+      "question_id": 2,
+      "context_id": 1,
+      "context_ids": [
+        1
+      ],
+      "expected_output": "A szak az Automatika, alkalmazott informatika és intelligens rendszerek képzési ághoz tartozik.",
+      "llm_answer": "Automatika, alkalmazott informatika és intelligens rendszerek.",
+      "score": 4,
+      "explanation": "The LLM answer is mostly correct and equivalent to the ground truth, as it lists the same fields without mentioning \"képzési ága.\" However, it does not explicitly state that the field belongs to the \"képzési ághoz,\" which is a minor omission.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "0edcffcd-05dc-4344-b1af-8f1c40ca2992",
+        "295a2007-8dbc-4614-a567-f2cda914c805"
+      ],
+      "retrieved_context_id_1": 1,
+      "retrieved_context_id_2": 10,
+      "retrieved_context_id_3": 9,
+      "retrieved_context_id_4": 14,
+      "retrieved_context_id_5": 4
+    },
+    {
+      "question": "Hány éves az alapképzés időtartama az Automatika és alkalmazott informatika mérnök szakon?",
+      "question_index": 3,
+      "question_id": 3,
+      "context_id": 1,
+      "context_ids": [
+        1
+      ],
+      "expected_output": "Az alapképzés időtartama 4 év.",
+      "llm_answer": "4 év",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact number of years for the alapképzés időtartama.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "0edcffcd-05dc-4344-b1af-8f1c40ca2992"
+      ],
+      "retrieved_context_id_1": 1,
+      "retrieved_context_id_2": 9,
+      "retrieved_context_id_3": 10,
+      "retrieved_context_id_4": 4,
+      "retrieved_context_id_5": 14
+    },
+    {
+      "question": "Mekkora a teljes tandíj összege a Fordító és tolmács szakon?",
+      "question_index": 4,
+      "question_id": 4,
+      "context_id": 2,
+      "context_ids": [
+        2
+      ],
+      "expected_output": "A teljes tandíj összege a Fordító és tolmács szakon 750 euró/év.",
+      "llm_answer": "A teljes tandíj összege a Fordító és tolmács szakon **750 euró/év**.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact same numerical value and unit of measurement.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "49bf1565-4aea-4043-8bfc-1f5721979d91",
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "2375d860-32ca-46a2-bca9-24cd4a3d9a0a",
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562"
+      ],
+      "retrieved_context_id_1": 2,
+      "retrieved_context_id_2": 7,
+      "retrieved_context_id_3": 4,
+      "retrieved_context_id_4": 15,
+      "retrieved_context_id_5": 5
+    },
+    {
+      "question": "Melyik képzési ághoz tartozik a Fordító és tolmács szak?",
+      "question_index": 5,
+      "question_id": 5,
+      "context_id": 2,
+      "context_ids": [
+        2
+      ],
+      "expected_output": "A Fordító és tolmács szak az Alkalmazott idegen nyelvek képzési ághoz tartozik.",
+      "llm_answer": "Alkalmazott idegen nyelvek.",
+      "score": 4,
+      "explanation": "The LLM answer is mostly correct as it identifies the relevant branch of education. However, it lacks the specific mention of \"Fordító és tolmács szak\" (Translation and interpreting), which is key information according to the ground truth answer.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "49bf1565-4aea-4043-8bfc-1f5721979d91",
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "2d1ed139-5882-4106-8126-9b6f42ebea3c",
+        "2375d860-32ca-46a2-bca9-24cd4a3d9a0a"
+      ],
+      "retrieved_context_id_1": 2,
+      "retrieved_context_id_2": 7,
+      "retrieved_context_id_3": 4,
+      "retrieved_context_id_4": 20,
+      "retrieved_context_id_5": 15
+    },
+    {
+      "question": "Hány éves a nappali alapképzés a Fordító és tolmács szakon?",
+      "question_index": 6,
+      "question_id": 6,
+      "context_id": 2,
+      "context_ids": [
+        2
+      ],
+      "expected_output": "A Fordító és tolmács szakon a képzés időtartama 3 év.",
+      "llm_answer": "3 év",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact number of years for the interpreter and translator basic training as stated in the ground truth.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "49bf1565-4aea-4043-8bfc-1f5721979d91",
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "2375d860-32ca-46a2-bca9-24cd4a3d9a0a",
+        "2d1ed139-5882-4106-8126-9b6f42ebea3c"
+      ],
+      "retrieved_context_id_1": 2,
+      "retrieved_context_id_2": 7,
+      "retrieved_context_id_3": 4,
+      "retrieved_context_id_4": 15,
+      "retrieved_context_id_5": 20
+    },
+    {
+      "question": "Milyen arányban számít bele a magyar nyelv és irodalom érettségi írásbeli jegye a Fordító és tolmács szak felvételi jegyébe?",
+      "question_index": 7,
+      "question_id": 7,
+      "context_id": 2,
+      "context_ids": [
+        2
+      ],
+      "expected_output": "A magyar nyelv és irodalom írásbeli érettségi jegye 50%-os arányban számít bele a felvételi jegybe.",
+      "llm_answer": "50% az magyar nyelv és irodalom érettségi írásbeli jegye a Fordító és tolmács szak felvételi jegyébe.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, stating the exact same information with slightly different wording.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "49bf1565-4aea-4043-8bfc-1f5721979d91",
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562"
+      ],
+      "retrieved_context_id_1": 2,
+      "retrieved_context_id_2": 7,
+      "retrieved_context_id_3": 4,
+      "retrieved_context_id_4": 9,
+      "retrieved_context_id_5": 5
+    },
+    {
+      "question": "Mekkora a költség-hozzájárulás összege a Gépészmérnöki szakon?",
+      "question_index": 8,
+      "question_id": 8,
+      "context_id": 3,
+      "context_ids": [
+        3
+      ],
+      "expected_output": "A költség-hozzájárulás összege a Gépészmérnöki szakon 500 euró/év.",
+      "llm_answer": "500 euró/év",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth answer, providing the exact same numerical value with the correct currency and time period.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "663aaae1-77d7-4dd2-b028-a69251850f5e",
+        "50958ab3-1e8b-40f8-b28d-fe9bd2344487"
+      ],
+      "retrieved_context_id_1": 3,
+      "retrieved_context_id_2": 9,
+      "retrieved_context_id_3": 10,
+      "retrieved_context_id_4": 11,
+      "retrieved_context_id_5": 6
+    },
+    {
+      "question": "Milyen képzési formában indul a Gépészmérnöki alapképzés?",
+      "question_index": 9,
+      "question_id": 9,
+      "context_id": 3,
+      "context_ids": [
+        3
+      ],
+      "expected_output": "A Gépészmérnöki szak 4 éves nappali alapképzés formájában indul.",
+      "llm_answer": "A Gépészmérnöki alapképzés 4 éves **nappali alapképzés** formában indul.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, as it accurately states that the Gépészmérnöki alapképzés begins in a 4-year full-time foundation program.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "663aaae1-77d7-4dd2-b028-a69251850f5e",
+        "2d1ed139-5882-4106-8126-9b6f42ebea3c",
+        "50958ab3-1e8b-40f8-b28d-fe9bd2344487"
+      ],
+      "retrieved_context_id_1": 3,
+      "retrieved_context_id_2": 9,
+      "retrieved_context_id_3": 11,
+      "retrieved_context_id_4": 20,
+      "retrieved_context_id_5": 6
+    },
+    {
+      "question": "Melyik képzési ághoz tartozik a Gépészmérnöki szak?",
+      "question_index": 10,
+      "question_id": 10,
+      "context_id": 3,
+      "context_ids": [
+        3
+      ],
+      "expected_output": "A Gépészmérnöki szak az Ipari mérnöki képzési ághoz tartozik.",
+      "llm_answer": "Ipari mérnöki.",
+      "score": 4,
+      "explanation": "The LLM answer is mostly correct, as it identifies the correct branch of engineering (Ipari mérnöki). However, it omits the specific mention of \"Gépészmérnöki\" from the ground truth answer.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+        "663aaae1-77d7-4dd2-b028-a69251850f5e"
+      ],
+      "retrieved_context_id_1": 3,
+      "retrieved_context_id_2": 9,
+      "retrieved_context_id_3": 10,
+      "retrieved_context_id_4": 6,
+      "retrieved_context_id_5": 11
+    },
+    {
+      "question": "Hány tandíjmentes helyet hirdetnek meg az Infokommunikációs hálózatok és rendszerek (Távközlés) mérnöki szakon?",
+      "question_index": 11,
+      "question_id": 11,
+      "context_id": 4,
+      "context_ids": [
+        4
+      ],
+      "expected_output": "Ezen a szakon 15 tandíjmentes helyet hirdetnek meg.",
+      "llm_answer": "15",
+      "score": 4,
+      "explanation": "The LLM answer is numerically correct but lacks the necessary context provided in the ground truth, which specifies that it is for the \"Infokommunikációs hálózatok és rendszerek (Távközlés) mérnöki szak.\" This minor omission results in a score of 4.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562",
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a"
+      ],
+      "retrieved_context_id_1": 4,
+      "retrieved_context_id_2": 1,
+      "retrieved_context_id_3": 5,
+      "retrieved_context_id_4": 7,
+      "retrieved_context_id_5": 10
+    },
+    {
+      "question": "Mekkora a költség-hozzájárulás összege a Távközlés mérnöki szakon?",
+      "question_index": 12,
+      "question_id": 12,
+      "context_id": 4,
+      "context_ids": [
+        4
+      ],
+      "expected_output": "A költség-hozzájárulás összege a Távközlés mérnöki szakon 500 euró/év.",
+      "llm_answer": "500 euró/év",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact amount specified in euros per year.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "663aaae1-77d7-4dd2-b028-a69251850f5e"
+      ],
+      "retrieved_context_id_1": 4,
+      "retrieved_context_id_2": 7,
+      "retrieved_context_id_3": 10,
+      "retrieved_context_id_4": 9,
+      "retrieved_context_id_5": 11
+    },
+    {
+      "question": "Melyik képzési ághoz tartozik a Távközlés mérnöki szak?",
+      "question_index": 13,
+      "question_id": 13,
+      "context_id": 4,
+      "context_ids": [
+        4
+      ],
+      "expected_output": "A szak az Elektronika, távközlés és információtechnológia mérnöki képzési ághoz tartozik.",
+      "llm_answer": "A Távközlés mérnöki szak a **„Elektronika, távközlés és információtechnológia mérnöki”** képzési ághoz tartozik.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, as it accurately states that the Távközlés mérnöki szak belongs to the Elektronika, távközlés és információtechnológia mérnöki képzési ága. The additional quotation marks in the LLM answer do not affect the correctness and are stylistic.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "2d1ed139-5882-4106-8126-9b6f42ebea3c",
+        "663aaae1-77d7-4dd2-b028-a69251850f5e"
+      ],
+      "retrieved_context_id_1": 4,
+      "retrieved_context_id_2": 10,
+      "retrieved_context_id_3": 7,
+      "retrieved_context_id_4": 20,
+      "retrieved_context_id_5": 11
+    },
+    {
+      "question": "Hány éves az alapképzés időtartama a Távközlés mérnöki szakon?",
+      "question_index": 14,
+      "question_id": 14,
+      "context_id": 4,
+      "context_ids": [
+        4
+      ],
+      "expected_output": "A képzés időtartama ezen a szakon 4 év.",
+      "llm_answer": "4 év.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact same information about the duration of the basic training in Telecommunications Engineering.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "663aaae1-77d7-4dd2-b028-a69251850f5e",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d"
+      ],
+      "retrieved_context_id_1": 4,
+      "retrieved_context_id_2": 7,
+      "retrieved_context_id_3": 11,
+      "retrieved_context_id_4": 10,
+      "retrieved_context_id_5": 9
+    },
+    {
+      "question": "Hány tandíjmentes hely érhető el az Informatika szakon?",
+      "question_index": 15,
+      "question_id": 15,
+      "context_id": 5,
+      "context_ids": [
+        5
+      ],
+      "expected_output": "Az Informatika szakon 25 tandíjmentes hely érhető el.",
+      "llm_answer": "25",
+      "score": 5,
+      "explanation": "The LLM answer directly provides the correct number of tandíjmentes (unrestricted) places available for the Informatika (Computer Science) specialization, matching the ground truth exactly.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562",
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "2375d860-32ca-46a2-bca9-24cd4a3d9a0a"
+      ],
+      "retrieved_context_id_1": 5,
+      "retrieved_context_id_2": 1,
+      "retrieved_context_id_3": 10,
+      "retrieved_context_id_4": 4,
+      "retrieved_context_id_5": 15
+    },
+    {
+      "question": "Mekkora a teljes tandíj összege az Informatika szakon?",
+      "question_index": 16,
+      "question_id": 16,
+      "context_id": 5,
+      "context_ids": [
+        5
+      ],
+      "expected_output": "A teljes tandíj összege az Informatika szakon 900 euró/év.",
+      "llm_answer": "Teljes tandíj összege: 900 euró/év.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact same numerical value and unit of measurement.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562",
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d"
+      ],
+      "retrieved_context_id_1": 5,
+      "retrieved_context_id_2": 1,
+      "retrieved_context_id_3": 4,
+      "retrieved_context_id_4": 10,
+      "retrieved_context_id_5": 9
+    },
+    {
+      "question": "Hány éves az alapképzés az Informatika szakon?",
+      "question_index": 17,
+      "question_id": 17,
+      "context_id": 5,
+      "context_ids": [
+        5
+      ],
+      "expected_output": "Az Informatika szak képzési időtartama 3 év.",
+      "llm_answer": "3 év",
+      "score": 5,
+      "explanation": "The LLM answer \"3 év\" is fully correct and equivalent to the ground truth answer, providing the exact information requested.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562",
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d"
+      ],
+      "retrieved_context_id_1": 5,
+      "retrieved_context_id_2": 1,
+      "retrieved_context_id_3": 4,
+      "retrieved_context_id_4": 10,
+      "retrieved_context_id_5": 9
+    },
+    {
+      "question": "Milyen arányban határozza meg az érettségi vizsga átlaga a felvételi jegyet a Kertészmérnöki szakon?",
+      "question_index": 18,
+      "question_id": 18,
+      "context_id": 6,
+      "context_ids": [
+        6
+      ],
+      "expected_output": "A Kertészmérnöki szakon a felvételi jegy 100%-át az érettségi vizsga átlaga adja.",
+      "llm_answer": "A Kertészmérnöki szakon a felvételi jegy 100 %‑ban az érettségi vizsga átlagától függ.",
+      "score": 4,
+      "explanation": "The LLM answer is mostly correct, as it accurately states that the admission grade depends on the average score of the maturity exam for the Horticulture major. However, there is a very minor omission since \"100%-át\" in the ground truth is correctly translated to \"100 %‑ban\" but the exact phrasing \"100%-át az érettségi vizsga átlaga adja\" is not fully matched.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+        "663aaae1-77d7-4dd2-b028-a69251850f5e",
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a"
+      ],
+      "retrieved_context_id_1": 6,
+      "retrieved_context_id_2": 11,
+      "retrieved_context_id_3": 3,
+      "retrieved_context_id_4": 9,
+      "retrieved_context_id_5": 10
+    },
+    {
+      "question": "Hány tandíjmentes helyet hirdetnek meg a Kertészmérnöki szakon?",
+      "question_index": 19,
+      "question_id": 19,
+      "context_id": 6,
+      "context_ids": [
+        6
+      ],
+      "expected_output": "A Kertészmérnöki szakon 15 tandíjmentes helyet hirdetnek meg.",
+      "llm_answer": "15",
+      "score": 4,
+      "explanation": "The LLM answer is correct and equivalent to the ground truth in terms of the number of positions. However, it lacks the context that this information pertains to the Kertészmérnöki szak (Landscape Architecture).",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+        "663aaae1-77d7-4dd2-b028-a69251850f5e",
+        "539f6ee7-2354-484f-9cca-76d94fc59c6e",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "295a2007-8dbc-4614-a567-f2cda914c805"
+      ],
+      "retrieved_context_id_1": 6,
+      "retrieved_context_id_2": 11,
+      "retrieved_context_id_3": 13,
+      "retrieved_context_id_4": 10,
+      "retrieved_context_id_5": 4
+    },
+    {
+      "question": "Mekkora az éves költség-hozzájárulás összege a Kertészmérnöki szakon?",
+      "question_index": 20,
+      "question_id": 20,
+      "context_id": 6,
+      "context_ids": [
+        6
+      ],
+      "expected_output": "A költség-hozzájárulás összege a Kertészmérnöki szakon 500 euró/év.",
+      "llm_answer": "500 euró/év.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth answer, providing the exact same information without any additional or incorrect details.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+        "663aaae1-77d7-4dd2-b028-a69251850f5e",
+        "539f6ee7-2354-484f-9cca-76d94fc59c6e",
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a"
+      ],
+      "retrieved_context_id_1": 6,
+      "retrieved_context_id_2": 11,
+      "retrieved_context_id_3": 13,
+      "retrieved_context_id_4": 3,
+      "retrieved_context_id_5": 10
+    },
+    {
+      "question": "Hány éves a nappali alapképzés a Kertészmérnöki szakon?",
+      "question_index": 21,
+      "question_id": 21,
+      "context_id": 6,
+      "context_ids": [
+        6
+      ],
+      "expected_output": "A képzés időtartama a Kertészmérnöki szakon 4 év.",
+      "llm_answer": "4 év",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact number of years for the morning basic training in Horticulture.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+        "663aaae1-77d7-4dd2-b028-a69251850f5e",
+        "539f6ee7-2354-484f-9cca-76d94fc59c6e",
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a"
+      ],
+      "retrieved_context_id_1": 6,
+      "retrieved_context_id_2": 11,
+      "retrieved_context_id_3": 13,
+      "retrieved_context_id_4": 3,
+      "retrieved_context_id_5": 10
+    },
+    {
+      "question": "Hány tandíjmentes hely érhető el a Kommunikáció és közkapcsolatok szakon?",
+      "question_index": 22,
+      "question_id": 22,
+      "context_id": 7,
+      "context_ids": [
+        7
+      ],
+      "expected_output": "A Kommunikáció és közkapcsolatok szakon 15 tandíjmentes hely érhető el.",
+      "llm_answer": "15 tandíjmentes hely.",
+      "score": 4,
+      "explanation": "The LLM answer is mostly correct and equivalent to the ground truth, as it provides the exact number of tandíjmentes helys. However, it lacks the context that this information pertains to the Kommunikáció és közkapcsolatok szakon.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "cc599057-33ee-407f-8c5a-e8ca6c4e2250",
+        "49bf1565-4aea-4043-8bfc-1f5721979d91",
+        "663aaae1-77d7-4dd2-b028-a69251850f5e"
+      ],
+      "retrieved_context_id_1": 7,
+      "retrieved_context_id_2": 4,
+      "retrieved_context_id_3": 8,
+      "retrieved_context_id_4": 2,
+      "retrieved_context_id_5": 11
+    },
+    {
+      "question": "Mekkora a teljes tandíj összege a Kommunikáció és közkapcsolatok szakon?",
+      "question_index": 23,
+      "question_id": 23,
+      "context_id": 7,
+      "context_ids": [
+        7
+      ],
+      "expected_output": "A teljes tandíj összege ezen a szakon 900 euró/év.",
+      "llm_answer": "A teljes tandíj összege a Kommunikáció és közkapcsolatok szakon 900 euró/év.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact same information about the total cost of training in the Communication and Public Relations specialization.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "49bf1565-4aea-4043-8bfc-1f5721979d91",
+        "cc599057-33ee-407f-8c5a-e8ca6c4e2250",
+        "663aaae1-77d7-4dd2-b028-a69251850f5e"
+      ],
+      "retrieved_context_id_1": 7,
+      "retrieved_context_id_2": 4,
+      "retrieved_context_id_3": 2,
+      "retrieved_context_id_4": 8,
+      "retrieved_context_id_5": 11
+    },
+    {
+      "question": "Hány éves a nappali alapképzés a Kommunikáció és közkapcsolatok szakon?",
+      "question_index": 24,
+      "question_id": 24,
+      "context_id": 7,
+      "context_ids": [
+        7
+      ],
+      "expected_output": "A képzés időtartama ezen a szakon 3 év.",
+      "llm_answer": "3 év",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact number of years for the training program as stated in the ground truth answer.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "49bf1565-4aea-4043-8bfc-1f5721979d91",
+        "cc599057-33ee-407f-8c5a-e8ca6c4e2250",
+        "2d1ed139-5882-4106-8126-9b6f42ebea3c"
+      ],
+      "retrieved_context_id_1": 7,
+      "retrieved_context_id_2": 4,
+      "retrieved_context_id_3": 2,
+      "retrieved_context_id_4": 8,
+      "retrieved_context_id_5": 20
+    },
+    {
+      "question": "Hány tandíjmentes helyet hirdetnek meg a Közegészségügyi szolgáltatások és politikák szakon?",
+      "question_index": 25,
+      "question_id": 25,
+      "context_id": 8,
+      "context_ids": [
+        8
+      ],
+      "expected_output": "A Közegészségügyi szolgáltatások és politikák szakon 15 tandíjmentes hely érhető el.",
+      "llm_answer": "15 tandíjmentes helyet hirdetnek meg.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, as it accurately states the number of tandíjmentes (root canal treatment) positions advertised on the specific topic.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "cc599057-33ee-407f-8c5a-e8ca6c4e2250",
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "539f6ee7-2354-484f-9cca-76d94fc59c6e",
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562",
+        "295a2007-8dbc-4614-a567-f2cda914c805"
+      ],
+      "retrieved_context_id_1": 8,
+      "retrieved_context_id_2": 7,
+      "retrieved_context_id_3": 13,
+      "retrieved_context_id_4": 5,
+      "retrieved_context_id_5": 4
+    },
+    {
+      "question": "Mekkora az éves költség-hozzájárulás összege a Közegészségügyi szolgáltatások és politikák szakon?",
+      "question_index": 26,
+      "question_id": 26,
+      "context_id": 8,
+      "context_ids": [
+        8
+      ],
+      "expected_output": "A költség-hozzájárulás összege ezen a szakon 500 euró/év.",
+      "llm_answer": "Az éves költség‑hozzájárulás összege 500 euró/év.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, as it accurately states that the annual contribution for health services and policies is 500 euros.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "cc599057-33ee-407f-8c5a-e8ca6c4e2250",
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "539f6ee7-2354-484f-9cca-76d94fc59c6e",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a"
+      ],
+      "retrieved_context_id_1": 8,
+      "retrieved_context_id_2": 7,
+      "retrieved_context_id_3": 13,
+      "retrieved_context_id_4": 4,
+      "retrieved_context_id_5": 10
+    },
+    {
+      "question": "Hány éves a nappali alapképzés a Közegészségügyi szolgáltatások és politikák szakon?",
+      "question_index": 27,
+      "question_id": 27,
+      "context_id": 8,
+      "context_ids": [
+        8
+      ],
+      "expected_output": "A képzés időtartama ezen a szakon 3 év.",
+      "llm_answer": "3 év.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact same information about the duration of the training.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "cc599057-33ee-407f-8c5a-e8ca6c4e2250",
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "539f6ee7-2354-484f-9cca-76d94fc59c6e",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "49bf1565-4aea-4043-8bfc-1f5721979d91"
+      ],
+      "retrieved_context_id_1": 8,
+      "retrieved_context_id_2": 7,
+      "retrieved_context_id_3": 13,
+      "retrieved_context_id_4": 4,
+      "retrieved_context_id_5": 2
+    },
+    {
+      "question": "Hány tandíjmentes hely érhető el a Mechatronika mérnöki szakon?",
+      "question_index": 28,
+      "question_id": 28,
+      "context_id": 9,
+      "context_ids": [
+        9
+      ],
+      "expected_output": "A Mechatronika mérnöki szakon 20 tandíjmentes hely érhető el.",
+      "llm_answer": "20",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact number of tandíjmentes (ungraded) positions available for the Mechatronika engineering program.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "d0003287-3b9e-4ac0-838a-06bc0a815086",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d"
+      ],
+      "retrieved_context_id_1": 9,
+      "retrieved_context_id_2": 12,
+      "retrieved_context_id_3": 10,
+      "retrieved_context_id_4": 3,
+      "retrieved_context_id_5": 1
+    },
+    {
+      "question": "Mekkora a költség-hozzájárulás összege a Mechatronika mérnöki szakon?",
+      "question_index": 29,
+      "question_id": 29,
+      "context_id": 9,
+      "context_ids": [
+        9
+      ],
+      "expected_output": "A költség-hozzájárulás összege a Mechatronika mérnöki szakon 500 euró/év.",
+      "llm_answer": "500 euró/év",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth answer, providing the exact amount of the cost-sharing sum for the Mechatronika engineering degree.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "d0003287-3b9e-4ac0-838a-06bc0a815086",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d"
+      ],
+      "retrieved_context_id_1": 9,
+      "retrieved_context_id_2": 12,
+      "retrieved_context_id_3": 10,
+      "retrieved_context_id_4": 3,
+      "retrieved_context_id_5": 1
+    },
+    {
+      "question": "Hány éves a Mechatronika mérnöki alapképzés?",
+      "question_index": 30,
+      "question_id": 30,
+      "context_id": 9,
+      "context_ids": [
+        9
+      ],
+      "expected_output": "A Mechatronika mérnöki szak képzési időtartama 4 év.",
+      "llm_answer": "4 év.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact number of years for the Mechatronika mérnöki alapképzés.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "d0003287-3b9e-4ac0-838a-06bc0a815086",
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d"
+      ],
+      "retrieved_context_id_1": 9,
+      "retrieved_context_id_2": 12,
+      "retrieved_context_id_3": 3,
+      "retrieved_context_id_4": 10,
+      "retrieved_context_id_5": 1
+    },
+    {
+      "question": "Hány tandíjmentes helyet hirdetnek meg a Számítástechnika mérnöki szakon?",
+      "question_index": 31,
+      "question_id": 31,
+      "context_id": 10,
+      "context_ids": [
+        10
+      ],
+      "expected_output": "A Számítástechnika mérnöki szakon 10 tandíjmentes hely érhető el.",
+      "llm_answer": "10",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact number of internship positions offered.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562",
+        "529f91e6-355b-45f7-97a1-a33845a9243b"
+      ],
+      "retrieved_context_id_1": 10,
+      "retrieved_context_id_2": 1,
+      "retrieved_context_id_3": 9,
+      "retrieved_context_id_4": 5,
+      "retrieved_context_id_5": 3
+    },
+    {
+      "question": "Mekkora az éves költség-hozzájárulás összege a Számítástechnika mérnöki szakon?",
+      "question_index": 32,
+      "question_id": 32,
+      "context_id": 10,
+      "context_ids": [
+        10
+      ],
+      "expected_output": "A költség-hozzájárulás összege ezen a szakon 500 euró/év.",
+      "llm_answer": "500 euró/év.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact amount specified in the ground truth answer.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "295a2007-8dbc-4614-a567-f2cda914c805"
+      ],
+      "retrieved_context_id_1": 10,
+      "retrieved_context_id_2": 9,
+      "retrieved_context_id_3": 1,
+      "retrieved_context_id_4": 3,
+      "retrieved_context_id_5": 4
+    },
+    {
+      "question": "Hány éves a nappali alapképzés a Számítástechnika mérnöki szakon?",
+      "question_index": 33,
+      "question_id": 33,
+      "context_id": 10,
+      "context_ids": [
+        10
+      ],
+      "expected_output": "A képzés időtartama a Számítástechnika mérnöki szakon 4 év.",
+      "llm_answer": "4 év",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact number of years for the morning basic training in the Computer Engineering program.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "0edcffcd-05dc-4344-b1af-8f1c40ca2992"
+      ],
+      "retrieved_context_id_1": 10,
+      "retrieved_context_id_2": 1,
+      "retrieved_context_id_3": 9,
+      "retrieved_context_id_4": 3,
+      "retrieved_context_id_5": 14
+    },
+    {
+      "question": "Hány tandíjmentes hely érhető el a Tájépítészmérnöki szakon?",
+      "question_index": 34,
+      "question_id": 34,
+      "context_id": 11,
+      "context_ids": [
+        11
+      ],
+      "expected_output": "A Tájépítészmérnöki szakon 12 tandíjmentes hely érhető el.",
+      "llm_answer": "18",
+      "score": 2,
+      "explanation": "The LLM answer is incorrect as it provides a different number than the ground truth. While the answer attempts to quantify the available free places, it does not match the given correct value of 12.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "663aaae1-77d7-4dd2-b028-a69251850f5e",
+        "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a"
+      ],
+      "retrieved_context_id_1": 11,
+      "retrieved_context_id_2": 6,
+      "retrieved_context_id_3": 4,
+      "retrieved_context_id_4": 3,
+      "retrieved_context_id_5": 10
+    },
+    {
+      "question": "Mekkora a teljes tandíj összege a Tájépítészmérnöki szakon?",
+      "question_index": 35,
+      "question_id": 35,
+      "context_id": 11,
+      "context_ids": [
+        11
+      ],
+      "expected_output": "A teljes tandíj összege ezen a szakon 900 euró/év.",
+      "llm_answer": "A teljes tandíj összege 900 euró/év.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, as it accurately states the total tuition fee for the Tájépítészmérnöki (Education Engineering) field of study.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "663aaae1-77d7-4dd2-b028-a69251850f5e",
+        "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a"
+      ],
+      "retrieved_context_id_1": 11,
+      "retrieved_context_id_2": 6,
+      "retrieved_context_id_3": 4,
+      "retrieved_context_id_4": 3,
+      "retrieved_context_id_5": 10
+    },
+    {
+      "question": "Hány éves a nappali alapképzés a Tájépítészmérnöki szakon?",
+      "question_index": 36,
+      "question_id": 36,
+      "context_id": 11,
+      "context_ids": [
+        11
+      ],
+      "expected_output": "A képzés időtartama a Tájépítészmérnöki szakon 4 év.",
+      "llm_answer": "4 év.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact number of years for the morning basic training in the Educational Science major.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "663aaae1-77d7-4dd2-b028-a69251850f5e",
+        "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a"
+      ],
+      "retrieved_context_id_1": 11,
+      "retrieved_context_id_2": 6,
+      "retrieved_context_id_3": 3,
+      "retrieved_context_id_4": 4,
+      "retrieved_context_id_5": 10
+    },
+    {
+      "question": "Hány éves a Fejlett mechatronikai rendszerek mesteri szak képzési időtartama?",
+      "question_index": 37,
+      "question_id": 37,
+      "context_id": 12,
+      "context_ids": [
+        12
+      ],
+      "expected_output": "A képzés időtartama ezen a mesteri szakon 2 év.",
+      "llm_answer": "2 év.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact same information about the duration of the master's program in Advanced Mechatronic Systems.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "d0003287-3b9e-4ac0-838a-06bc0a815086",
+        "0edcffcd-05dc-4344-b1af-8f1c40ca2992",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "295a2007-8dbc-4614-a567-f2cda914c805"
+      ],
+      "retrieved_context_id_1": 12,
+      "retrieved_context_id_2": 14,
+      "retrieved_context_id_3": 9,
+      "retrieved_context_id_4": 10,
+      "retrieved_context_id_5": 4
+    },
+    {
+      "question": "Mekkora a szóbeli vizsga súlya a Fejlett mechatronikai rendszerek mesteri szak felvételi jegyében?",
+      "question_index": 38,
+      "question_id": 38,
+      "context_id": 12,
+      "context_ids": [
+        12
+      ],
+      "expected_output": "A szóbeli vizsga a felvételi jegy 50%-át teszi ki.",
+      "llm_answer": "A szóbeli vizsga súlya a felvételi jegyben **50%**.",
+      "score": 5,
+      "explanation": "A LLM válasza teljesen helyes és egyezik a hullámmutató válaszának tartalmával. Minden fontos információ benne van, és nincs extra, nem támogatott információ.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "d0003287-3b9e-4ac0-838a-06bc0a815086",
+        "73e954a0-5f13-4547-91c2-bb004bb0649d",
+        "0edcffcd-05dc-4344-b1af-8f1c40ca2992",
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a"
+      ],
+      "retrieved_context_id_1": 12,
+      "retrieved_context_id_2": 9,
+      "retrieved_context_id_3": 14,
+      "retrieved_context_id_4": 3,
+      "retrieved_context_id_5": 10
+    },
+    {
+      "question": "Hány éves a Növényorvos mesteri szak képzési időtartama?",
+      "question_index": 39,
+      "question_id": 39,
+      "context_id": 13,
+      "context_ids": [
+        13
+      ],
+      "expected_output": "A Növényorvos mesteri szak képzési időtartama 2 év.",
+      "llm_answer": "2 év",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact same information about the duration of the Master's program in Plant Medicine.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "539f6ee7-2354-484f-9cca-76d94fc59c6e",
+        "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+        "2375d860-32ca-46a2-bca9-24cd4a3d9a0a",
+        "663aaae1-77d7-4dd2-b028-a69251850f5e",
+        "cc599057-33ee-407f-8c5a-e8ca6c4e2250"
+      ],
+      "retrieved_context_id_1": 13,
+      "retrieved_context_id_2": 6,
+      "retrieved_context_id_3": 15,
+      "retrieved_context_id_4": 11,
+      "retrieved_context_id_5": 8
+    },
+    {
+      "question": "Mekkora az írásbeli vizsga súlya a Növényorvos mesteri szak felvételi jegyében?",
+      "question_index": 40,
+      "question_id": 40,
+      "context_id": 13,
+      "context_ids": [
+        13
+      ],
+      "expected_output": "Az írásbeli vizsga 40%-os arányban számít bele a felvételi jegybe.",
+      "llm_answer": "40%",
+      "score": 4,
+      "explanation": "The LLM answer is numerically correct but lacks the necessary context provided in the ground truth, which specifies that the 40% is the weight of the written exam in the admission grade.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "539f6ee7-2354-484f-9cca-76d94fc59c6e",
+        "50958ab3-1e8b-40f8-b28d-fe9bd2344487",
+        "529f91e6-355b-45f7-97a1-a33845a9243b",
+        "2375d860-32ca-46a2-bca9-24cd4a3d9a0a",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a"
+      ],
+      "retrieved_context_id_1": 13,
+      "retrieved_context_id_2": 6,
+      "retrieved_context_id_3": 3,
+      "retrieved_context_id_4": 15,
+      "retrieved_context_id_5": 10
+    },
+    {
+      "question": "Melyik képzési ághoz tartozik a Számítógépes irányítási rendszerek mesteri szak?",
+      "question_index": 41,
+      "question_id": 41,
+      "context_id": 14,
+      "context_ids": [
+        14
+      ],
+      "expected_output": "A Számítógépes irányítási rendszerek szak a Rendszermérnöki képzési ághoz tartozik.",
+      "llm_answer": "Rendszermérnöki.",
+      "score": 4,
+      "explanation": "The LLM answer is mostly correct, as it identifies the correct branch (Rendszermérnöki). However, it lacks the specific mention of \"képzési ága\" (training branch) which is present in the ground truth answer.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "0edcffcd-05dc-4344-b1af-8f1c40ca2992",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "d0003287-3b9e-4ac0-838a-06bc0a815086",
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+        "295a2007-8dbc-4614-a567-f2cda914c805"
+      ],
+      "retrieved_context_id_1": 14,
+      "retrieved_context_id_2": 10,
+      "retrieved_context_id_3": 12,
+      "retrieved_context_id_4": 1,
+      "retrieved_context_id_5": 4
+    },
+    {
+      "question": "Melyik magyarországi egyetem a partnerintézménye a Szoftverfejlesztés mesteri szaknak?",
+      "question_index": 42,
+      "question_id": 42,
+      "context_id": 15,
+      "context_ids": [
+        15
+      ],
+      "expected_output": "A Szoftverfejlesztés mesteri szak partnerintézménye az Eötvös Loránd Tudományegyetem Informatikai Kara.",
+      "llm_answer": "Eötvös Loránd Tudományegyetem, Informatika Kar.",
+      "score": 4,
+      "explanation": "The LLM answer is mostly correct and equivalent to the ground truth, as it identifies the correct partner institution for the Master's degree in Software Development. However, there is a minor omission since the full name \"Informatikai Kara\" (Faculty of Informatics) was not included.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "2375d860-32ca-46a2-bca9-24cd4a3d9a0a",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a",
+        "d0003287-3b9e-4ac0-838a-06bc0a815086",
+        "0edcffcd-05dc-4344-b1af-8f1c40ca2992",
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562"
+      ],
+      "retrieved_context_id_1": 15,
+      "retrieved_context_id_2": 10,
+      "retrieved_context_id_3": 12,
+      "retrieved_context_id_4": 14,
+      "retrieved_context_id_5": 5
+    },
+    {
+      "question": "Mikorra esik a 2026-os nyári alapképzési beiratkozási időszak?",
+      "question_index": 43,
+      "question_id": 43,
+      "context_id": 16,
+      "context_ids": [
+        16
+      ],
+      "expected_output": "A 2026-os nyári alapképzési beiratkozás 2026. július 8. és 19. között zajlik.",
+      "llm_answer": "2026. július 8 – 19.",
+      "score": 4,
+      "explanation": "The LLM answer provides the correct date range for the 2026 summer basic training application period, which is very minorly imprecise as it does not include \"A\" (meaning \"The\") at the beginning of the sentence. However, this omission is very minor and does not affect the factual correctness or completeness of the answer.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "2353afd1-ab86-48d7-a6e0-1b94a2b740fe",
+        "2d1ed139-5882-4106-8126-9b6f42ebea3c",
+        "9f1bc4dd-cb8d-4bfc-af8b-823c69801c55",
+        "d3ef2fd9-919e-486b-ade8-dfcf2bf502f6",
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d"
+      ],
+      "retrieved_context_id_1": 16,
+      "retrieved_context_id_2": 20,
+      "retrieved_context_id_3": 19,
+      "retrieved_context_id_4": 17,
+      "retrieved_context_id_5": 1
+    },
+    {
+      "question": "Mikor tartják a 2026-os nyári mesterképzési felvételi vizsgát?",
+      "question_index": 44,
+      "question_id": 44,
+      "context_id": 16,
+      "context_ids": [
+        16
+      ],
+      "expected_output": "A mesterképzési felvételi vizsga időpontja 2026. július 22., szerda.",
+      "llm_answer": "2026. július 22., szerda.",
+      "score": 5,
+      "explanation": "The LLM answer is fully correct and equivalent to the ground truth, providing the exact date and day of the week for the 2026 summer teacher certification exam application test.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "2353afd1-ab86-48d7-a6e0-1b94a2b740fe",
+        "d3ef2fd9-919e-486b-ade8-dfcf2bf502f6",
+        "2d1ed139-5882-4106-8126-9b6f42ebea3c",
+        "9f1bc4dd-cb8d-4bfc-af8b-823c69801c55",
+        "2375d860-32ca-46a2-bca9-24cd4a3d9a0a"
+      ],
+      "retrieved_context_id_1": 16,
+      "retrieved_context_id_2": 17,
+      "retrieved_context_id_3": 20,
+      "retrieved_context_id_4": 19,
+      "retrieved_context_id_5": 15
+    },
+    {
+      "question": "Mi a telefonszáma Ungvári Zsuzsának, a kari PR-felelősnek?",
+      "question_index": 45,
+      "question_id": 45,
+      "context_id": 17,
+      "context_ids": [
+        17
+      ],
+      "expected_output": "Ungvári Zsuzsa telefonszáma a 0755-142-432.",
+      "llm_answer": "0755-142-432",
+      "score": 5,
+      "explanation": "The LLM answer directly matches the ground truth answer, providing the correct phone number for Ungvári Zsuzsa. There are no omissions or imprecisions in this response.",
+      "reciprocal_rank": 0.3333333333333333,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "d3ef2fd9-919e-486b-ade8-dfcf2bf502f6",
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562",
+        "9e57e213-94aa-41f9-ba40-a6f6d28bca0a"
+      ],
+      "retrieved_context_id_1": 7,
+      "retrieved_context_id_2": 4,
+      "retrieved_context_id_3": 17,
+      "retrieved_context_id_4": 5,
+      "retrieved_context_id_5": 10
+    },
+    {
+      "question": "Mennyi az éves díja egy apartmannak (3+3 ágy) a bentlakásban a 2025/2026-os tanévben?",
+      "question_index": 46,
+      "question_id": 46,
+      "context_id": 18,
+      "context_ids": [
+        18
+      ],
+      "expected_output": "Az éves díj egy 3+3 ágyas apartmanban 210 lej/fő.",
+      "llm_answer": "210 lej/fő.",
+      "score": 4,
+      "explanation": "The LLM answer is mostly correct and equivalent to the ground truth, as it provides the exact amount mentioned in the ground truth answer. However, it lacks the context of \"az éves díja egy 3+3 ágyas apartmanban\" (the annual rent for a 3+3 bedroom apartment), which is a minor omission.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "20765d5a-40cc-4707-9bde-29f01c4b14c7",
+        "9f1bc4dd-cb8d-4bfc-af8b-823c69801c55",
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "6794fd41-a8a3-4d19-aa7f-eb0141150c4d",
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562"
+      ],
+      "retrieved_context_id_1": 18,
+      "retrieved_context_id_2": 19,
+      "retrieved_context_id_3": 7,
+      "retrieved_context_id_4": 1,
+      "retrieved_context_id_5": 5
+    },
+    {
+      "question": "Milyen e-mail címre kell küldeni az első évesek bentlakási pályázatait?",
+      "question_index": 47,
+      "question_id": 47,
+      "context_id": 19,
+      "context_ids": [
+        19
+      ],
+      "expected_output": "A pályázatokat az andrasannamaria@ms.sapientia.ro e-mail címre kell küldeni.",
+      "llm_answer": "andrasannamaria@ms.sapientia.ro",
+      "score": 4,
+      "explanation": "The LLM answer provides the correct email address, but it lacks the context of where this email should be sent (i.e., \"A pályázatokat az andrasannamaria@ms.sapientia.ro e-mail címre kell küldeni.\"). This minor omission is very slight and does not significantly impact the correctness.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "9f1bc4dd-cb8d-4bfc-af8b-823c69801c55",
+        "00df947f-0a4e-4b47-a6eb-4abfa6753747",
+        "2353afd1-ab86-48d7-a6e0-1b94a2b740fe",
+        "295a2007-8dbc-4614-a567-f2cda914c805",
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562"
+      ],
+      "retrieved_context_id_1": 19,
+      "retrieved_context_id_2": 7,
+      "retrieved_context_id_3": 16,
+      "retrieved_context_id_4": 4,
+      "retrieved_context_id_5": 5
+    },
+    {
+      "question": "Melyik napon közölték a 2024-es nyári felvételi végleges eredményeit?",
+      "question_index": 48,
+      "question_id": 48,
+      "context_id": 20,
+      "context_ids": [
+        20
+      ],
+      "expected_output": "A 2024/2025-ös tanév nyári felvételi végleges eredményeit 2024. július 31-én közölték.",
+      "llm_answer": "2024. július 31.",
+      "score": 4,
+      "explanation": "The LLM answer is mostly correct and equivalent to the ground truth, as it provides the exact date when the results were announced. However, it slightly omits the context of the academic year (2024/2025) mentioned in the ground truth answer.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "2d1ed139-5882-4106-8126-9b6f42ebea3c",
+        "2353afd1-ab86-48d7-a6e0-1b94a2b740fe",
+        "d3ef2fd9-919e-486b-ade8-dfcf2bf502f6",
+        "9f1bc4dd-cb8d-4bfc-af8b-823c69801c55",
+        "b300b1bb-ba01-43b5-8c2a-595ed3426562"
+      ],
+      "retrieved_context_id_1": 20,
+      "retrieved_context_id_2": 16,
+      "retrieved_context_id_3": 17,
+      "retrieved_context_id_4": 19,
+      "retrieved_context_id_5": 5
+    },
+    {
+      "question": "Meddig jelentkezhettek az első évesek a bentlakásba a 2025-2026-os tanévre?",
+      "question_index": 49,
+      "question_id": 49,
+      "context_id": 19,
+      "context_ids": [
+        19
+      ],
+      "expected_output": "Az első éveseknek 2025. július 29., 12 óráig volt lehetőségük jelentkezni.",
+      "llm_answer": "Július 29., 12 óráig.",
+      "score": 4,
+      "explanation": "The LLM answer is mostly correct, providing the key information about the deadline for first-year students to apply through the window. However, it lacks the specific years (2025) mentioned in the ground truth answer.",
+      "reciprocal_rank": 1.0,
+      "recall_at_k": 1.0,
+      "supporting_doc_count": 1,
+      "retrieved_doc_ids": [
+        "9f1bc4dd-cb8d-4bfc-af8b-823c69801c55",
+        "2353afd1-ab86-48d7-a6e0-1b94a2b740fe",
+        "20765d5a-40cc-4707-9bde-29f01c4b14c7",
+        "2d1ed139-5882-4106-8126-9b6f42ebea3c",
+        "539f6ee7-2354-484f-9cca-76d94fc59c6e"
+      ],
+      "retrieved_context_id_1": 19,
+      "retrieved_context_id_2": 16,
+      "retrieved_context_id_3": 18,
+      "retrieved_context_id_4": 20,
+      "retrieved_context_id_5": 13
+    }
+  ],
+  "statistics": {
+    "single_supporting_doc": {
+      "label": "Single supporting document",
+      "total_questions": 50,
+      "average_score": 4.64,
+      "score_distribution": {
+        "score_5": {
+          "count": 34,
+          "percentage": 68.0
+        },
+        "score_4": {
+          "count": 15,
+          "percentage": 30.0
+        },
+        "score_3": {
+          "count": 0,
+          "percentage": 0.0
+        },
+        "score_2": {
+          "count": 1,
+          "percentage": 2.0
+        },
+        "score_1": {
+          "count": 0,
+          "percentage": 0.0
+        }
+      },
+      "mrr": {
+        "mean_reciprocal_rank": 0.9867,
+        "questions_with_ground_truth": 50,
+        "questions_hit_at_1": 49,
+        "questions_hit_at_3": 50,
+        "questions_hit_at_5": 50,
+        "questions_hit_at_k": 50
+      },
+      "recall_at_k": {
+        "mean_recall": 1.0,
+        "questions_with_ground_truth": 50,
+        "perfect_recall_count": 50
+      }
+    }
+  }
+}
